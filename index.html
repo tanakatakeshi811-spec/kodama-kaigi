@@ -188,6 +188,19 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .pollOpt.voted{border-color:var(--mint-d)}
 .pollOpt.voted .po-label{color:var(--mint);font-weight:700}
 .pollFoot{margin-top:8px;font-size:11px;color:var(--dim);text-align:right}
+.locCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.locCard .liveTag{margin-left:8px;font-size:10.5px;color:var(--coral);font-weight:800;letter-spacing:.04em}
+.locMapWrap{width:100%;aspect-ratio:16/10;border-radius:9px;overflow:hidden;margin-top:8px;border:1px solid var(--line);background:#0c1120}
+.locMap{width:100%;height:100%;border:0;display:block}
+.locFoot{margin-top:6px;font-size:11.5px}
+.locFoot a{color:var(--mint)}
+.locEnded{margin:6px 0 0;color:var(--dim);font-size:12.5px}
+.bgGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+.bgPick{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:11px;padding:6px;background:#0c1120;transition:.15s}
+.bgPick:hover{border-color:var(--mint-d)}
+.bgPick.sel{border-color:var(--mint);box-shadow:0 0 0 2px rgba(95,227,192,.25)}
+.bgPick img{width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:7px;display:block;background:#1a2032}
+.bgPick span{font-size:10.5px;color:var(--dim);line-height:1.3}
 #ytResults{display:flex;flex-direction:column;gap:7px;margin-top:9px}
 .ytres{display:flex;gap:9px;align-items:center;padding:7px;background:#0c1120;border:1px solid var(--line);border-radius:10px;text-align:left;width:100%;transition:.15s}
 .ytres:hover{border-color:var(--mint-d);background:#101a2c;transform:translateX(2px)}
@@ -372,7 +385,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         </div>
       </div>
       <button class="btn primary" id="btnPersistNew">新しく持続的会議を始める</button>
-      <p class="hint">同じ合言葉で何度でも再開でき、チャット履歴とメンバーの記録を引き継げます（このブラウザがホスト役の間だけ有効です）。<br><b style="color:var(--amber)">合言葉が使い回されるので、知らない人が入ってこないよう基本的にロックをかけて使うことをおすすめします。</b></p>
+      <p class="hint">同じ合言葉で何度でも再開でき、チャット履歴とメンバーの記録を引き継げます。一覧からタップすると、まだ誰も開いていなければ自分がホストとして開始し、既に誰か（元のホスト含む）が開いていれば自動的に参加者として入ります。<b>メンバーに追加された人なら、元のホストがその場にいなくても代わりに開始できます。</b><br><b style="color:var(--amber)">合言葉が使い回されるので、知らない人が入ってこないよう基本的にロックをかけて使うことをおすすめします。</b></p>
     </div>
   </div>
 
@@ -425,7 +438,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <!-- 参加者 -->
     <aside class="side" id="sidePpl">
       <div class="sh"><b>参加者 <span id="pplN">0</span></b><button class="iconbtn" data-close="sidePpl">✕</button></div>
-      <div class="scroll" id="pplList"></div>
+      <div class="scroll">
+        <div id="joinReqWrap" style="display:none;margin-bottom:14px">
+          <div style="font-size:11px;letter-spacing:.1em;color:var(--amber);font-weight:800;margin-bottom:8px">⚠ 入室リクエスト</div>
+          <div id="joinReqList" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+        <div id="pplList"></div>
+      </div>
       <div class="compose" id="hostTools" style="display:none">
         <button class="btn ghost" id="btnMuteAll" style="font-size:13px">全員にミュートを依頼</button>
       </div>
@@ -478,7 +497,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <button class="cbtn" id="cItp"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 9h18M3 15h18M12 3c2.4 2.5 3.8 5.7 3.8 9s-1.4 6.5-3.8 9c-2.4-2.5-3.8-5.7-3.8-9s1.4-6.5 3.8-9z"/></svg><small>通訳</small></button>
     <button class="cbtn" id="cGoogle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><small>検索</small></button>
     <button class="cbtn" id="cChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg><small>チャット</small><span class="bdg" id="chatBdg" style="display:none">0</span></button>
-    <button class="cbtn" id="cPpl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 5.5a3.5 3.5 0 0 1 0 6.9M18 20a6.5 6.5 0 0 0-2.5-5.1"/></svg><small>参加者</small></button>
+    <button class="cbtn" id="cPpl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 5.5a3.5 3.5 0 0 1 0 6.9M18 20a6.5 6.5 0 0 0-2.5-5.1"/></svg><small>参加者</small><span class="bdg" id="reqBdg" style="display:none">0</span></button>
     <button class="cbtn mobileOnly" id="cInvite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h3v3M20 14v3M17 20h3.01"/></svg><small>招待</small></button>
     <button class="cbtn mobileOnly lockBtn" id="cLock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><small>ロック</small></button>
     <button class="cbtn" id="cSet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"/></svg><small>設定</small></button>
@@ -524,8 +543,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <option value="mosaic-eyes">モザイク（目だけ）</option>
         <option value="mosaic-face">モザイク（顔だけ）</option>
         <option value="softcream">ソフトクリームモード</option>
+        <option value="bg">背景（人物だけ残して部屋を変える）</option>
       </select></div>
-      <p class="hint" style="margin-top:-4px">「目だけ」「顔だけ」「ソフトクリームモード」は顔検出ライブラリを初回選択時に読み込みます（少し時間がかかることがあります）。ふだんの操作は<b>カメラボタンの長押し</b>からのクイック選択が便利です。</p>
+      <p class="hint" style="margin-top:-4px">「目だけ」「顔だけ」「ソフトクリームモード」「背景」は検出用のライブラリを初回選択時に読み込みます（少し時間がかかることがあります）。ふだんの操作は<b>カメラボタンの長押し</b>からのクイック選択が便利です。</p>
       <div class="frow"><span>ボイスチェンジャー</span><select id="selFxVoice">
         <option value="none">なし</option>
         <option value="robot">ロボット</option>
@@ -586,11 +606,35 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button class="btn ghost" id="plusLink">🔗　リンクを貼る</button>
       <button class="btn ghost" id="plusPoll">📊　アンケートを作る</button>
       <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
+      <button class="btn ghost" id="plusLoc">📍　位置情報を共有</button>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
 </div>
 <input type="file" id="photoFile" accept="image/*" multiple hidden>
+
+<!-- 位置情報の共有方法選択 -->
+<div class="modal" id="mLoc">
+  <div class="sheet" style="max-width:360px">
+    <h3>位置情報を共有</h3>
+    <div class="sub">共有はあなたがここで選んだ時だけ始まります</div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px">
+      <button class="btn ghost" id="locOnce">📍　今の位置を1回だけ送る</button>
+      <button class="btn ghost" id="locLive">🔴　継続的に共有する（ライブ共有）</button>
+    </div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
+
+<!-- 背景選択（バーチャル背景） -->
+<div class="modal" id="mBgPicker">
+  <div class="sheet" style="max-width:460px">
+    <h3>背景を選ぶ</h3>
+    <div class="sub">自分の映像から人物だけを残して、背景をこの画像に置き換えます</div>
+    <div class="bgGrid" id="bgPickList"></div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
 
 <!-- 放課後の居残りに招待 -->
 <div class="modal" id="mInokori">
@@ -694,7 +738,8 @@ const S={
   fx:{video:'none',voice:'none'}, ytState:null,
   itp:{lang:'ja-JP',to:'auto',tts:false,running:false},
   roomSound:localStorage.getItem('kdm-roomsound')!=='0',
-  persistent:false, persistMembers:[]
+  persistent:false, persistMembers:[], joinRequests:null,
+  locSharing:false
 };
 
 /* ---------- 小道具 ---------- */
@@ -823,13 +868,18 @@ function replaceOut(kind,track){
    カメラ・画面共有の生映像をcanvasに毎フレーム描画し、
    captureStream()したものをreplaceOut('video',...)に渡す
    ============================================================ */
+function mediaSize(v){
+  if(v.videoWidth) return [v.videoWidth,v.videoHeight];
+  if(v.naturalWidth) return [v.naturalWidth,v.naturalHeight];
+  return [v.width,v.height];
+}
 function drawCover(ctx,v,x,y,w,h){
-  const vw=v.videoWidth,vh=v.videoHeight; if(!vw||!vh) return;
+  const [vw,vh]=mediaSize(v); if(!vw||!vh) return;
   const s=Math.max(w/vw,h/vh), dw=vw*s, dh=vh*s;
   ctx.drawImage(v, x+(w-dw)/2, y+(h-dh)/2, dw, dh);
 }
 function drawContain(ctx,v,x,y,w,h){
-  const vw=v.videoWidth,vh=v.videoHeight; if(!vw||!vh) return;
+  const [vw,vh]=mediaSize(v); if(!vw||!vh) return;
   const s=Math.min(w/vw,h/vh), dw=vw*s, dh=vh*s;
   ctx.drawImage(v, x+(w-dw)/2, y+(h-dh)/2, dw, dh);
 }
@@ -959,10 +1009,96 @@ function drawSoftcream(ctx,v,x,y,w,h){
   drawSoftcreamFace(ctx,ox,oy,dw,dh,met.mouthOpen,met.eyeOpen);
 }
 
+/* ============================================================
+   バーチャル背景（人物セグメンテーション、MediaPipe ImageSegmenter）
+   顔検出(FaceFx)と同じ@mediapipe/tasks-visionパッケージ・同じCDNを使い回す。
+   segmentForVideo()はコールバック形式で、confidenceMasks（0〜1の連続値）を使うことで、
+   境界を別途ぼかさなくても自然な半透明の縁が出るようにしている
+   ============================================================ */
+const BgSeg={
+  segmenter:null, loading:null, lastMask:null, lastMaskW:0, lastMaskH:0, lastRunTs:0,
+  async ensure(){
+    if(this.segmenter) return true;
+    if(this.loading) return this.loading;
+    this.loading=(async()=>{
+      try{
+        const vision=await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs');
+        const fileset=await vision.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+        this.segmenter=await vision.ImageSegmenter.createFromOptions(fileset,{
+          baseOptions:{modelAssetPath:'https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter_landscape/float16/latest/selfie_segmenter_landscape.tflite'},
+          runningMode:'VIDEO', outputCategoryMask:false, outputConfidenceMasks:true
+        });
+        return true;
+      }catch(e){ console.warn('背景合成の準備に失敗しました',e); this.segmenter=null; return false; }
+    })();
+    const ok=await this.loading; this.loading=null; return ok;
+  },
+  segment(video,tsMs){
+    if(!this.segmenter||!video.videoWidth) return this.lastMask;
+    if(tsMs-this.lastRunTs<140) return this.lastMask; // 顔検出よりさらに重いので間引きを強めにする（軽量化）
+    this.lastRunTs=tsMs;
+    try{
+      this.segmenter.segmentForVideo(video, Math.round(tsMs), result=>{
+        const m=result&&result.confidenceMasks&&result.confidenceMasks[0];
+        if(m){
+          this.lastMask=m.getAsFloat32Array();
+          this.lastMaskW=m.width; this.lastMaskH=m.height;
+          try{ m.close&&m.close(); }catch(_){}
+        }
+      });
+    }catch(_){}
+    return this.lastMask;
+  }
+};
+const BG_LIST=[
+  ['bg_office_white','オフィス（ホワイト）'],['bg_library_cozy','書斎（コージー）'],['bg_office_minimal','オフィス（ミニマル）'],
+  ['bg_studio_plants','スタジオ（観葉植物）'],['bg_office_nightcity','オフィス（夜景）'],['bg_artstudio','アートスタジオ'],
+  ['bg_office_executive','オフィス（役員室）'],['bg_loft_industrial','ロフト（インダストリアル）'],['bg_boardroom','会議室']
+];
+const BgImages={};
+function getBgImage(key){
+  if(!BgImages[key]){
+    const rec={img:new Image(),loaded:false};
+    rec.img.onload=()=>{rec.loaded=true;};
+    rec.img.onerror=()=>{rec.loaded=false;};
+    rec.img.src='assets/'+key+'.jpg';
+    BgImages[key]=rec;
+  }
+  return BgImages[key];
+}
+const BG_WORK_W=320, BG_WORK_H=180;
+const bgFgTmp=document.createElement('canvas'); bgFgTmp.width=BG_WORK_W; bgFgTmp.height=BG_WORK_H;
+const bgFgCtx=bgFgTmp.getContext('2d');
+function drawVirtualBg(ctx,v,x,y,w,h,bgKey){
+  const bg=getBgImage(bgKey||BG_LIST[0][0]);
+  if(!v||!v.videoWidth){ return; }
+  if(!bg.loaded){ drawCover(ctx,v,x,y,w,h); return; } // 背景画像の読み込み待ちは普通の映像にフォールバック（真っ黒にしない）
+  const mask=BgSeg.segment(v,performance.now());
+  if(!mask){ drawCover(ctx,v,x,y,w,h); return; } // 検出結果がまだ無い間も普通の映像を出す（人が消えて見えるのを防ぐ）
+  drawCover(ctx,bg.img,x,y,w,h);
+  bgFgCtx.clearRect(0,0,BG_WORK_W,BG_WORK_H);
+  drawCover(bgFgCtx,v,0,0,BG_WORK_W,BG_WORK_H);
+  const imgData=bgFgCtx.getImageData(0,0,BG_WORK_W,BG_WORK_H);
+  const data=imgData.data, mw=BgSeg.lastMaskW, mh=BgSeg.lastMaskH;
+  if(mw&&mh){
+    for(let py=0;py<BG_WORK_H;py++){
+      const my=Math.min(mh-1,(py*mh/BG_WORK_H)|0);
+      const mRow=my*mw;
+      for(let px=0;px<BG_WORK_W;px++){
+        const mx=Math.min(mw-1,(px*mw/BG_WORK_W)|0);
+        data[(py*BG_WORK_W+px)*4+3]=Math.max(0,Math.min(255,Math.round(mask[mRow+mx]*255)));
+      }
+    }
+  }
+  bgFgCtx.putImageData(imgData,0,0);
+  drawCover(ctx,bgFgTmp,x,y,w,h);
+}
+
 const fxTmp=document.createElement('canvas');
 function drawEffect(ctx,v,x,y,w,h,mode,fit){
   if(mode==='blackout'){ ctx.fillStyle='#0b0f1c'; ctx.fillRect(x,y,w,h); return; }
   if(mode==='softcream'){ drawSoftcream(ctx,v,x,y,w,h); return; }
+  if(mode&&mode.indexOf('bg:')===0){ drawVirtualBg(ctx,v,x,y,w,h,mode.slice(3)); return; }
   if(mode==='mosaic-eyes'||mode==='mosaic-face'){
     if(fit==='contain') drawContain(ctx,v,x,y,w,h); else drawCover(ctx,v,x,y,w,h);
     const lm=FaceFx.detect(v,performance.now());
@@ -1149,7 +1285,11 @@ async function hostStart(opts){
   let peer=null;
   if(opts.resumeCode){
     try{ peer=await makePeer(PREFIX+opts.resumeCode); S.code=opts.resumeCode; }
-    catch(e){ throw new Error(e.type==='unavailable-id'?'この合言葉の会議はまだ使用中のようです。少し待ってからもう一度お試しください':(e.message||'再開できませんでした')); }
+    catch(e){
+      const err=new Error(e.type==='unavailable-id'?'この合言葉の会議はまだ使用中のようです':(e.message||'再開できませんでした'));
+      err.occupied=(e.type==='unavailable-id'); // 既に誰かがホストとして開いている＝参加者として入れる可能性がある、の目印
+      throw err;
+    }
   }else{
     for(let i=0;i<6&&!peer;i++){
       const code=genCode();
@@ -1176,21 +1316,70 @@ async function hostStart(opts){
 }
 function hostAccept(conn){
   conn.on('open',()=>{
-    if(S.locked){ conn.send({t:'denied',why:'この会議はロックされています'}); setTimeout(()=>conn.close(),400); return; }
     if(S.roster.length>=12){ conn.send({t:'denied',why:'満員です'}); setTimeout(()=>conn.close(),400); return; }
-    const nm=((conn.metadata&&conn.metadata.name)||'ゲスト').slice(0,18);
-    S.conns.set(conn.peer,conn);
-    const newP={id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false};
-    addRoster(newP);
-    conn.send({t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked},
-               roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState});
-    broadcast({t:'roster',roster:S.roster});
-    sysBroadcast(nm+' が参加しました','join',conn.peer);
-    // 入っただけでは自動でメンバー扱いにしない。ホストが参加者パネルから明示的に追加した時だけ記録する
+    if(S.locked){ conn.send({t:'locked'}); return; } // ここでは弾かない。reqJoinが来るのを待つ（下のconn.on('data')）
+    admitGuest(conn);
   });
-  conn.on('data',d=>hostHandle(conn.peer,d));
-  conn.on('close',()=>dropPeer(conn.peer));
+  conn.on('data',d=>{
+    if(d&&d.t==='reqJoin'){ handleJoinRequest(conn,d); return; }
+    hostHandle(conn.peer,d);
+  });
+  conn.on('close',()=>{ if(S.joinRequests&&S.joinRequests.has(conn.peer)){ S.joinRequests.delete(conn.peer); renderJoinRequests(); } dropPeer(conn.peer); });
   conn.on('error',()=>dropPeer(conn.peer));
+}
+/* ロック中でも即座に拒否せず「入室リクエスト」を送れるようにする。承認されるまでは
+   S.roster / S.conns に一切追加しない（承認前のconnからのメッセージはhostHandleに回さずここで止める） */
+function admitGuest(conn){
+  const nm=((conn.metadata&&conn.metadata.name)||'ゲスト').slice(0,18);
+  S.conns.set(conn.peer,conn);
+  const newP={id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false};
+  addRoster(newP);
+  conn.send({t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked},
+             roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState});
+  broadcast({t:'roster',roster:S.roster});
+  sysBroadcast(nm+' が参加しました','join',conn.peer);
+  // 入っただけでは自動でメンバー扱いにしない。ホストが参加者パネルから明示的に追加した時だけ記録する
+}
+function handleJoinRequest(conn,d){
+  if(S.roster.some(x=>x.id===conn.peer)) return; // 既に入室済みなら無視
+  if(!S.locked){ admitGuest(conn); return; } // その間にロック解除されていたらそのまま入れる
+  const nm=String((d&&d.name)||(conn.metadata&&conn.metadata.name)||'ゲスト').slice(0,18);
+  S.joinRequests=S.joinRequests||new Map();
+  S.joinRequests.set(conn.peer,{conn,name:nm,ts:Date.now()});
+  toast(nm+' さんが入室をリクエストしています');
+  renderJoinRequests();
+  setTimeout(()=>{ if(S.joinRequests&&S.joinRequests.has(conn.peer)) denyJoinRequest(conn.peer); },120000); // 2分反応がなければ自動で拒否
+}
+function approveJoinRequest(id){
+  const req=S.joinRequests&&S.joinRequests.get(id); if(!req) return;
+  S.joinRequests.delete(id); renderJoinRequests();
+  admitGuest(req.conn);
+}
+function denyJoinRequest(id){
+  const req=S.joinRequests&&S.joinRequests.get(id); if(!req) return;
+  S.joinRequests.delete(id); renderJoinRequests();
+  try{ req.conn.send({t:'denied',why:'ホストが入室を許可しませんでした'}); }catch(_){}
+  setTimeout(()=>{ try{req.conn.close()}catch(_){} },400);
+}
+function renderJoinRequests(){
+  const wrap=$('#joinReqWrap'), box=$('#joinReqList'); if(!wrap||!box) return;
+  const reqs=[...(S.joinRequests||new Map()).entries()];
+  wrap.style.display=reqs.length?'':'none';
+  const badge=$('#reqBdg'); if(badge){ badge.style.display=reqs.length?'':'none'; badge.textContent=reqs.length; }
+  box.innerHTML='';
+  reqs.forEach(([id,req])=>{
+    const d=document.createElement('div'); d.className='prow';
+    d.innerHTML=`<div class="pi" style="background:var(--amber)">${esc(initial(req.name))}</div>
+      <div class="pn"><b>${esc(req.name)}</b><small>入室をリクエスト中</small></div>`;
+    const pa=document.createElement('div'); pa.className='pa';
+    const ok=document.createElement('button'); ok.textContent='✔'; ok.title='承認する'; ok.style.color='var(--mint)';
+    ok.onclick=()=>approveJoinRequest(id);
+    const ng=document.createElement('button'); ng.textContent='✕'; ng.title='拒否する'; ng.style.color='var(--coral)';
+    ng.onclick=()=>denyJoinRequest(id);
+    pa.appendChild(ok); pa.appendChild(ng);
+    d.appendChild(pa);
+    box.appendChild(d);
+  });
 }
 function dropPeer(id){
   const p=S.roster.find(x=>x.id===id);
@@ -1238,6 +1427,23 @@ function hostHandle(from,m){
       const opt=+m.opt; if(!(opt>=0&&opt<entry.opts.length))break;
       entry.votes[from]=opt;
       deliver({t:'pollVote',id:entry.id,votes:entry.votes}); schedulePersistSave(); break;}
+    case 'locShare':{
+      // 位置情報カードは新規メッセージを連投せず、本人の「有効な」カードを1枚だけ更新し続ける
+      let entry=S.chat.find(c=>c.loc&&c.from===from&&c.active);
+      if(m.stop){
+        if(entry){ entry.active=false; deliver({t:'locUpdate',id:entry.id,lat:entry.lat,lng:entry.lng,active:false}); schedulePersistSave(); }
+        break;
+      }
+      const lat=+m.lat, lng=+m.lng; if(!isFinite(lat)||!isFinite(lng)) break;
+      if(entry){
+        entry.lat=lat; entry.lng=lng; entry.ts=Date.now();
+        deliver({t:'locUpdate',id:entry.id,lat,lng,active:true});
+      }else{
+        entry={loc:true,id:'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),from,name:p.name,color:p.color,lat,lng,live:!!m.live,active:true,ts:Date.now()};
+        S.chat.push(entry); if(S.chat.length>300)S.chat.shift();
+        deliver({t:'loc',entry});
+      }
+      schedulePersistSave(); break;}
     case 'yt':{
       const a=String(m.a||''); const id=String(m.id||'').slice(0,64); const time=+m.time||0;
       const svc=['youtube','vimeo','twitch'].includes(m.svc)?m.svc:'youtube';
@@ -1257,6 +1463,7 @@ function deliver(m){ broadcast(m); onMessage(m); }
 async function guestJoin(code){
   const peer=await makePeer();
   S.peer=peer; S.myId=peer.id; S.isHost=false; S.code=code;
+  let settled=false; // denied/locked拒否など、閉じる理由が既にはっきりしている場合は close時の二重案内を出さない
   peer.on('call',call=>answer(call));
   peer.on('error',e=>{ if(e.type==='peer-unavailable'&&!S.joined){ toast('その合言葉の会議は見つかりません'); bail(); } });
   const conn=peer.connect(PREFIX+code,{metadata:{name:S.name},reliable:true,serialization:'json'});
@@ -1278,10 +1485,17 @@ async function guestJoin(code){
       }
       return;
     }
-    if(m.t==='denied'){ toast(m.why||'参加できません'); bail(); return; }
+    if(m.t==='denied'){ settled=true; toast(m.why||'参加できません'); bail(); return; }
+    if(m.t==='locked'){
+      if(confirm('この会議はロックされています。ホストに入室をリクエストしますか？')){
+        conn.send({t:'reqJoin',name:S.name});
+        toast('入室をリクエストしました。ホストの承認をお待ちください…');
+      }else{ settled=true; bail(); }
+      return;
+    }
     onMessage(m);
   });
-  conn.on('close',()=>{ toast('ホストが退出したため会議が終了しました'); bail(); });
+  conn.on('close',()=>{ if(settled) return; settled=true; toast(S.joined?'ホストが退出したため会議が終了しました':'会議に入れませんでした'); bail(); });
 }
 function bail(){ setTimeout(()=>location.reload(),1600); }
 function send(m){ if(S.isHost) hostHandle(S.myId,m); else if(S.hostConn&&S.hostConn.open) S.hostConn.send(m); }
@@ -1301,6 +1515,15 @@ function onMessage(m){
         entry.votes=m.votes;
         const card=$('#chatLog').querySelector(`.pollCard[data-poll-id="${m.id}"]`);
         if(card) card.replaceWith(renderPollCard(entry));
+      }
+      break;}
+    case 'loc': pushChat(Object.assign({loc:true},m.entry)); break;
+    case 'locUpdate':{
+      const entry=S.chat.find(c=>c.loc&&c.id===m.id);
+      if(entry){
+        entry.lat=m.lat; entry.lng=m.lng; entry.active=m.active;
+        const card=$('#chatLog').querySelector(`.locCard[data-loc-id="${m.id}"]`);
+        if(card) card.replaceWith(renderLocCard(entry));
       }
       break;}
     case 'room': S.roomName=m.name; S.locked=m.locked; $('#mTitle').textContent=S.roomName; $$('.lockBtn').forEach(b=>b.classList.toggle('on',S.locked)); break;
@@ -1557,10 +1780,39 @@ function renderPollCard(poll){
   });
   return wrap;
 }
+/* 位置情報カード。地図表示はAPIキー不要のOpenStreetMap埋め込みを使う
+   （YouTube/Google検索の時と同じく、キーが要るサービスの埋め込みは避ける判断） */
+function locBBox(lat,lng,d){
+  return [(lng-d).toFixed(5),(lat-d).toFixed(5),(lng+d).toFixed(5),(lat+d).toFixed(5)].join('%2C');
+}
+function renderLocCard(entry){
+  const wrap=document.createElement('div');
+  wrap.className='locCard'; wrap.dataset.locId=entry.id;
+  if(!entry.active){
+    wrap.innerHTML=`<div class="mh"><b style="color:${entry.color}">${esc(entry.name)}</b><time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div><p class="locEnded">📍 位置情報の共有を終了しました</p>`;
+    return wrap;
+  }
+  const bbox=locBBox(entry.lat,entry.lng,0.006);
+  const osmUrl=`https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&marker=${entry.lat},${entry.lng}&layer=mapnik`;
+  const gmapsUrl=`https://www.google.com/maps?q=${entry.lat},${entry.lng}`;
+  wrap.innerHTML=`
+    <div class="mh"><b style="color:${entry.color}">${esc(entry.name)}</b>${entry.live?'<span class="liveTag">● 共有中</span>':''}<time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div>
+    <div class="locMapWrap"><iframe class="locMap" src="${osmUrl}" loading="lazy"></iframe></div>
+    <div class="locFoot"><a href="${gmapsUrl}" target="_blank" rel="noopener">大きい地図で見る</a></div>`;
+  if(entry.from===S.myId && entry.live){
+    const stopBtn=document.createElement('button');
+    stopBtn.className='btn ghost'; stopBtn.style.cssText='width:auto;padding:6px 12px;font-size:12px;margin-top:8px';
+    stopBtn.textContent='共有を停止';
+    stopBtn.onclick=()=>stopLocationShare();
+    wrap.appendChild(stopBtn);
+  }
+  return wrap;
+}
 function addChatEl(m){
   const l=$('#chatLog'); const d=document.createElement('div');
   if(m.sys){ d.className='msg sys'; d.innerHTML=`<p>${esc(m.text)}</p>`; }
   else if(m.poll){ d.className='msg'; d.appendChild(renderPollCard(m)); }
+  else if(m.loc){ d.className='msg'; d.appendChild(renderLocCard(m)); }
   else{
     d.className='msg'+(m.ai?' ai':'');
     const body=m.text?linkify(m.text):'';
@@ -1665,8 +1917,20 @@ function renderPersistList(){
       S.published=$('#pPub').classList.contains('on');
       S.persistent=true;
       b.disabled=true;
-      try{ await startMedia(); await hostStart({resumeCode:entry.code}); }
-      catch(e){ console.error(e); toast(e.message||'再開できませんでした'); b.disabled=false; }
+      try{
+        await startMedia();
+        try{
+          await hostStart({resumeCode:entry.code});
+        }catch(e){
+          // 既に誰か（元のホスト含む）がこの合言葉でホストとして開いている→自分は参加者として入る。
+          // 「先に開いた人がホスト、後から来た人は参加者」という自然な役割分担にすることで、
+          // 元のホストが今その場にいなくても、メンバーの誰かが代わりにホスト役を引き受けられるようにしている
+          if(e&&e.occupied){
+            toast('すでに開かれているので参加者として入ります');
+            await guestJoin(entry.code);
+          }else throw e;
+        }
+      }catch(e){ console.error(e); toast(e.message||'入れませんでした'); b.disabled=false; }
     };
     box.appendChild(b);
   });
@@ -1955,14 +2219,34 @@ function attachLongPress(el,onLongPress,ms=480){
   });
   ['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,cancel));
 }
-const FX_VIDEO_OPTS=[['none','なし'],['mosaic','モザイク（全体）'],['blackout','映像を隠す（黒塗り）'],['mosaic-eyes','モザイク（目だけ）'],['mosaic-face','モザイク（顔だけ）'],['softcream','ソフトクリームモード']];
+const FX_VIDEO_OPTS=[['none','なし'],['mosaic','モザイク（全体）'],['blackout','映像を隠す（黒塗り）'],['mosaic-eyes','モザイク（目だけ）'],['mosaic-face','モザイク（顔だけ）'],['softcream','ソフトクリームモード'],['bg','背景...']];
 const FACE_FX_MODES=['mosaic-eyes','mosaic-face','softcream'];
 function applyFxVideo(v){
-  S.fx.video=v; $('#selFxVideo').value=v; rebuildVideoPipeline(); toast('映像エフェクトを変更しました');
+  S.fx.video=v; $('#selFxVideo').value=(v.indexOf('bg:')===0?'bg':v); rebuildVideoPipeline(); toast('映像エフェクトを変更しました');
   if(FACE_FX_MODES.includes(v)){
     toast('顔検出を準備しています…');
     FaceFx.ensure().then(ok=>{ if(!ok) toast('顔検出の準備に失敗しました。別のエフェクトをお試しください'); });
   }
+  if(v.indexOf('bg:')===0){
+    toast('背景合成を準備しています…');
+    BgSeg.ensure().then(ok=>{ if(!ok) toast('背景合成の準備に失敗しました。別のエフェクトをお試しください'); });
+  }
+}
+/* 長押しクイックメニュー・設定モーダルどちらからも呼ばれる共通入口。
+   「背景」は9枚から選ぶ必要があるので、ここでピッカーに振り分ける */
+function pickFxVideoOption(v){
+  if(v==='bg'){ openBgPicker(); return; }
+  applyFxVideo(v);
+}
+function openBgPicker(){
+  const box=$('#bgPickList'); box.innerHTML='';
+  BG_LIST.forEach(([key,label])=>{
+    const b=document.createElement('button'); b.className='bgPick'+(S.fx.video==='bg:'+key?' sel':'');
+    b.innerHTML=`<img src="assets/${key}.jpg" loading="lazy" alt=""><span>${esc(label)}</span>`;
+    b.onclick=()=>{ applyFxVideo('bg:'+key); $('#mBgPicker').classList.remove('on'); };
+    box.appendChild(b);
+  });
+  $('#mBgPicker').classList.add('on');
 }
 const FX_VOICE_OPTS=[['none','なし'],['robot','ロボット'],['high','高い声'],['low','低い声'],['echo','エコー']];
 function showQuickFx(anchorEl,title,opts,current,onPick){
@@ -1988,7 +2272,7 @@ function showQuickFx(anchorEl,title,opts,current,onPick){
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#quickFx')&&!e.target.closest('#cMic')&&!e.target.closest('#cCam')) $('#quickFx').classList.remove('on'); });
 attachLongPress($('#cCam'),()=>{
   camLongFired=true;
-  showQuickFx($('#cCam'),'映像エフェクト',FX_VIDEO_OPTS,S.fx.video,applyFxVideo);
+  showQuickFx($('#cCam'),'映像エフェクト',FX_VIDEO_OPTS,S.fx.video.indexOf('bg:')===0?'bg':S.fx.video,pickFxVideoOption);
 });
 attachLongPress($('#cMic'),()=>{
   micLongFired=true;
@@ -2082,6 +2366,43 @@ $('#btnInokoriSend').onclick=()=>{
   $('#mInokori').classList.remove('on');
 };
 $('#inokoriCode').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnInokoriSend').click(); } };
+
+/* 位置情報の共有（プライバシーに関わるため、本人が明示的にボタンを押した時だけ開始する。自動開始は一切しない） */
+let locWatchId=null;
+$('#plusLoc').onclick=()=>{
+  $('#mPlus').classList.remove('on');
+  if(S.locSharing){
+    if(confirm('位置情報のライブ共有を停止しますか？')) stopLocationShare();
+    return;
+  }
+  $('#mLoc').classList.add('on');
+};
+$('#locOnce').onclick=()=>{ $('#mLoc').classList.remove('on'); shareLocationOnce(); };
+$('#locLive').onclick=()=>{ $('#mLoc').classList.remove('on'); startLiveLocationShare(); };
+function shareLocationOnce(){
+  if(!navigator.geolocation) return toast('この端末は位置情報に対応していません');
+  toast('現在地を取得しています…');
+  navigator.geolocation.getCurrentPosition(
+    pos=>send({t:'locShare',lat:pos.coords.latitude,lng:pos.coords.longitude,live:false}),
+    err=>toast('位置情報を取得できませんでした：'+(err.message||'許可されていないようです')),
+    {enableHighAccuracy:false,timeout:12000,maximumAge:30000}
+  );
+}
+function startLiveLocationShare(){
+  if(!navigator.geolocation) return toast('この端末は位置情報に対応していません');
+  if(locWatchId!=null) return;
+  locWatchId=navigator.geolocation.watchPosition(
+    pos=>{ S.locSharing=true; send({t:'locShare',lat:pos.coords.latitude,lng:pos.coords.longitude,live:true}); },
+    err=>{ toast('位置情報の取得に失敗しました：'+(err.message||'')); stopLocationShare(); },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:5000}
+  );
+  S.locSharing=true;
+  toast('ライブ共有を開始しました（「+」からいつでも停止できます）');
+}
+function stopLocationShare(){
+  if(locWatchId!=null){ try{navigator.geolocation.clearWatch(locWatchId);}catch(_){} locWatchId=null; }
+  if(S.locSharing){ S.locSharing=false; send({t:'locShare',stop:true}); toast('位置情報の共有を停止しました'); }
+}
 
 // 写真の送信（送信前にリサイズ・圧縮してbase64化。1枚あたり長辺1280px・JPEG品質0.72程度）
 function resizeImageToDataURL(file,maxSide,quality){
@@ -2208,7 +2529,7 @@ $('#swRoomSound').onclick=()=>{
   toast(S.roomSound?'入退室サウンドをオンにしました':'オフにしました');
   if(S.roomSound) playJoinSound();
 };
-$('#selFxVideo').onchange=e=>applyFxVideo(e.target.value);
+$('#selFxVideo').onchange=e=>pickFxVideoOption(e.target.value);
 $('#selFxVoice').onchange=e=>{ S.fx.voice=e.target.value; VoiceFX.apply(S.fx.voice); toast('ボイスチェンジャーを変更しました'); };
 $('#swNs').onclick=async()=>{
   S.ns=!S.ns; $('#swNs').classList.toggle('on',S.ns);
