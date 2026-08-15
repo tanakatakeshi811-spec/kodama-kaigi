@@ -144,9 +144,20 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .tile .recBadge{display:none;position:absolute;top:8px;left:8px;align-items:center;gap:4px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:5px 9px;border-radius:7px;z-index:2;animation:recBlink 1.3s infinite}
 .tile.recording .recBadge{display:flex}
 @keyframes recBlink{50%{opacity:.5}}
+#btnAiSum.spin{animation:aiSpin 1s linear infinite}
+#btnAiSum.err{color:var(--coral)}
+@keyframes aiSpin{to{transform:rotate(360deg)}}
 
 /* 字幕 */
 #caps{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;width:min(860px,calc(100% - 40px));display:flex;flex-direction:column;gap:7px;pointer-events:none;z-index:3}
+#shareSelfPreview{position:fixed;right:14px;top:64px;width:190px;background:rgba(10,13,22,.94);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:24;display:none}
+#shareSelfPreview.on{display:block;animation:modalBgIn .18s ease}
+#shareSelfPreview video{width:100%;aspect-ratio:16/9;object-fit:contain;background:#000;display:block}
+.ssp-info{padding:8px 9px;display:flex;flex-direction:column;gap:7px}
+.ssp-info b{font-size:11px;color:var(--mint);display:flex;align-items:center;gap:6px;font-weight:700}
+.ssp-info b::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--coral);animation:recBlink 1.3s infinite;flex:0 0 auto}
+.ssp-info .btn{width:100%;padding:6px;font-size:11.5px}
+@media (max-width:760px){#shareSelfPreview{width:140px;right:8px;top:58px}}
 .cap{background:rgba(6,9,16,.8);backdrop-filter:blur(10px);border-left:3px solid var(--mint);border-radius:9px;padding:9px 13px;animation:capin .2s ease;transition:opacity .5s}
 .cap.fade{opacity:0}
 .cap b{font-size:11.5px;letter-spacing:.06em;display:block;margin-bottom:2px}
@@ -465,6 +476,14 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       </div>
       <div class="grid" id="grid"></div>
       <div id="caps"></div>
+      <!-- 画面共有中、自分が何を共有しているか自分でも確認できる小さいプレビュー -->
+      <div id="shareSelfPreview">
+        <video id="shareSelfVideo" autoplay playsinline muted></video>
+        <div class="ssp-info">
+          <b>画面を共有しています</b>
+          <button class="btn ghost" id="shareSelfStop">共有を終了</button>
+        </div>
+      </div>
     </div>
 
     <!-- チャット -->
@@ -606,6 +625,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <p class="hint" style="margin-top:-4px">Google Cloud Consoleで「YouTube Data API v3」を有効にしてAPIキーを発行すると、YouTube検索の結果がアプリの中に直接表示されるようになります（無料枠は1日あたり検索およそ100回程度）。未設定の場合は、これまで通り新しいタブでYouTube検索が開きます。</p>
       <div class="frow"><span>Gemini APIキー</span><input type="text" id="inGeminiKey" placeholder="任意（チャットのAI機能に使用）" style="max-width:220px"></div>
       <p class="hint" style="margin-top:-4px">Google AI Studio（aistudio.google.com）で無料発行できます。設定するとチャットで「@AI ○○」と話しかけて質問したり、「AIで要約」ボタンで会話をまとめたりできるようになります。呼び出しはあなたのキーを使って、あなたのブラウザから直接Geminiに送られます（未設定の間はAI機能は使えません）。</p>
+      <div class="frow"><span>Geminiのモデル</span><select id="selGeminiModel">
+        <option value="gemini-flash-latest">Flash（速度重視・既定）</option>
+        <option value="gemini-flash-lite-latest">Flash-Lite（最速・軽量）</option>
+        <option value="gemini-pro-latest">Pro（精度重視・複雑な質問向け）</option>
+      </select></div>
+      <p class="hint" style="margin-top:-4px">いずれもGoogle公式の自動更新エイリアス（世代が新しくなってもURLを書き換えなくて済む仕組み）です。API側は利用回数の残り・レート制限の情報をレスポンスとしては提供していないため（AI Studioの管理画面でのみ確認可）、代わりに1回ごとの消費トークン数の目安をAI応答の後に小さく表示します。</p>
     </div>
 
     <div class="sec"><h4>ショートカット</h4>
@@ -1231,7 +1256,7 @@ function drawEffect(ctx,v,x,y,w,h,mode,fit){
   if(fit==='contain') drawContain(ctx,v,x,y,w,h); else drawCover(ctx,v,x,y,w,h);
 }
 const Comp={
-  canvas:null, ctx:null, camVideo:null, shareVideo:null, raf:null, stream:null, track:null, _camT:null, _shareT:null,
+  canvas:null, ctx:null, camVideo:null, shareVideo:null, raf:null, timer:null, running:false, stream:null, track:null, _camT:null, _shareT:null,
   ensure(){
     if(this.canvas) return;
     this.canvas=document.createElement('canvas'); this.canvas.width=1280; this.canvas.height=720;
@@ -1245,10 +1270,25 @@ const Comp={
     if(!S.camTrack){ this._camT=null; this.camVideo.srcObject=null; }
     if(S.shareTrack && this._shareT!==S.shareTrack){ this._shareT=S.shareTrack; this.shareVideo.srcObject=new MediaStream([S.shareTrack]); this.shareVideo.play().catch(()=>{}); }
     if(!S.shareTrack){ this._shareT=null; this.shareVideo.srcObject=null; }
-    if(!this.raf) this.tick();
+    this.running=true;
+    this.drive();
   },
-  stop(){ if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } },
-  tick(){ this.raf=requestAnimationFrame(()=>this.tick()); this.draw(); },
+  stop(){ this.running=false; if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } if(this.timer){ clearInterval(this.timer); this.timer=null; } },
+  /* タブが非表示（document.hidden）になるとブラウザがrequestAnimationFrameを大幅に間引く／止めることがあり、
+     画面共有中はそれがそのままcanvas合成の更新停止→canvas.captureStream()が同じ静止フレームを送り続ける
+     ＝相手から見て「画面共有が止まって見える」原因になる。見た目の描画頻度が落ちるのは許容し、
+     「映像データ自体が完全に止まる」ことだけは避けるため、非表示中だけsetIntervalへ駆動源を切り替える */
+  drive(){
+    if(!this.running) return;
+    if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; }
+    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+    if(document.hidden){
+      this.timer=setInterval(()=>this.draw(),1000/12);
+    }else{
+      const tick=()=>{ if(!this.running) return; this.draw(); this.raf=requestAnimationFrame(tick); };
+      tick();
+    }
+  },
   draw(){
     const c=this.ctx, w=this.canvas.width, h=this.canvas.height;
     c.fillStyle='#0b0f1c'; c.fillRect(0,0,w,h);
@@ -1266,6 +1306,7 @@ const Comp={
     }
   }
 };
+document.addEventListener('visibilitychange',()=>{ if(Comp.running) Comp.drive(); });
 function rebuildVideoPipeline(){
   const needCompose = S.sharing || S.fx.video!=='none';
   if(needCompose){
@@ -2573,6 +2614,7 @@ $('#cShare').onclick=async()=>{
     const t=st.getVideoTracks()[0];
     S.shareTrack=t; S.sharing=true; rebuildVideoPipeline();
     $('#cShare').classList.add('act'); sendState();
+    updateShareSelfPreview();
     t.onended=stopShare;
   }catch(_){}
 };
@@ -2582,7 +2624,22 @@ function stopShare(){
   S.sharing=false; S.shareTrack=null; rebuildVideoPipeline();
   if(S.camTrack)S.camTrack.enabled=S.video;
   $('#cShare').classList.remove('act'); sendState(); renderTiles(true);
+  updateShareSelfPreview();
 }
+/* 画面共有中、自分が何を共有しているか自分でも一目で分かる小さいプレビュー。
+   S.out（=合成後の実際の送出映像。カメラワイプ込み）をそのまま映すことで
+   「相手に実際に見えているもの」と完全に同じ内容を表示する */
+function updateShareSelfPreview(){
+  const el=$('#shareSelfPreview');
+  if(S.sharing){
+    el.classList.add('on');
+    const v=$('#shareSelfVideo');
+    if(v.srcObject!==S.out){ v.srcObject=S.out; v.play().catch(()=>{}); }
+  }else{
+    el.classList.remove('on');
+  }
+}
+$('#shareSelfStop').onclick=()=>stopShare();
 $('#cCap').onclick=()=>{ setCaps(!S.capsOn); };
 function setCaps(on){
   if(on && chatRecOn) stopChatMic();
@@ -3591,8 +3648,9 @@ $('#inYtKey').onchange=e=>{
    チャットのAI機能（Gemini API）
    呼び出しは常に「その操作をした本人のブラウザ」から、本人が設定したAPIキーで直接行う
    （ホストが代理実行することはしない）。モデル名は固定バージョンではなく、
-   Google公式の自動更新エイリアス gemini-flash-latest を使うことで、
-   モデルの世代が変わってもURLを書き換えずに済むようにしている
+   Google公式の自動更新エイリアス（gemini-flash-latest等）を使うことで、
+   モデルの世代が変わってもURLを書き換えずに済むようにしている。どのエイリアスを使うかは
+   設定画面のドロップダウンで選べ、localStorageに保存する
    ============================================================ */
 function geminiApiKey(){ return (localStorage.getItem('kdm-gemini-key')||'').trim(); }
 $('#inGeminiKey').value=geminiApiKey();
@@ -3601,10 +3659,32 @@ $('#inGeminiKey').onchange=e=>{
   if(v) localStorage.setItem('kdm-gemini-key',v); else localStorage.removeItem('kdm-gemini-key');
   toast(v?'Gemini APIキーを保存しました':'Gemini APIキーを削除しました');
 };
+function geminiModel(){ return localStorage.getItem('kdm-gemini-model')||'gemini-flash-latest'; }
+$('#selGeminiModel').value=geminiModel();
+$('#selGeminiModel').onchange=e=>{
+  localStorage.setItem('kdm-gemini-model',e.target.value);
+  toast('Geminiのモデルを変更しました');
+};
+/* AIアイコン(#btnAiSum)の状態表示：応答待ち中はぐるぐる回転、失敗時は少しの間×を出してから元に戻す。
+   @AIチャット・「AIで要約」どちらの呼び出し中も、アプリ内で唯一のAI状態インジケーターとしてここに集約する */
+let aiIconResetT=null, aiBusy=false;
+function aiIconState(state){
+  const btn=$('#btnAiSum'); if(!btn) return;
+  clearTimeout(aiIconResetT);
+  if(state==='loading'){ aiBusy=true; btn.classList.remove('err'); btn.classList.add('spin'); btn.textContent='🌀'; }
+  else if(state==='error'){
+    aiBusy=false; btn.classList.remove('spin'); btn.classList.add('err'); btn.textContent='✕';
+    aiIconResetT=setTimeout(()=>{ btn.classList.remove('err'); btn.textContent='✨'; },1600);
+  }else{ aiBusy=false; btn.classList.remove('spin','err'); btn.textContent='✨'; }
+}
+/* レート制限・残り利用回数は、公式ドキュメント上generateContentのレスポンスヘッダーとしては提供されておらず
+   （AI Studioの管理画面でのみ確認できる）取得不可能と判断した。一方でレスポンス本文の`usageMetadata`には
+   その1回分の消費トークン数が確実に含まれているため、取得できる「使用量」の目安としてこちらを表示に使う */
 async function callGemini(prompt){
   const key=geminiApiKey();
   if(!key) throw new Error('APIキーが設定されていません');
-  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',{
+  const model=geminiModel();
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
     method:'POST',
     headers:{'Content-Type':'application/json','x-goog-api-key':key},
     body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
@@ -3614,30 +3694,41 @@ async function callGemini(prompt){
   const parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
   const text=parts.map(p=>p.text||'').join('').trim();
   if(!text) throw new Error('空の応答でした（安全フィルタ等でブロックされた可能性があります）');
-  return text;
+  return {text,usage:(d&&d.usageMetadata)||null};
+}
+function toastAiUsage(usage){
+  if(usage&&usage.totalTokenCount) toast('🔢 今回の消費トークン数（目安）：'+usage.totalTokenCount,3200);
 }
 async function askAI(question){
   if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
+  aiIconState('loading');
   try{
-    const reply=await callGemini('あなたはビデオ会議アプリのチャットに参加しているアシスタントです。次の質問に、チャットで読みやすいよう簡潔に日本語で答えてください。\n\n質問：'+question);
+    const {text:reply,usage}=await callGemini('あなたはビデオ会議アプリのチャットに参加しているアシスタントです。次の質問に、チャットで読みやすいよう簡潔に日本語で答えてください。\n\n質問：'+question);
     send({t:'chat',text:reply,ai:true});
+    aiIconState('idle'); toastAiUsage(usage);
   }catch(e){
     console.warn(e);
     toast('AIの応答に失敗しました：'+(e.message||'不明なエラー'));
+    aiIconState('error');
   }
 }
 $('#btnAiSum').onclick=async()=>{
   if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
   const recent=S.chat.filter(m=>!m.sys&&!m.poll).slice(-40);
   if(!recent.length) return toast('まだ要約できるチャットがありません');
   const transcript=recent.map(m=>`${m.ai?'AI':m.name}: ${m.text||(m.imgs&&m.imgs.length?'[画像]':'')}`).join('\n');
+  aiIconState('loading');
   toast('要約を作成しています…');
   try{
-    const reply=await callGemini('次はビデオ会議アプリのチャットログです。話の流れが分かるように、簡潔に日本語で要約してください。\n\n'+transcript);
+    const {text:reply,usage}=await callGemini('次はビデオ会議アプリのチャットログです。話の流れが分かるように、簡潔に日本語で要約してください。\n\n'+transcript);
     send({t:'chat',text:'📋 会話の要約\n\n'+reply,ai:true});
+    aiIconState('idle'); toastAiUsage(usage);
   }catch(e){
     console.warn(e);
     toast('要約に失敗しました：'+(e.message||'不明なエラー'));
+    aiIconState('error');
   }
 };
 
