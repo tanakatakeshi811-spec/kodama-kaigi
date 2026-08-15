@@ -100,7 +100,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .stage{flex:1;position:relative;padding:12px;min-width:0;display:flex;flex-direction:column;gap:10px}
 #ytStage{display:none;width:100%;flex:0 0 auto;height:56%;max-height:520px;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 14px 40px rgba(0,0,0,.4)}
 #ytStage.on{display:block}
+#ytStage.vertical{width:auto;max-width:100%;align-self:center;aspect-ratio:9/16}
 #ytPlayer{width:100%;height:100%}
+#ytPlayer iframe{width:100%!important;height:100%!important;display:block;border:0}
+@media(min-width:761px){
+  /* PCでは画面に対して大きすぎないよう控えめに（およそ画面高さの4割・上限380px） */
+  #ytStage{height:38vh;max-height:380px}
+}
 .grid{display:grid;gap:10px;width:100%;flex:1;min-height:0;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));align-content:center;justify-content:center}
 .grid.pinmode{display:flex;flex-wrap:wrap;align-content:flex-start}
 .grid.pinmode .tile{flex:0 0 148px;height:100px}
@@ -111,6 +117,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .tile video{width:100%;height:100%;object-fit:cover;display:block;background:#0b0f1c}
 .tile.mirror video{transform:scaleX(-1)}
 .tile.camoff video{opacity:0}
+.tile.oddAspect video{object-fit:contain;background:#05070d}
 .av{position:absolute;inset:0;display:none;place-items:center}
 .tile.camoff .av{display:grid}
 .av i{width:74px;height:74px;border-radius:50%;display:grid;place-items:center;font-size:27px;font-weight:800;font-style:normal;color:#06120f;letter-spacing:.04em}
@@ -165,6 +172,17 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .pollOpt.voted{border-color:var(--mint-d)}
 .pollOpt.voted .po-label{color:var(--mint);font-weight:700}
 .pollFoot{margin-top:8px;font-size:11px;color:var(--dim);text-align:right}
+#ytResults{display:flex;flex-direction:column;gap:7px;margin-top:9px}
+.ytres{display:flex;gap:9px;align-items:center;padding:7px;background:#0c1120;border:1px solid var(--line);border-radius:10px;text-align:left;width:100%;transition:.15s}
+.ytres:hover{border-color:var(--mint-d)}
+.ytres img{width:64px;height:36px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#000}
+.ytres span{font-size:12px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.gres{display:block;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:8px;font-size:13px;line-height:1.6;color:var(--txt);text-decoration:none}
+.gres b{display:block;color:var(--mint);font-size:13.5px;margin-bottom:3px}
+.gres p{margin:0 0 4px}
+.gres a{color:var(--mint);font-size:12px;word-break:break-all}
+.gres.link{color:var(--mint);font-weight:600}
+.gres.link:hover{text-decoration:underline}
 .compose{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line);align-items:flex-end}
 .compose textarea{flex:1;resize:none;height:42px;max-height:110px;background:#0c1120;border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:13.5px;line-height:1.4}
 .compose textarea:focus{outline:none;border-color:var(--mint-d)}
@@ -174,6 +192,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 #imgView{position:fixed;inset:0;background:rgba(4,6,12,.92);display:none;align-items:center;justify-content:center;z-index:70;padding:24px}
 #imgView.on{display:flex}
 #imgView img{max-width:100%;max-height:100%;border-radius:10px}
+#quickFx{position:fixed;display:none;flex-direction:column;gap:6px;background:rgba(15,19,32,.97);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:50;min-width:180px}
+#quickFx.on{display:flex}
+#quickFxTitle{font-size:10.5px;letter-spacing:.12em;color:var(--dim);padding:0 4px 2px;font-weight:700}
+#quickFxOpts{display:flex;flex-direction:column;gap:4px}
+#quickFxOpts button{display:block;width:100%;padding:9px 10px;border-radius:9px;font-size:13px;background:var(--panel2);text-align:left}
+#quickFxOpts button:hover{background:#243050}
+#quickFxOpts button.sel{background:rgba(95,227,192,.16);color:var(--mint);font-weight:700}
 .prow{display:flex;align-items:center;gap:10px;padding:9px;border-radius:11px}
 .prow:hover{background:var(--panel)}
 .prow .pi{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#06120f;font-size:13px;flex:0 0 auto}
@@ -357,22 +382,24 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       </div>
     </aside>
 
-    <!-- YouTube同時視聴 -->
+    <!-- 動画の同時視聴 -->
     <aside class="side" id="sideYt">
-      <div class="sh"><b>YouTube</b><button class="iconbtn" data-close="sideYt">✕</button></div>
+      <div class="sh"><b>動画をみんなで見る</b><button class="iconbtn" data-close="sideYt">✕</button></div>
       <div class="scroll" style="padding:14px">
         <div class="row"><label class="f">YouTubeで検索</label>
           <div style="display:flex;gap:8px">
             <input class="in" id="ytSearchIn" placeholder="検索したいキーワード">
             <button class="btn ghost" id="btnYtSearch" style="width:auto;padding:0 16px">検索</button>
           </div>
-          <p class="hint">新しいタブでYouTube検索が開きます。見つけた動画のURLをコピーして下の欄に貼り付けてください</p>
+          <p class="hint">設定でAPIキーを登録するとここに結果が出て、クリックだけで再生できます。未登録の場合は新しいタブでYouTube検索が開くので、動画のURLをコピーして下の欄に貼り付けてください</p>
+          <div id="ytResults"></div>
         </div>
         <div class="row"><label class="f">動画のURL</label>
           <div style="display:flex;gap:8px">
-            <input class="in" id="ytUrlIn" placeholder="https://www.youtube.com/watch?v=...">
+            <input class="in" id="ytUrlIn" placeholder="YouTube・Vimeo・TwitchのURL">
             <button class="btn primary" id="btnYtLoad" style="width:auto;padding:0 16px">開く</button>
           </div>
+          <p class="hint">YouTube・Vimeo・Twitchに対応。ニコニコ動画やTikTokは外部からの再生制御に公式対応していないため今回は見送っています</p>
         </div>
         <div id="ytCtl" style="display:none">
           <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
@@ -380,6 +407,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
             <button class="btn ghost" id="btnYtClose" style="width:auto;padding:8px 14px;font-size:13px">閉じる</button>
           </div>
           <p class="hint" style="text-align:center">画面の上のほうで、みんなの画面に同期して再生されています</p>
+        </div>
+        <div id="ytCtlLite" style="display:none">
+          <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
+            <button class="btn ghost" id="btnYtClose2" style="width:auto;padding:8px 14px;font-size:13px">閉じる</button>
+          </div>
+          <p class="hint" style="text-align:center">画面の上のほうで、みんなに同じ配信が表示されています（Twitchは再生位置の同期には対応していません）</p>
         </div>
       </div>
     </aside>
@@ -444,6 +477,11 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <option value="low">低い声</option>
         <option value="echo">エコー</option>
       </select></div>
+    </div>
+
+    <div class="sec"><h4>外部サービス</h4>
+      <div class="frow"><span>YouTube APIキー</span><input type="text" id="inYtKey" placeholder="任意（検索結果をアプリ内に表示）" style="max-width:220px"></div>
+      <p class="hint" style="margin-top:-4px">Google Cloud Consoleで「YouTube Data API v3」を有効にしてAPIキーを発行すると、YouTube検索の結果がアプリの中に直接表示されるようになります（無料枠は1日あたり検索およそ100回程度）。未設定の場合は、これまで通り新しいタブでYouTube検索が開きます。</p>
     </div>
 
     <div class="sec"><h4>ショートカット</h4>
@@ -512,13 +550,14 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
-<!-- Google検索 -->
+<!-- 検索（DuckDuckGoで即答を試み、ダメなら新しいタブへ） -->
 <div class="modal" id="mGoogle">
-  <div class="sheet" style="max-width:360px">
-    <h3>Google検索</h3>
-    <div class="sub">新しいタブで検索が開きます。見つけた情報やURLはチャットに貼って共有できます</div>
+  <div class="sheet" style="max-width:400px">
+    <h3>調べもの検索</h3>
+    <div class="sub">用語の説明などはこの場に出ます。見つからない場合は新しいタブで検索を開きます</div>
     <div class="row"><input class="in" id="gSearchIn" placeholder="調べたいこと"></div>
-    <button class="btn primary" id="btnGSearch">検索を開く</button>
+    <button class="btn primary" id="btnGSearch">検索する</button>
+    <div id="gResults" style="margin-top:12px"></div>
     <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
   </div>
 </div>
@@ -543,6 +582,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
   <div class="itpLog" id="itpLog"></div>
 </div>
+
+<!-- マイク／カメラ長押しのクイックエフェクト選択 -->
+<div id="quickFx"><div id="quickFxTitle"></div><div id="quickFxOpts"></div></div>
 
 <div id="toast"></div>
 <div id="reacts"></div>
@@ -966,9 +1008,11 @@ function hostHandle(from,m){
       entry.votes[from]=opt;
       deliver({t:'pollVote',id:entry.id,votes:entry.votes}); break;}
     case 'yt':{
-      const a=String(m.a||''); const id=String(m.id||'').slice(0,20); const time=+m.time||0;
-      if(a==='close') S.ytState=null; else S.ytState={a,id:id||(S.ytState&&S.ytState.id)||'',time,ts:Date.now()};
-      deliver({t:'yt',a,id,time}); break;}
+      const a=String(m.a||''); const id=String(m.id||'').slice(0,64); const time=+m.time||0;
+      const svc=['youtube','vimeo','twitch'].includes(m.svc)?m.svc:'youtube';
+      const vertical=!!m.vertical;
+      if(a==='close') S.ytState=null; else S.ytState={a,id:id||(S.ytState&&S.ytState.id)||'',svc,vertical,time,ts:Date.now()};
+      deliver({t:'yt',a,id,svc,vertical,time}); break;}
     case 'mod':
       if(from!==S.myId) break;
       break;
@@ -999,7 +1043,7 @@ async function guestJoin(code){
       if(m.yt && m.yt.id){
         let time=m.yt.time||0;
         if(m.yt.a==='play') time+=Math.max(0,(Date.now()-m.yt.ts)/1000);
-        Yt.remote({a:m.yt.a==='pause'?'pause':'play', id:m.yt.id, time});
+        applyYtMessage({a:m.yt.a==='pause'?'pause':'play', id:m.yt.id, svc:m.yt.svc, vertical:m.yt.vertical, time});
       }
       return;
     }
@@ -1031,7 +1075,7 @@ function onMessage(m){
     case 'room': S.roomName=m.name; S.locked=m.locked; $('#mTitle').textContent=S.roomName; $('#btnLock').classList.toggle('on',S.locked); break;
     case 'muteask': if(S.audio){ setMic(false); toast('ホストからミュートの依頼がありました'); } break;
     case 'kick': toast('ホストにより退出しました'); bail(); break;
-    case 'yt': Yt.remote(m); break;
+    case 'yt': applyYtMessage(m); break;
   }
 }
 
@@ -1083,17 +1127,35 @@ function enterMeeting(){
   S.t0=Date.now(); setInterval(tick,1000); setNet(true);
   meterLocal(); loop(); syncViewportHeight();
 }
-/* iOSでソフトキーボードが開閉すると visualViewport のサイズが変わるのに
-   position:fixed の #meet が追従できず、入力欄がキーボードとの間に浮く問題への対策 */
+/* ソフトキーボードが開閉すると visualViewport のサイズが変わるのに
+   position:fixed の #meet が追従できず、入力欄がキーボードとの間に浮く問題への対策。
+   iOS/Android両方で、開閉を繰り返しても毎回ズレなく追従するよう複数の経路から再計算する */
 function syncViewportHeight(){
   const meet=$('#meet'); const vv=window.visualViewport;
-  if(vv){ meet.style.height=vv.height+'px'; meet.style.top=vv.offsetTop+'px'; }
-  else{ meet.style.height=''; meet.style.top=''; }
+  if(vv){
+    meet.style.height=vv.height+'px'; meet.style.top=vv.offsetTop+'px';
+    if(window.scrollX||window.scrollY) window.scrollTo(0,0); // iOSがフォーカス時にページ自体をずらす対策
+  }else{
+    meet.style.height=''; meet.style.top='';
+  }
+  if($('#sideChat').classList.contains('on')) $('#chatLog').scrollTop=$('#chatLog').scrollHeight;
+}
+let vvSyncT1=null, vvSyncT2=null;
+function requestSyncViewport(){
+  // resizeイベントの発火タイミング・値の確定がブラウザ／再開回数によってズレることがあるため、
+  // 即時実行に加えて少し遅らせた再計算を二重に行う（1回登録して終わりにしない）
+  syncViewportHeight();
+  clearTimeout(vvSyncT1); clearTimeout(vvSyncT2);
+  vvSyncT1=setTimeout(syncViewportHeight,120);
+  vvSyncT2=setTimeout(syncViewportHeight,340);
 }
 if(window.visualViewport){
-  visualViewport.addEventListener('resize',syncViewportHeight);
-  visualViewport.addEventListener('scroll',syncViewportHeight);
+  visualViewport.addEventListener('resize',requestSyncViewport);
+  visualViewport.addEventListener('scroll',requestSyncViewport);
 }
+addEventListener('resize',requestSyncViewport); // visualViewport非対応環境やAndroidの保険
+$('#chatIn').addEventListener('focus',requestSyncViewport);
+$('#chatIn').addEventListener('blur',requestSyncViewport);
 function tick(){
   const s=Math.floor((Date.now()-S.t0)/1000);
   $('#chipTime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
@@ -1122,7 +1184,15 @@ function renderTiles(soft){
     }
     const v=el.querySelector('video');
     const stream = p.id===S.myId ? S.out : S.streams.get(p.id);
-    if(stream && v.srcObject!==stream){ v.srcObject=stream; v.play().catch(()=>{}); if(S.devices.spk&&v.setSinkId)v.setSinkId(S.devices.spk).catch(()=>{}); }
+    if(stream && v.srcObject!==stream){
+      v.srcObject=stream; v.play().catch(()=>{});
+      if(S.devices.spk&&v.setSinkId)v.setSinkId(S.devices.spk).catch(()=>{});
+      // 縦長・極端なアスペクト比のカメラ映像はcoverだと顔が見切れるので、その時だけcontain寄りにする
+      v.onloadedmetadata=()=>{
+        const vw=v.videoWidth, vh=v.videoHeight;
+        el.classList.toggle('oddAspect', !!(vw&&vh&&(vh>vw*1.15||vw>vh*2.4)));
+      };
+    }
     el.querySelector('.nm').textContent=p.name+(p.host?'（ホスト）':'')+(p.id===S.myId?'（あなた）':'');
     el.querySelector('.cdot').style.background=p.color;
     el.querySelector('.av i').style.background=p.color;
@@ -1468,8 +1538,56 @@ function setCam(on){
   S.video=on&&!!S.camTrack; if(S.camTrack)S.camTrack.enabled=S.video;
   $('#cCam').classList.toggle('off',!S.video); sendState(); renderTiles(true);
 }
-$('#cMic').onclick=()=>{ if(!S.micTrack) return toast('マイクがありません'); setMic(!S.audio); };
-$('#cCam').onclick=()=>{ if(!S.camTrack) return toast('カメラがありません'); setCam(!S.video); };
+let micLongFired=false, camLongFired=false;
+$('#cMic').onclick=()=>{ if(micLongFired){micLongFired=false;return;} if(!S.micTrack) return toast('マイクがありません'); setMic(!S.audio); };
+$('#cCam').onclick=()=>{ if(camLongFired){camLongFired=false;return;} if(!S.camTrack) return toast('カメラがありません'); setCam(!S.video); };
+
+/* 長押しでエフェクトのクイック選択（通常クリックはこれまで通りON/OFF切替のまま） */
+function attachLongPress(el,onLongPress,ms=480){
+  let timer=null;
+  const cancel=()=>{ clearTimeout(timer); timer=null; };
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0) return;
+    cancel();
+    timer=setTimeout(()=>{ timer=null; onLongPress(); },ms);
+  });
+  ['pointerup','pointerleave','pointercancel'].forEach(ev=>el.addEventListener(ev,cancel));
+}
+const FX_VIDEO_OPTS=[['none','なし'],['mosaic','モザイク（全体）'],['blackout','映像を隠す（黒塗り）']];
+const FX_VOICE_OPTS=[['none','なし'],['robot','ロボット'],['high','高い声'],['low','低い声'],['echo','エコー']];
+function showQuickFx(anchorEl,title,opts,current,onPick){
+  const box=$('#quickFx');
+  $('#quickFxTitle').textContent=title;
+  const wrap=$('#quickFxOpts'); wrap.innerHTML='';
+  opts.forEach(([v,label])=>{
+    const b=document.createElement('button'); b.className=v===current?'sel':'';
+    b.textContent=label;
+    b.onclick=()=>{ onPick(v); box.classList.remove('on'); };
+    wrap.appendChild(b);
+  });
+  const r=anchorEl.getBoundingClientRect();
+  box.style.left=Math.max(8,Math.min(r.left,innerWidth-200))+'px';
+  box.style.top=Math.max(8,r.top-8)+'px';
+  box.classList.add('on');
+  requestAnimationFrame(()=>{
+    const bh=box.offsetHeight;
+    let top=r.top-10-bh; if(top<8) top=Math.min(r.bottom+10, innerHeight-bh-8);
+    box.style.top=top+'px';
+  });
+}
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#quickFx')&&!e.target.closest('#cMic')&&!e.target.closest('#cCam')) $('#quickFx').classList.remove('on'); });
+attachLongPress($('#cCam'),()=>{
+  camLongFired=true;
+  showQuickFx($('#cCam'),'映像エフェクト',FX_VIDEO_OPTS,S.fx.video,v=>{
+    S.fx.video=v; $('#selFxVideo').value=v; rebuildVideoPipeline(); toast('映像エフェクトを変更しました');
+  });
+});
+attachLongPress($('#cMic'),()=>{
+  micLongFired=true;
+  showQuickFx($('#cMic'),'ボイスチェンジャー',FX_VOICE_OPTS,S.fx.voice,v=>{
+    S.fx.voice=v; $('#selFxVoice').value=v; VoiceFX.apply(v); toast('ボイスチェンジャーを変更しました');
+  });
+});
 $('#cShare').onclick=async()=>{
   if(S.sharing){ stopShare(); return; }
   try{
@@ -1572,12 +1690,8 @@ $('#photoFile').onchange=async e=>{
   send({t:'chat',text:'',imgs});
 };
 
-// Google検索（新しいタブで開く。過度な作り込みはせず、見つけた情報はチャットに貼って共有する導線）
-$('#cGoogle').onclick=()=>{ $('#gSearchIn').value=''; $('#mGoogle').classList.add('on'); setTimeout(()=>$('#gSearchIn').focus(),50); };
-$('#btnGSearch').onclick=()=>{
-  const q=$('#gSearchIn').value.trim(); if(!q) return;
-  window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener');
-};
+// 検索（DuckDuckGoのInstant Answer APIを試し、ダメなら新しいタブで開く。実装本体は後方のbtnGSearchハンドラ）
+$('#cGoogle').onclick=()=>{ $('#gSearchIn').value=''; $('#gResults').innerHTML=''; $('#mGoogle').classList.add('on'); setTimeout(()=>$('#gSearchIn').focus(),50); };
 $('#gSearchIn').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnGSearch').click(); } };
 
 // チャットへの音声入力（字幕用の認識とは別インスタンス。字幕オン中は衝突を避けるため使用不可にする）
@@ -1681,17 +1795,17 @@ $('#btnCapDl').onclick=()=>{
 };
 
 /* ============================================================
-   YouTube同時視聴（YouTube IFrame Player API。再生状態はsend/hostHandle/deliverに乗せて同期）
+   動画の同時視聴（YouTube / Vimeo / Twitch）
+   再生状態はsend/hostHandle/deliverに乗せて同期（メッセージ種別は既存のt:'yt'を流用し、
+   どのサービスかを表すsvcフィールドで振り分ける）。
+   ニコニコ動画・TikTokは外部からの再生/一時停止/シーク制御が公式サポートされておらず
+   安定した同期が見込めないため見送り。Netflix等の定額配信はDRMのため埋め込み自体が不可能。
    ============================================================ */
-const Yt={
+const Yt={ // YouTube（IFrame Player API）
   ready:false, _cbs:[], player:null, videoId:'', applyingRemote:false,
-  extract(url){
-    const m=String(url||'').match(/(?:youtu\.be\/|[?&]v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/);
-    return m?m[1]:null;
-  },
   whenReady(cb){ if(this.ready||(window.YT&&window.YT.Player)){cb();return;} this._cbs.push(cb); },
   load(id){
-    this.videoId=id; $('#ytStage').classList.add('on'); $('#ytCtl').style.display='';
+    this.videoId=id;
     this.whenReady(()=>{
       if(this.player){ this.player.loadVideoById(id); return; }
       this.player=new YT.Player('ytPlayer',{
@@ -1702,13 +1816,12 @@ const Yt={
   },
   onState(e){
     if(this.applyingRemote) return;
-    if(e.data===YT.PlayerState.PLAYING) send({t:'yt',a:'play',id:this.videoId,time:this.player.getCurrentTime()});
-    else if(e.data===YT.PlayerState.PAUSED) send({t:'yt',a:'pause',id:this.videoId,time:this.player.getCurrentTime()});
+    if(e.data===YT.PlayerState.PLAYING) send({t:'yt',a:'play',svc:'youtube',id:this.videoId,time:this.player.getCurrentTime()});
+    else if(e.data===YT.PlayerState.PAUSED) send({t:'yt',a:'pause',svc:'youtube',id:this.videoId,time:this.player.getCurrentTime()});
   },
   remote(m){
     if(!m.id) return;
-    if(m.a==='close'){ this.close(false); return; }
-    if(this.videoId!==m.id || !this.player){ this.load(m.id); }
+    if(this.videoId!==m.id || !this.player) this.load(m.id);
     this.whenReady(()=>{
       this.applyingRemote=true;
       const go=()=>{
@@ -1724,29 +1837,200 @@ const Yt={
       if(this.player && this.player.getPlayerState) go(); else setTimeout(go,600);
     });
   },
-  close(notify){
-    if(notify!==false) send({t:'yt',a:'close'});
-    $('#ytStage').classList.remove('on'); $('#ytCtl').style.display='none'; $('#ytUrlIn').value='';
-    if(this.player){ try{this.player.destroy()}catch(_){} this.player=null; }
-    this.videoId='';
-  }
+  close(){ if(this.player){ try{this.player.destroy()}catch(_){} this.player=null; } this.videoId=''; }
 };
 window.onYouTubeIframeAPIReady=function(){ Yt.ready=true; const q=Yt._cbs; Yt._cbs=[]; q.forEach(f=>{try{f()}catch(_){}}); };
+
+function loadExternalScript(src,onReadyFlagFn){
+  return cb=>{
+    if(onReadyFlagFn()){ cb(); return; }
+    let box=loadExternalScript._boxes||(loadExternalScript._boxes={});
+    let b=box[src];
+    if(!b){ b=box[src]={cbs:[]}; const s=document.createElement('script'); s.src=src;
+      s.onload=()=>{ b.cbs.forEach(f=>{try{f()}catch(_){}}); b.cbs=[]; b.done=true; };
+      document.head.appendChild(s);
+    }
+    if(b.done) cb(); else b.cbs.push(cb);
+  };
+}
+const VimeoP={ // Vimeo（公式 @vimeo/player、YouTubeと同じくpostMessageベースでplay/pause/seekを制御できる）
+  player:null, videoId:'', applyingRemote:false,
+  whenReady: loadExternalScript('https://player.vimeo.com/api/player.js',()=>!!(window.Vimeo&&window.Vimeo.Player)),
+  load(id){
+    this.videoId=id;
+    this.whenReady(()=>{
+      if(this.player){ this.player.loadVideo(+id).catch(()=>{}); return; }
+      $('#ytPlayer').innerHTML='';
+      this.player=new Vimeo.Player('ytPlayer',{id:+id,width:640,height:360});
+      this.player.on('play',()=>this.onState('play'));
+      this.player.on('pause',()=>this.onState('pause'));
+    });
+  },
+  onState(kind){
+    if(this.applyingRemote||!this.player) return;
+    this.player.getCurrentTime().then(t=>send({t:'yt',a:kind,svc:'vimeo',id:this.videoId,time:t})).catch(()=>{});
+  },
+  remote(m){
+    if(!m.id) return;
+    if(this.videoId!==String(m.id) || !this.player) this.load(m.id);
+    this.whenReady(()=>{
+      this.applyingRemote=true;
+      setTimeout(()=>{
+        if(!this.player){ this.applyingRemote=false; return; }
+        Promise.resolve(this.player.getCurrentTime()).then(cur=>{
+          if(m.a==='play'){
+            if(Math.abs((cur||0)-m.time)>1.2) this.player.setCurrentTime(m.time).catch(()=>{});
+            this.player.play().catch(()=>{});
+          }else if(m.a==='pause'){
+            this.player.setCurrentTime(m.time).catch(()=>{});
+            this.player.pause().catch(()=>{});
+          }
+        }).catch(()=>{}).finally(()=>{ setTimeout(()=>{this.applyingRemote=false},400); });
+      },300);
+    });
+  },
+  close(){ if(this.player){ try{this.player.destroy()}catch(_){} this.player=null; } this.videoId=''; }
+};
+const TwitchP={ // Twitch Embed（ライブ配信を一緒に見る用途。play/pause/seekの精密な同期は非対応、チャンネル/VODを開く操作だけ全員に伝える）
+  player:null, raw:'',
+  whenReady: loadExternalScript('https://player.twitch.tv/js/embed/v1.js',()=>!!(window.Twitch&&window.Twitch.Player)),
+  load(idStr){
+    this.raw=idStr;
+    const isVideo=/^video:/.test(idStr);
+    const opts=isVideo?{video:idStr.slice(6)}:{channel:idStr};
+    this.whenReady(()=>{
+      $('#ytPlayer').innerHTML='';
+      this.player=new Twitch.Player('ytPlayer',Object.assign({width:'100%',height:'100%',parent:[location.hostname||'localhost']},opts));
+    });
+  },
+  close(){ this.player=null; this.raw=''; $('#ytPlayer').innerHTML=''; }
+};
+
+let watchSvc='youtube';
+function watchTeardown(){
+  if(watchSvc==='youtube') Yt.close();
+  else if(watchSvc==='vimeo') VimeoP.close();
+  else if(watchSvc==='twitch') TwitchP.close();
+  $('#ytPlayer').innerHTML='';
+}
+function detectWatchUrl(url){
+  const u=String(url||'').trim(); let m;
+  if(m=u.match(/(?:youtu\.be\/|[?&]v=|shorts\/|embed\/)([A-Za-z0-9_-]{11})/)) return {svc:'youtube',id:m[1],vertical:/\/shorts\//.test(u)};
+  if(m=u.match(/vimeo\.com\/(?:.*\/)?(\d+)/)) return {svc:'vimeo',id:m[1],vertical:false};
+  if(m=u.match(/twitch\.tv\/videos\/(\d+)/)) return {svc:'twitch',id:'video:'+m[1],vertical:false};
+  if(m=u.match(/twitch\.tv\/([A-Za-z0-9_]{3,25})\/?(?:[?#]|$)/)) return {svc:'twitch',id:m[1],vertical:false};
+  return null;
+}
+function watchStageOn(svc,vertical){
+  $('#ytStage').classList.add('on'); $('#ytStage').classList.toggle('vertical',!!vertical);
+  const full=svc==='youtube'||svc==='vimeo';
+  $('#ytCtl').style.display = full?'':'none';
+  $('#ytCtlLite').style.display = full?'none':'';
+}
+function watchLoadUrl(url){
+  const hit=detectWatchUrl(url);
+  if(!hit) return toast('対応していない動画のURLです（YouTube・Vimeo・Twitchに対応）');
+  if(hit.svc!==watchSvc) watchTeardown();
+  watchSvc=hit.svc; watchStageOn(hit.svc,hit.vertical);
+  if(hit.svc==='youtube') Yt.load(hit.id);
+  else if(hit.svc==='vimeo') VimeoP.load(hit.id);
+  else if(hit.svc==='twitch') TwitchP.load(hit.id);
+  send({t:'yt',a:'play',svc:hit.svc,id:hit.id,time:0,vertical:!!hit.vertical});
+}
+function applyYtMessage(m){
+  if(m.a==='close'){ watchClose(false); return; }
+  const svc=m.svc||'youtube';
+  if(svc!==watchSvc) watchTeardown();
+  watchSvc=svc; watchStageOn(svc,m.vertical);
+  if(svc==='youtube') Yt.remote(m);
+  else if(svc==='vimeo') VimeoP.remote(m);
+  else if(svc==='twitch') TwitchP.load(m.id);
+}
+function watchClose(notify){
+  if(notify!==false) send({t:'yt',a:'close'});
+  watchTeardown();
+  $('#ytStage').classList.remove('on'); $('#ytStage').classList.remove('vertical');
+  $('#ytCtl').style.display='none'; $('#ytCtlLite').style.display='none'; $('#ytUrlIn').value='';
+}
 $('#btnYtLoad').onclick=()=>{
   const url=$('#ytUrlIn').value.trim(); if(!url) return;
-  const id=Yt.extract(url); if(!id) return toast('YouTubeのURLを確認してください');
-  Yt.load(id); send({t:'yt',a:'play',id,time:0});
+  watchLoadUrl(url);
 };
 $('#btnYtPlay').onclick=()=>{
-  if(!Yt.player||!Yt.player.getPlayerState) return;
-  if(Yt.player.getPlayerState()===1) Yt.player.pauseVideo(); else Yt.player.playVideo();
+  if(watchSvc==='youtube'){ if(!Yt.player||!Yt.player.getPlayerState) return; Yt.player.getPlayerState()===1?Yt.player.pauseVideo():Yt.player.playVideo(); }
+  else if(watchSvc==='vimeo'){ if(!VimeoP.player) return; VimeoP.player.getPaused().then(p=>p?VimeoP.player.play():VimeoP.player.pause()).catch(()=>{}); }
 };
-$('#btnYtClose').onclick=()=>Yt.close();
-$('#btnYtSearch').onclick=()=>{
+$('#btnYtClose').onclick=()=>watchClose();
+$('#btnYtClose2').onclick=()=>watchClose();
+
+/* YouTube検索：APIキーがあればアプリ内に結果一覧を表示、なければ新しいタブで検索を開く */
+function ytApiKey(){ return (localStorage.getItem('kdm-yt-key')||'').trim(); }
+$('#btnYtSearch').onclick=async()=>{
   const q=$('#ytSearchIn').value.trim(); if(!q) return;
-  window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank','noopener');
+  const key=ytApiKey();
+  if(!key){
+    window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank','noopener');
+    return;
+  }
+  const box=$('#ytResults'); box.innerHTML='<div class="empty" style="padding:14px 4px;font-size:12.5px">検索中…</div>';
+  try{
+    const r=await fetch('https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q='+encodeURIComponent(q)+'&key='+encodeURIComponent(key));
+    const d=await r.json();
+    if(!r.ok||d.error) throw new Error((d.error&&d.error.message)||'検索に失敗しました');
+    const items=d.items||[];
+    if(!items.length){ box.innerHTML='<div class="empty" style="padding:14px 4px;font-size:12.5px">見つかりませんでした</div>'; return; }
+    box.innerHTML='';
+    items.forEach(it=>{
+      const id=it.id&&it.id.videoId; if(!id) return;
+      const sn=it.snippet||{};
+      const b=document.createElement('button'); b.className='ytres';
+      b.innerHTML=`<img src="${(sn.thumbnails&&sn.thumbnails.default&&sn.thumbnails.default.url)||''}"><span>${esc(sn.title||'')}</span>`;
+      b.onclick=()=>{
+        if(watchSvc!=='youtube') watchTeardown();
+        watchSvc='youtube'; watchStageOn('youtube',false);
+        Yt.load(id); send({t:'yt',a:'play',svc:'youtube',id,time:0,vertical:false});
+      };
+      box.appendChild(b);
+    });
+  }catch(e){
+    console.warn(e);
+    toast('YouTube検索に失敗しました。新しいタブで検索を開きます');
+    box.innerHTML='';
+    window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(q),'_blank','noopener');
+  }
 };
 $('#ytSearchIn').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnYtSearch').click(); } };
+$('#inYtKey').value=ytApiKey();
+$('#inYtKey').onchange=e=>{
+  const v=e.target.value.trim();
+  if(v) localStorage.setItem('kdm-yt-key',v); else localStorage.removeItem('kdm-yt-key');
+  toast(v?'YouTube APIキーを保存しました':'YouTube APIキーを削除しました');
+};
+
+/* Google検索（うまく行けばDuckDuckGoのInstant Answer APIでアプリ内に回答を出す。
+   キー不要でCORS対応している唯一の汎用検索APIだが「インスタント回答」止まりで、
+   Googleと同じ検索結果一覧が出せるわけではない点は割り切り。ダメなら正直に新しいタブへ） */
+$('#btnGSearch').onclick=async()=>{
+  const q=$('#gSearchIn').value.trim(); if(!q) return;
+  const box=$('#gResults'); box.innerHTML='<div class="empty" style="padding:12px 4px;font-size:12.5px">調べています…</div>';
+  let ok=false;
+  try{
+    const r=await fetch('https://api.duckduckgo.com/?format=json&no_redirect=1&no_html=1&skip_disambig=1&q='+encodeURIComponent(q));
+    if(r.ok){
+      const d=await r.json();
+      const parts=[];
+      if(d.AbstractText) parts.push(`<div class="gres"><b>${esc(d.Heading||q)}</b><p>${esc(d.AbstractText)}</p>${d.AbstractURL?`<a href="${esc(d.AbstractURL)}" target="_blank" rel="noopener">${esc(d.AbstractURL)}</a>`:''}</div>`);
+      (d.RelatedTopics||[]).slice(0,5).forEach(t=>{
+        if(t.Text && t.FirstURL) parts.push(`<a class="gres link" href="${esc(t.FirstURL)}" target="_blank" rel="noopener">${esc(t.Text)}</a>`);
+      });
+      if(parts.length){ box.innerHTML=parts.join(''); ok=true; }
+    }
+  }catch(e){ console.warn(e); }
+  if(!ok){
+    box.innerHTML='<div class="empty" style="padding:12px 4px;font-size:12.5px">この場では見つかりませんでした。新しいタブで検索します</div>';
+    window.open('https://www.google.com/search?q='+encodeURIComponent(q),'_blank','noopener');
+  }
+};
 
 /* ショートカット */
 addEventListener('keydown',e=>{
