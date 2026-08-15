@@ -141,6 +141,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .tile .pinb{position:absolute;right:8px;bottom:8px;width:28px;height:28px;border-radius:8px;background:rgba(6,9,16,.68);display:grid;place-items:center;opacity:0;transition:.15s;font-size:13px}
 .tile:hover .pinb{opacity:1}
 .tile .lvl{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--mint);transition:width .08s linear}
+.tile .recBadge{display:none;position:absolute;top:8px;left:8px;align-items:center;gap:4px;background:var(--coral);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.04em;padding:5px 9px;border-radius:7px;z-index:2;animation:recBlink 1.3s infinite}
+.tile.recording .recBadge{display:flex}
+@keyframes recBlink{50%{opacity:.5}}
 
 /* 字幕 */
 #caps{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;width:min(860px,calc(100% - 40px));display:flex;flex-direction:column;gap:7px;pointer-events:none;z-index:3}
@@ -167,6 +170,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .msg.sys p{background:transparent;border:none;padding:4px 0;color:var(--dim);font-size:12px;text-align:center}
 .msg.ai .mh b{color:#a78bfa}
 .msg.ai p{border-left:3px solid #a78bfa;background:rgba(167,139,250,.08)}
+.msg.cap p{border-left:3px solid #7cc4ff;background:rgba(124,196,255,.07);font-style:italic}
 .msg p a{color:var(--mint)}
 .chatImgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .chatImg{width:96px;height:96px;object-fit:cover;border-radius:9px;border:1px solid var(--line);cursor:pointer;transition:.15s}
@@ -235,6 +239,34 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 #imgView{position:fixed;inset:0;background:rgba(4,6,12,.92);display:none;align-items:center;justify-content:center;z-index:70;padding:24px;cursor:zoom-out}
 #imgView.on{display:flex;animation:modalBgIn .16s ease}
 #imgView img{max-width:100%;max-height:100%;border-radius:10px;cursor:default;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#wbOverlay{position:fixed;inset:0;background:rgba(4,6,12,.94);display:none;flex-direction:column;z-index:55}
+#wbOverlay.on{display:flex;animation:modalBgIn .18s ease}
+.wbTop{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:rgba(10,13,22,.9);flex:0 0 auto}
+.wbTop b{font-size:14px;letter-spacing:.05em;white-space:nowrap}
+.wbTools{flex:1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:center}
+.wbColor{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);flex:0 0 auto;transition:.15s}
+.wbColor.sel{border-color:var(--mint);box-shadow:0 0 0 2px rgba(95,227,192,.3)}
+.wbStage{flex:1;display:flex;align-items:center;justify-content:center;padding:14px;min-height:0}
+#wbCanvas{width:100%;max-width:1100px;height:auto;aspect-ratio:1200/700;background:#12182a;border-radius:12px;border:1px solid var(--line);touch-action:none;cursor:crosshair;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+#ktOverlay{position:fixed;inset:0;background:rgba(4,6,12,.94);display:none;flex-direction:column;z-index:55}
+#ktOverlay.on{display:flex;animation:modalBgIn .18s ease}
+.ktStage{flex:1;display:flex;gap:18px;padding:22px;min-height:0;overflow:auto;justify-content:center}
+.ktMain{flex:0 1 460px;display:flex;flex-direction:column;align-items:center;gap:14px;min-width:0}
+.ktPitchWrap{width:60px;height:min(42vh,300px);background:var(--panel2);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.ktPitchBar{width:100%;height:100%;display:flex;align-items:flex-end;position:relative}
+.ktPitchFill{width:100%;height:0%;background:linear-gradient(0deg,#5fe3c0,#7cc4ff);transition:height .08s linear}
+.ktPitchBar.voiced .ktPitchFill{background:linear-gradient(0deg,#5fe3c0,#ffc44d)}
+.ktScoreWrap{font-size:14px;color:var(--dim)}
+.ktScoreWrap b{font-size:28px;color:var(--mint);margin-left:8px}
+.ktSongPicker{display:none;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px}
+.ktSongBtn{padding:9px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:13px;transition:.15s}
+.ktSongBtn.sel{border-color:var(--mint);color:var(--mint);background:rgba(95,227,192,.12)}
+.ktActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ktQueueList{width:220px;flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;overflow:auto;align-self:flex-start}
+.ktQueueList h5{font-size:12px;color:var(--dim);margin-bottom:8px;font-weight:600}
+.ktQRow{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.ktQRow:last-child{border-bottom:none}
+.ktQRow b{color:var(--mint);font-size:12px}
 #quickFx{position:fixed;display:none;flex-direction:column;gap:6px;background:rgba(15,19,32,.97);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:50;min-width:180px}
 #quickFx.on{display:flex;animation:modalIn .16s cubic-bezier(.2,.8,.2,1)}
 #quickFxTitle{font-size:10.5px;letter-spacing:.12em;color:var(--dim);padding:0 4px 2px;font-weight:700}
@@ -531,7 +563,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     </div>
 
     <div class="sec"><h4>字幕</h4>
-      <div class="frow"><span>字幕を表示</span><div class="toggle" id="swCap"></div></div>
+      <div class="frow"><span>字幕を認識する（自分の発言を書き起こし）</span><div class="toggle" id="swCap"></div></div>
+      <div class="frow"><span>字幕を画面に表示する</span><div class="toggle on" id="swCapShow"></div></div>
+      <div class="frow"><span>字幕をチャットにも記録する</span><div class="toggle" id="swCapChat"></div></div>
       <div class="frow"><span>自分の話す言語</span><select id="selLang"></select></div>
       <div class="frow"><span>翻訳して表示</span><div class="toggle" id="swTr"></div></div>
       <div class="frow"><span>翻訳先の言語</span><select id="selTr"></select></div>
@@ -620,6 +654,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
       <button class="btn ghost" id="plusLoc">📍　位置情報を共有</button>
       <button class="btn ghost" id="plusJanken">✊　じゃんけんで決める</button>
+      <button class="btn ghost" id="plusWb">🖊　ホワイトボード</button>
+      <button class="btn ghost" id="plusKaraoke">🎤　カラオケ</button>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
@@ -702,6 +738,47 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 <!-- 画像の拡大表示 -->
 <div id="imgView"><img id="imgViewImg" src="" alt=""></div>
 
+<!-- ホワイトボード（全員でリアルタイム共有。開いている間も会議は裏で続く） -->
+<div id="wbOverlay">
+  <div class="wbTop">
+    <b>ホワイトボード</b>
+    <div class="wbTools">
+      <button class="wbColor sel" data-color="#e9edf7" style="background:#e9edf7"></button>
+      <button class="wbColor" data-color="#ff5f74" style="background:#ff5f74"></button>
+      <button class="wbColor" data-color="#ffc44d" style="background:#ffc44d"></button>
+      <button class="wbColor" data-color="#5fe3c0" style="background:#5fe3c0"></button>
+      <button class="wbColor" data-color="#7cc4ff" style="background:#7cc4ff"></button>
+      <button class="wbColor" data-color="#101418" style="background:#101418"></button>
+      <button class="iconbtn" id="wbEraser" title="消しゴム">🧹</button>
+      <button class="iconbtn" id="wbClearBtn" title="全消去">🗑</button>
+    </div>
+    <button class="iconbtn" id="wbClose" title="閉じる">✕</button>
+  </div>
+  <div class="wbStage"><canvas id="wbCanvas" width="1200" height="700"></canvas></div>
+</div>
+
+<!-- カラオケ（著作権フリー音源での簡易カラオケ。曲のライセンス情報はナレッジファイル参照） -->
+<div id="ktOverlay">
+  <div class="wbTop">
+    <b>🎤 カラオケ</b>
+    <div class="wbTools" id="ktStatus" style="font-size:12.5px;color:var(--dim)"></div>
+    <button class="iconbtn" id="ktClose" title="閉じる">✕</button>
+  </div>
+  <div class="ktStage">
+    <div class="ktMain">
+      <div class="ktPitchWrap"><div class="ktPitchBar" id="ktPitchBar"><div class="ktPitchFill" id="ktPitchFill"></div></div></div>
+      <div class="ktScoreWrap">スコア<b id="ktScoreNum">0</b></div>
+      <div class="ktSongPicker" id="ktSongPicker"></div>
+      <div class="ktActions">
+        <button class="btn ghost" id="ktJoinBtn">🙋　キューに並ぶ</button>
+        <button class="btn ghost" id="ktLeaveBtn" style="display:none">キューから抜ける</button>
+        <button class="btn primary" id="ktNextBtn" style="display:none">次の人へ交代</button>
+      </div>
+    </div>
+    <div class="ktQueueList" id="ktQueueList"></div>
+  </div>
+</div>
+
 <!-- 同時通訳（個人用。翻訳結果は他の参加者には送られない） -->
 <div id="itpBox">
   <div class="itpHead"><span class="itpDot" id="itpDot"></span><b>同時通訳</b><button class="iconbtn" id="itpClose" style="width:28px;height:28px">✕</button></div>
@@ -710,7 +787,10 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <select id="itpLangTo" title="翻訳先"></select>
   </div>
   <div class="itpRow2">
-    <label class="itpChk"><input type="checkbox" id="itpTts">読み上げ</label>
+    <div style="display:flex;align-items:center;gap:8px">
+      <label class="itpChk"><input type="checkbox" id="itpTts">読み上げ</label>
+      <button class="iconbtn" id="itpTtsTest" title="読み上げをテスト" style="width:28px;height:28px">🔊</button>
+    </div>
     <button class="btn primary" id="itpBtn" style="width:auto;padding:8px 18px;font-size:13px">開始</button>
   </div>
   <div class="itpLive">
@@ -757,12 +837,16 @@ const S={
   audio:true, video:true, hand:false, sharing:false,
   devices:{mic:'',cam:'',spk:''}, ns:true, mirror:true,
   capsOn:false, lang:'ja-JP', trOn:false, trTo:'ja', engine:'auto', capSize:17,
+  capShowOverlay:localStorage.getItem('kdm-capshow')!=='0', capToChat:localStorage.getItem('kdm-capchat')==='1',
   pin:null, unread:0, joined:false, shareTrack:null, t0:0, ac:null, meters:new Map(), rec:null, recOn:false, ptt:false,
   fx:{video:'none',voice:'none'}, ytState:null,
   itp:{lang:'ja-JP',to:'auto',tts:false,running:false},
   roomSound:localStorage.getItem('kdm-roomsound')!=='0',
   persistent:false, persistMembers:[], joinRequests:null,
-  locSharing:false
+  locSharing:false,
+  wbStrokes:[], wbBuf:new Map(), wbOpen:false,
+  recording:false,
+  ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0
 };
 
 /* ---------- 小道具 ---------- */
@@ -884,6 +968,7 @@ function replaceOut(kind,track){
     pc.getSenders().forEach(sd=>{ if(sd.track&&sd.track.kind===kind&&track) sd.replaceTrack(track).catch(()=>{}); });
   });
   if(kind==='video') renderTiles(true);
+  if(kind==='audio' && S.recording) RecAudio.addTrack('me',outAudio()); // ボイスチェンジャー切替等でトラックが差し替わっても録画の音声ミックスに追従させる
 }
 
 /* ============================================================
@@ -1358,7 +1443,8 @@ function admitGuest(conn){
   const newP={id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false};
   addRoster(newP);
   conn.send({t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked},
-             roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState});
+             roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState,wb:S.wbStrokes,
+             kt:{queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}});
   broadcast({t:'roster',roster:S.roster});
   sysBroadcast(nm+' が参加しました','join',conn.peer);
   // 入っただけでは自動でメンバー扱いにしない。ホストが参加者パネルから明示的に追加した時だけ記録する
@@ -1411,6 +1497,12 @@ function dropPeer(id){
   if(p) sysBroadcast(p.name+' が退出しました','leave',id);
   if(p&&S.persistent) touchPersistMember(p.name,p.color); // 既にメンバー登録済みの人だけ最終確認時刻を更新（新規追加はしない）
   broadcast({t:'roster',roster:S.roster});
+  // カラオケの歌い手・キューに並んでいた人がそのまま退出した場合の後始末
+  if(S.ktQueue.includes(id) || S.ktSinger===id){
+    S.ktQueue=S.ktQueue.filter(x=>x!==id);
+    if(S.ktSinger===id){ S.ktSinger=null; S.ktSong=null; S.ktPlayTs=0; }
+    deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs});
+  }
   renderTiles(); renderPpl();
 }
 function broadcast(m,except){ S.conns.forEach((c,id)=>{ if(id!==except&&c.open) try{c.send(m)}catch(_){}}); }
@@ -1431,7 +1523,7 @@ function hostHandle(from,m){
     case 'chat':{
       const imgs=Array.isArray(m.imgs)?m.imgs.filter(s=>typeof s==='string'&&s.startsWith('data:image/')).slice(0,4):[];
       const invite=(m.invite&&INVITE_GAMES[m.invite.game])?{game:m.invite.game,code:String(m.invite.code||'').toUpperCase().slice(0,8)}:null;
-      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,4000),imgs,ai:!!m.ai,invite,ts:Date.now()};
+      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,4000),imgs,ai:!!m.ai,cap:!!m.cap,invite,ts:Date.now()};
       if(!msg.text&&!imgs.length&&!invite)break; S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
       deliver({t:'chat',msg}); schedulePersistSave(); break;}
     case 'cap':
@@ -1487,6 +1579,43 @@ function hostHandle(from,m){
       const vertical=!!m.vertical;
       if(a==='close') S.ytState=null; else S.ytState={a,id:id||(S.ytState&&S.ytState.id)||'',svc,vertical,time,ts:Date.now()};
       deliver({t:'yt',a,id,svc,vertical,time}); break;}
+    case 'wbStroke':{
+      // ホストは検証・整形だけ行い、実際の記録(S.wbStrokes積み上げ)は他の全メッセージ同様onMessage側でホスト自身も含めて統一して行う
+      const id=String(m.id||'').slice(0,40); if(!id) break;
+      const color=(typeof m.color==='string'&&/^#[0-9a-fA-F]{3,8}$/.test(m.color))?m.color:'#e9edf7';
+      const size=Math.max(1,Math.min(40,+m.size||4));
+      const erase=!!m.erase;
+      const pts=(Array.isArray(m.pts)?m.pts:[]).slice(0,300)
+        .map(pt=>[Math.round(+pt[0])||0,Math.round(+pt[1])||0])
+        .filter(pt=>isFinite(pt[0])&&isFinite(pt[1]));
+      if(!pts.length) break;
+      deliver({t:'wbStroke',id,color,size,erase,pts,from}); break;}
+    case 'wbClear':
+      deliver({t:'wbClear',from}); break;
+    case 'recNotice':
+      deliver({t:'recNotice',from,name:p.name,on:!!m.on}); break;
+    case 'ktJoin':
+      if(S.ktSinger===from || S.ktQueue.includes(from)) break;
+      S.ktQueue.push(from);
+      deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}); break;
+    case 'ktLeave':
+      S.ktQueue=S.ktQueue.filter(id=>id!==from);
+      if(S.ktSinger===from){ S.ktSinger=null; S.ktSong=null; S.ktPlayTs=0; }
+      deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}); break;
+    case 'ktStart':{
+      if(S.ktSinger) break; // 既に誰かが歌っている間は開始できない
+      const key=String(m.key||''); if(!KARAOKE_SONGS.some(s=>s.key===key)) break;
+      S.ktSinger=from; S.ktSong=key; S.ktPlayTs=Date.now();
+      S.ktQueue=S.ktQueue.filter(id=>id!==from);
+      deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}); break;}
+    case 'ktNext':{
+      // 交代は「今歌っている本人」か「ホスト」だけが行える
+      if(from!==S.ktSinger && !p.host) break;
+      S.ktSinger=null; S.ktSong=null; S.ktPlayTs=0;
+      deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}); break;}
+    case 'ktScore':
+      if(from!==S.ktSinger) break; // 採点の対象は現在の歌い手のマイクだけ
+      deliver({t:'ktScore',score:Math.max(0,Math.min(100,+m.score||0)),from}); break;
     case 'mod':
       if(from!==S.myId) break;
       break;
@@ -1534,6 +1663,8 @@ async function guestJoin(code){
     if(m.t==='welcome'){
       S.roomName=m.room.name; S.locked=m.room.locked; S.roster=m.roster;
       S.joined=true; S.chat=(m.chat||[]); renderChat(); enterMeeting(); renderTiles(); renderPpl();
+      S.wbStrokes=Array.isArray(m.wb)?m.wb:[]; wbRedrawAll();
+      if(m.kt){ S.ktQueue=Array.isArray(m.kt.queue)?m.kt.queue:[]; S.ktSinger=m.kt.singer||null; S.ktSong=m.kt.song||null; S.ktPlayTs=m.kt.playTs||0; ktSyncPlayback(); }
       sendState();
       if(m.yt && m.yt.id){
         let time=m.yt.time||0;
@@ -1608,6 +1739,24 @@ function onMessage(m){
       savePersistMembership(String(m.code||'').toUpperCase().slice(0,4), String(m.roomName||'').slice(0,30));
       toast('この会議の「持続的会議」メンバーに追加されました（このブラウザでも一覧から入れます）');
       break;
+    case 'wbStroke': wbRecordAndMaybeDraw(m); break;
+    case 'wbClear':
+      S.wbStrokes=[]; if(wbCtx) wbCtx.clearRect(0,0,1200,700);
+      break;
+    case 'recNotice':
+      if(m.from!==S.myId) toast('🔴 '+m.name+' さんがこの会議のローカル録画を'+(m.on?'開始':'終了')+'しました');
+      break;
+    case 'ktState':{
+      const prevSinger=S.ktSinger, prevFront=S.ktQueue[0];
+      S.ktQueue=Array.isArray(m.queue)?m.queue:[]; S.ktSinger=m.singer||null; S.ktSong=m.song||null; S.ktPlayTs=m.playTs||0;
+      ktSyncPlayback();
+      if(S.ktOpen) ktRenderPanel();
+      if(S.ktSinger===S.myId && prevSinger!==S.myId) toast('🎤 あなたの番です！歌ってください');
+      else if(!S.ktSinger && S.ktQueue[0]===S.myId && prevFront!==S.myId) toast('🎤 次はあなたの番です。曲を選んで開始できます');
+      break;}
+    case 'ktScore':
+      if(m.from!==S.myId){ S.ktLastScoreOther=m.score; if(S.ktOpen) ktRenderPanel(); }
+      break;
   }
 }
 
@@ -1622,8 +1771,8 @@ function bindCall(call){
   const id=call.peer;
   const old=S.calls.get(id); if(old&&old!==call){ try{old.close()}catch(_){ } }
   S.calls.set(id,call);
-  call.on('stream',st=>{ S.streams.set(id,st); renderTiles(true); meterRemote(id,st); });
-  call.on('close',()=>{ if(S.calls.get(id)===call){S.calls.delete(id);S.streams.delete(id);renderTiles(true);} });
+  call.on('stream',st=>{ S.streams.set(id,st); renderTiles(true); meterRemote(id,st); if(S.recording) RecAudio.refreshPeer(id); });
+  call.on('close',()=>{ if(S.calls.get(id)===call){S.calls.delete(id);S.streams.delete(id);renderTiles(true); if(S.recording) RecAudio.removeTrack(id);} });
   call.on('error',()=>{});
 }
 function killCall(id){
@@ -1631,6 +1780,7 @@ function killCall(id){
   S.calls.delete(id); S.streams.delete(id);
   const m=S.meters.get(id); if(m&&m.ctxSrc){try{m.ctxSrc.disconnect()}catch(_){}}
   S.meters.delete(id);
+  if(S.recording) RecAudio.removeTrack(id);
 }
 function ensureCalls(){
   if(!S.peer) return;
@@ -1739,10 +1889,14 @@ function renderTiles(soft){
         <div class="tname"><span class="cdot"></span><span class="nm"></span></div>
         <div class="tflags"></div>
         <button class="pinb" title="ピン留め">📌</button>
+        <button class="recBadge" title="録画を停止">⏺ REC</button>
         <div class="lvl"></div>`;
       const togglePin=()=>{ S.pin=S.pin===p.id?null:p.id; renderTiles(); };
       el.querySelector('.pinb').onclick=e=>{ e.stopPropagation(); togglePin(); };
-      el.onclick=e=>{ if(e.target.closest('button')) return; togglePin(); };
+      el.querySelector('.recBadge').onclick=e=>{ e.stopPropagation(); stopTileRecording(); };
+      el.onclick=e=>{ if(e.target.closest('button')) return; if(selfTileLongFired){selfTileLongFired=false;return;} togglePin(); };
+      // 自分の映像タイルだけ、長押しで録画の開始/停止（マイク・カメラの長押しエフェクトメニューと同じ操作パターン）
+      if(p.id===S.myId) attachLongPress(el,()=>{ selfTileLongFired=true; toggleTileRecording(); });
       g.appendChild(el);
       tileResizeObserver.observe(el);
     }
@@ -1760,6 +1914,7 @@ function renderTiles(soft){
     el.classList.toggle('camoff', !(p.video||p.share));
     el.classList.toggle('mirror', p.id===S.myId && S.mirror && !S.sharing);
     el.classList.toggle('pin', S.pin===p.id);
+    if(p.id===S.myId) el.classList.toggle('recording', S.recording);
     const f=el.querySelector('.tflags'); f.innerHTML='';
     if(!p.audio) f.innerHTML+='<i class="red">🔇</i>';
     if(p.share) f.innerHTML+='<i>🖥</i>';
@@ -1937,11 +2092,11 @@ function addChatEl(m){
   else if(m.loc){ d.className='msg'; d.appendChild(renderLocCard(m)); }
   else if(m.janken){ d.className='msg'; d.appendChild(renderJankenCard(m)); }
   else{
-    d.className='msg'+(m.ai?' ai':'');
+    d.className='msg'+(m.ai?' ai':'')+(m.cap?' cap':'');
     const body=m.text?linkify(m.text):'';
     const imgsHtml=(m.imgs&&m.imgs.length)?`<div class="chatImgs">${m.imgs.map(src=>`<img src="${src}" class="chatImg">`).join('')}</div>`:'';
     const inviteHtml=m.invite?renderInviteCard(m):'';
-    const dispName=m.ai?'✨ AI':esc(m.name);
+    const dispName=m.ai?'✨ AI':esc(m.name)+(m.cap?' <small style="font-weight:400;opacity:.6">🗣️字幕</small>':'');
     d.innerHTML=`<div class="mh"><b style="color:${m.ai?'':m.color}">${dispName}</b><time>${new Date(m.ts).toTimeString().slice(0,5)}</time></div>${body?`<p>${body}</p>`:''}${imgsHtml}${inviteHtml}`;
     if(imgsHtml) d.querySelectorAll('.chatImg').forEach(img=>img.onclick=()=>openImgViewer(img.src));
   }
@@ -2093,7 +2248,10 @@ function startRec(){
     for(let i=e.resultIndex;i<e.results.length;i++){
       const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
     }
-    if(fin.trim()) send({t:'cap',text:fin.trim(),final:true,lang:S.lang});
+    if(fin.trim()){
+      send({t:'cap',text:fin.trim(),final:true,lang:S.lang});
+      if(S.capToChat) send({t:'chat',text:fin.trim(),cap:true}); // 確定した字幕だけをチャットにも記録する設定がONの時
+    }
     else if(interim.trim()) send({t:'cap',text:interim.trim(),final:false,lang:S.lang});
   };
   rec.onend=()=>{ if(recWant) setTimeout(()=>{try{rec.start()}catch(_){}},250); };
@@ -2105,7 +2263,7 @@ function stopRec(){ recWant=false; if(rec){try{rec.stop()}catch(_){ } rec=null;}
 
 const capEls=new Map(), trCache=new Map();
 function showCap(m){
-  if(!S.capsOn) return;
+  if(!S.capShowOverlay) return; // 「認識するか」(capsOn)とは切り離した、画面オーバーレイ表示だけのON/OFF
   const box=$('#caps');
   let el=capEls.get(m.from);
   if(!el || el.dataset.done==='1'){
@@ -2286,6 +2444,11 @@ $('#itpLangIn').onchange=e=>{ S.itp.lang=e.target.value; if(itpRunning){ itpStop
 $('#itpLangTo').onchange=e=>{ S.itp.to=e.target.value; };
 $('#itpTts').onchange=e=>{ S.itp.tts=e.target.checked; if(!S.itp.tts) speechSynthesis.cancel(); };
 $('#itpBtn').onclick=()=>{ itpRunning ? itpStop() : itpStart(); };
+// マイクをオンにする前に、読み上げ側だけ先に確認できるようにするテストボタン
+$('#itpTtsTest').onclick=()=>{
+  itpSpeak('これは音声読み上げのテストです。聞こえていますか？','ja');
+  toast('読み上げをテストしています…');
+};
 
 /* ============================================================
    音量メーター
@@ -2327,7 +2490,7 @@ function setCam(on){
   S.video=on&&!!S.camTrack; if(S.camTrack)S.camTrack.enabled=S.video;
   $('#cCam').classList.toggle('off',!S.video); sendState(); renderTiles(true);
 }
-let micLongFired=false, camLongFired=false;
+let micLongFired=false, camLongFired=false, selfTileLongFired=false;
 $('#cMic').onclick=()=>{ if(micLongFired){micLongFired=false;return;} if(!S.micTrack) return toast('マイクがありません'); setMic(!S.audio); };
 $('#cCam').onclick=()=>{ if(camLongFired){camLongFired=false;return;} if(!S.camTrack) return toast('カメラがありません'); setCam(!S.video); };
 
@@ -2451,6 +2614,7 @@ $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m)m.classList.remove('on');
 function sendChat(){
   const t=$('#chatIn').value.trim(); if(!t)return;
   send({t:'chat',text:t}); $('#chatIn').value=''; $('#chatIn').style.height='42px';
+  chatRecBase=''; // 音声入力が動いたままだと、送信済みの文字が次の認識イベントで復活してしまうのでリセット
   const aiMatch=t.match(/^@AI\s+([\s\S]+)/i);
   if(aiMatch) askAI(aiMatch[1].trim());
 }
@@ -2512,6 +2676,379 @@ function openLocModal(){
 }
 $('#plusLoc').onclick=()=>{ $('#mPlus').classList.remove('on'); openLocModal(); };
 $('#plusJanken').onclick=()=>{ $('#mPlus').classList.remove('on'); send({t:'janken'}); };
+$('#plusWb').onclick=()=>{ $('#mPlus').classList.remove('on'); openWhiteboard(); };
+
+/* ============================================================
+   ホワイトボード（チャットから開ける全員共有のお絵かき。会議は裏で続く）
+   pointermoveのたびに送ると通信量が多すぎるので、線は「ストローク」単位でID管理し、
+   一定間隔(約80ms)ごとにその間に溜まった座標だけをまとめて1メッセージとして送る（間引き）。
+   自分が描いた分は送信を待たずローカルへ即描画して体感の遅延をなくし、
+   受け取った側は「前のバッチの最後の点」から繋げて描くことで、間引いても線が途切れない。
+   S.wbStrokes は「全ストロークの座標リスト」を持つ正本データで、後から入った人への
+   welcomeペイロード（wb:S.wbStrokes）や、画面を開き直した時の全体再描画に使う
+   ============================================================ */
+let wbCtx=null;
+function wbGetCtx(){
+  if(!wbCtx){ const cv=$('#wbCanvas'); wbCtx=cv.getContext('2d'); wbCtx.lineCap='round'; wbCtx.lineJoin='round'; }
+  return wbCtx;
+}
+function wbPoint(e){
+  const cv=$('#wbCanvas'); const r=cv.getBoundingClientRect();
+  const x=(e.clientX-r.left)*(cv.width/r.width), y=(e.clientY-r.top)*(cv.height/r.height);
+  return [Math.round(x),Math.round(y)];
+}
+function wbSegment(c,p0,p1,color,size,erase){
+  c.save();
+  c.globalCompositeOperation=erase?'destination-out':'source-over';
+  c.strokeStyle=color; c.lineWidth=size;
+  c.beginPath();
+  if(p0){ c.moveTo(p0[0],p0[1]); c.lineTo(p1[0],p1[1]); }
+  else{ c.moveTo(p1[0],p1[1]); c.lineTo(p1[0]+0.01,p1[1]+0.01); } // タップだけ（動かさず離した）でも点が残るように
+  c.stroke();
+  c.restore();
+}
+function wbRedrawAll(){
+  const c=wbGetCtx(); c.clearRect(0,0,1200,700);
+  S.wbStrokes.forEach(s=>{ let prev=null; s.pts.forEach(pt=>{ wbSegment(c,prev,pt,s.color,s.size,s.erase); prev=pt; }); });
+}
+/* 受信したストローク座標バッチをS.wbStrokes（正本）へ積み上げる。自分が送った分のエコー（ホスト経由で自分にも返ってくる）は
+   既にローカルで即描画済みなので、記録だけ行いピクセルの再描画はスキップする（二重描画・二重負荷を避ける） */
+function wbRecordAndMaybeDraw(m){
+  let entry=S.wbStrokes.find(s=>s.id===m.id);
+  if(!entry){ entry={id:m.id,color:m.color,size:m.size,erase:m.erase,pts:[]}; S.wbStrokes.push(entry); if(S.wbStrokes.length>1500)S.wbStrokes.shift(); }
+  const prevLast=entry.pts.length?entry.pts[entry.pts.length-1]:null;
+  entry.pts.push(...m.pts); if(entry.pts.length>4000) entry.pts=entry.pts.slice(-4000);
+  if(m.from!==S.myId){
+    const c=wbGetCtx(); let prev=prevLast;
+    m.pts.forEach(pt=>{ wbSegment(c,prev,pt,m.color,m.size,m.erase); prev=pt; });
+  }
+}
+let wbColor='#e9edf7', wbErase=false, wbSize=4;
+let wbDrawingLocal=false, wbCurStroke=null, wbPendingPts=[], wbFlushTimer=null;
+function wbFlush(){
+  wbFlushTimer=null;
+  if(!wbPendingPts.length||!wbCurStroke) return;
+  const pts=wbPendingPts; wbPendingPts=[];
+  send({t:'wbStroke',id:wbCurStroke,color:wbColor,size:wbSize,erase:wbErase,pts});
+}
+function wbScheduleFlush(){ if(!wbFlushTimer) wbFlushTimer=setTimeout(wbFlush,80); }
+function wbPointerDown(e){
+  if(e.button>0) return;
+  const cv=$('#wbCanvas'); try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  wbDrawingLocal=true; wbCurStroke='s'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+  const pt=wbPoint(e);
+  let entry=S.wbStrokes.find(s=>s.id===wbCurStroke);
+  if(!entry){ entry={id:wbCurStroke,color:wbColor,size:wbSize,erase:wbErase,pts:[]}; S.wbStrokes.push(entry); }
+  entry.pts.push(pt);
+  wbSegment(wbGetCtx(),null,pt,wbColor,wbSize,wbErase);
+  wbPendingPts=[pt]; wbScheduleFlush();
+}
+function wbPointerMove(e){
+  if(!wbDrawingLocal) return;
+  const pt=wbPoint(e);
+  const entry=S.wbStrokes.find(s=>s.id===wbCurStroke); if(!entry) return;
+  const prev=entry.pts[entry.pts.length-1];
+  entry.pts.push(pt);
+  wbSegment(wbGetCtx(),prev,pt,wbColor,wbSize,wbErase);
+  wbPendingPts.push(pt); wbScheduleFlush();
+}
+function wbPointerUp(){
+  if(!wbDrawingLocal) return;
+  wbDrawingLocal=false;
+  if(wbFlushTimer){ clearTimeout(wbFlushTimer); wbFlushTimer=null; }
+  wbFlush(); wbCurStroke=null;
+}
+const wbCanvasEl=$('#wbCanvas');
+wbCanvasEl.addEventListener('pointerdown',wbPointerDown);
+wbCanvasEl.addEventListener('pointermove',wbPointerMove);
+['pointerup','pointercancel','pointerleave'].forEach(ev=>wbCanvasEl.addEventListener(ev,wbPointerUp));
+$$('.wbColor').forEach(b=>{
+  b.onclick=()=>{
+    $$('.wbColor').forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+    wbColor=b.dataset.color; wbErase=false; $('#wbEraser').classList.remove('on');
+  };
+});
+$('#wbEraser').onclick=()=>{ wbErase=!wbErase; $('#wbEraser').classList.toggle('on',wbErase); };
+$('#wbClearBtn').onclick=()=>{ if(confirm('ホワイトボードを全員分、消去しますか？（元に戻せません）')) send({t:'wbClear'}); };
+$('#wbClose').onclick=()=>closeWhiteboard();
+function openWhiteboard(){ S.wbOpen=true; $('#wbOverlay').classList.add('on'); wbRedrawAll(); }
+function closeWhiteboard(){ S.wbOpen=false; $('#wbOverlay').classList.remove('on'); }
+
+/* ============================================================
+   自分の映像タイル長押しでローカル録画
+   getDisplayMedia（毎回OSの選択ダイアログが出る）は「長押しで即座に始まる」感触と相性が悪いため使わず、
+   既存のCompと同じ考え方で「今画面に表示されている会議のグリッド（#grid の中身。ピン留め状態も含む）」を
+   そのままcanvasへ複写し続けるRecCompと、自分のマイク＋受信中の全員の音声をWeb Audioで1本にミックスする
+   RecAudioを用意し、その2つをMediaRecorderで一緒に録画してwebmとして自動ダウンロードする。
+   あくまで自分の端末だけで完結するローカル録画（相手には録画中である旨だけrecNoticeで軽く伝える）
+   ============================================================ */
+const RecComp={
+  canvas:null, ctx:null, raf:null,
+  ensure(){
+    if(this.canvas) return;
+    this.canvas=document.createElement('canvas'); this.canvas.width=1280; this.canvas.height=720;
+    this.ctx=this.canvas.getContext('2d',{alpha:false});
+  },
+  start(){ this.ensure(); if(!this.raf) this.tick(); },
+  stop(){ if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } },
+  tick(){ this.raf=requestAnimationFrame(()=>this.tick()); this.draw(); },
+  draw(){
+    const c=this.ctx, W=this.canvas.width, H=this.canvas.height;
+    c.fillStyle='#080b14'; c.fillRect(0,0,W,H);
+    const grid=$('#grid'); if(!grid) return;
+    const gr=grid.getBoundingClientRect(); if(!gr.width||!gr.height) return;
+    const scale=Math.min(W/gr.width,H/gr.height);
+    const offX=(W-gr.width*scale)/2, offY=(H-gr.height*scale)/2;
+    [...grid.querySelectorAll('.tile')].forEach(el=>{
+      const tr=el.getBoundingClientRect();
+      const x=offX+(tr.left-gr.left)*scale, y=offY+(tr.top-gr.top)*scale, w=tr.width*scale, h=tr.height*scale;
+      if(w<=1||h<=1) return;
+      c.save();
+      roundRectPath(c,x,y,w,h,Math.min(10,w*0.05)); c.clip();
+      const v=el.querySelector('video');
+      const camOff=el.classList.contains('camoff');
+      if(v && v.videoWidth && !camOff){
+        c.save();
+        if(el.classList.contains('mirror')){ c.translate(x+w,y); c.scale(-1,1); c.translate(-x,-y); }
+        const fit=el.classList.contains('oddAspect')?drawContain:drawCover;
+        c.fillStyle='#12182a'; c.fillRect(x,y,w,h);
+        fit(c,v,x,y,w,h);
+        c.restore();
+      }else{
+        c.fillStyle='#12182a'; c.fillRect(x,y,w,h);
+        const dotEl=el.querySelector('.cdot'); const nmEl=el.querySelector('.nm');
+        c.fillStyle=(dotEl&&dotEl.style.background)||'#5fe3c0';
+        c.beginPath(); c.arc(x+w/2,y+h/2,Math.min(w,h)*0.18,0,Math.PI*2); c.fill();
+        c.fillStyle='#0b0f1c'; c.font=Math.max(10,Math.min(w,h)*0.16)+'px sans-serif'; c.textAlign='center'; c.textBaseline='middle';
+        c.fillText(nmEl?initial(nmEl.textContent):'?', x+w/2, y+h/2);
+      }
+      const nmEl=el.querySelector('.nm');
+      if(nmEl && nmEl.textContent){
+        const label=nmEl.textContent;
+        const fs=Math.max(11,Math.min(16,h*0.07));
+        c.font=fs+'px sans-serif';
+        const tw=c.measureText(label).width, pad=6;
+        c.fillStyle='rgba(6,9,16,.62)'; c.fillRect(x+8,y+h-fs-16,tw+pad*2,fs+8);
+        c.fillStyle='#e9edf7'; c.textAlign='left'; c.textBaseline='top';
+        c.fillText(label, x+8+pad, y+h-fs-12);
+      }
+      c.restore();
+    });
+  }
+};
+const RecAudio={
+  dest:null, nodes:new Map(), active:false,
+  ensure(){ if(!this.dest){ const ac=ctx(); if(ac.state==='suspended') ac.resume().catch(()=>{}); this.dest=ac.createMediaStreamDestination(); } },
+  addTrack(id,track){
+    if(!track) return;
+    this.ensure();
+    try{
+      const old=this.nodes.get(id); if(old){try{old.disconnect()}catch(_){}}
+      const src=ctx().createMediaStreamSource(new MediaStream([track]));
+      src.connect(this.dest); this.nodes.set(id,src);
+    }catch(_){}
+  },
+  removeTrack(id){ const n=this.nodes.get(id); if(n){try{n.disconnect()}catch(_){}} this.nodes.delete(id); },
+  refreshPeer(id){ if(!this.active) return; const st=S.streams.get(id); const t=st&&st.getAudioTracks()[0]; if(t) this.addTrack(id,t); else this.removeTrack(id); },
+  start(){
+    this.active=true; this.ensure();
+    this.addTrack('me',outAudio());
+    S.streams.forEach((st,id)=>{ const t=st.getAudioTracks()[0]; if(t) this.addTrack(id,t); });
+  },
+  stop(){
+    this.active=false;
+    this.nodes.forEach(n=>{try{n.disconnect()}catch(_){}}); this.nodes.clear(); this.dest=null;
+  },
+  stream(){ return this.dest?this.dest.stream:null; }
+};
+let recTimer=null, recChunks=[];
+const REC_MAX_MS=60*60*1000; // 常識的な範囲での安全策：長時間録画でメモリを圧迫し続けないよう60分で自動停止する
+function startTileRecording(){
+  if(S.recording) return;
+  if(typeof MediaRecorder==='undefined') return toast('この端末・ブラウザは録画に対応していません');
+  RecComp.start(); RecAudio.start();
+  const videoTrack=RecComp.canvas.captureStream(24).getVideoTracks()[0];
+  const audioStream=RecAudio.stream(); const audioTrack=audioStream&&audioStream.getAudioTracks()[0];
+  const mixed=new MediaStream(); mixed.addTrack(videoTrack); if(audioTrack) mixed.addTrack(audioTrack);
+  let mime='video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm;codecs=vp8,opus';
+  if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm';
+  let rec;
+  try{ rec=new MediaRecorder(mixed,{mimeType:mime,videoBitsPerSecond:2500000}); }
+  catch(e){ toast('この端末では録画を開始できませんでした'); RecComp.stop(); RecAudio.stop(); return; }
+  recChunks=[];
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) recChunks.push(e.data); };
+  rec.onstop=()=>{
+    RecComp.stop(); RecAudio.stop();
+    if(recChunks.length){
+      const blob=new Blob(recChunks,{type:mime});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='kodama-'+new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')+'.webm';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),8000);
+      toast('録画を保存しました（ダウンロードフォルダをご確認ください）');
+    }
+    recChunks=[]; S.mediaRec=null;
+  };
+  rec.start(1000); // 1秒ごとにチャンク化。1つの巨大バッファに溜め込み続けないための対策
+  S.mediaRec=rec;
+  S.recording=true;
+  recTimer=setTimeout(()=>{ toast('録画時間が長くなったため自動的に停止しました'); stopTileRecording(); }, REC_MAX_MS);
+  renderTiles(true);
+  send({t:'recNotice',on:true});
+  toast('🔴 録画を開始しました（自分の端末に保存されます。もう一度長押しか、映像の「REC」表示で停止できます）');
+}
+function stopTileRecording(){
+  if(!S.recording) return;
+  S.recording=false;
+  if(recTimer){ clearTimeout(recTimer); recTimer=null; }
+  try{ S.mediaRec&&S.mediaRec.stop(); }catch(_){}
+  renderTiles(true);
+  send({t:'recNotice',on:false});
+}
+function toggleTileRecording(){ S.recording?stopTileRecording():startTileRecording(); }
+
+/* ============================================================
+   カラオケ（著作権フリー音源のみ使用。曲のライセンス情報はナレッジファイル参照）
+   ・曲の再生: 全員が自分のブラウザでローカルのmp3ファイルを再生し、既存のYouTube同時視聴と同じ
+     「開始時刻(ts)からの経過秒数」方式でシークして揃える（P2Pで音声そのものを流すわけではない）
+   ・音程バー/スコア: 「今の歌い手」の自分のマイクだけをWeb Audioの自己相関法で解析するローカル処理。
+     曲ごとの正解音程データは持たないため、ズレを厳密に採点する本格的なものではなく、
+     「安定して声を出せているか」を目安にした簡易採点（[[放課後の居残り]]の疑似物理と同じ考え方で
+     精度より「それっぽく盛り上がる」ことを優先）。約1.5秒おきに他の参加者へも共有する
+   ・順番待ちキュー・現在の歌い手はホスト権威で管理し、既存のjanken/位置情報と同じ
+     hostHandle→deliver→onMessageの流れで全員に同期する
+   ============================================================ */
+const KARAOKE_SONGS=[
+  {key:'retro-synths',title:'Retro Synths',artist:'HoliznaCC0',file:'assets/karaoke/retro-synths.mp3',dur:222},
+  {key:'happy-dance',title:'Happy Dance',artist:'HoliznaCC0',file:'assets/karaoke/happy-dance.mp3',dur:155},
+  {key:'back-in-the-80s',title:'Back In The 80s',artist:'HoliznaCC0',file:'assets/karaoke/back-in-the-80s.mp3',dur:239},
+];
+const ktAudioEl=new Audio(); ktAudioEl.preload='none';
+ktAudioEl.onended=()=>{ if(S.ktSinger===S.myId) send({t:'ktNext'}); };
+function ktSyncPlayback(){
+  if(!S.ktSinger || !S.ktSong){
+    if(!ktAudioEl.paused) ktAudioEl.pause();
+    ktStopPitchLoop();
+    return;
+  }
+  const song=KARAOKE_SONGS.find(s=>s.key===S.ktSong); if(!song) return;
+  if(!ktAudioEl.src || ktAudioEl.src.indexOf(song.file)===-1) ktAudioEl.src=song.file;
+  const elapsed=Math.max(0,(Date.now()-S.ktPlayTs)/1000);
+  if(elapsed>=song.dur+2){ /* 既に終わっている（遅れて参加等） */ return; }
+  try{ ktAudioEl.currentTime=elapsed; }catch(_){}
+  ktAudioEl.play().catch(()=>{});
+  if(S.ktSinger===S.myId) ktStartPitchLoop(); else ktStopPitchLoop();
+}
+/* 簡易的な自己相関法によるピッチ（基本周波数）検出。YINほど厳密ではないが、
+   「歌えているかどうかの目安」を出す用途には軽量で十分という判断 */
+function ktAutoCorrelate(buf,sampleRate){
+  const SIZE=buf.length;
+  let rms=0; for(let i=0;i<SIZE;i++) rms+=buf[i]*buf[i]; rms=Math.sqrt(rms/SIZE);
+  if(rms<0.012) return -1; // ほぼ無音
+  let r1=0,r2=SIZE-1; const thres=0.2;
+  for(let i=0;i<SIZE/2;i++){ if(Math.abs(buf[i])<thres){ r1=i; break; } }
+  for(let i=1;i<SIZE/2;i++){ if(Math.abs(buf[SIZE-i])<thres){ r2=SIZE-i; break; } }
+  const buf2=buf.slice(r1,r2); const SIZE2=buf2.length; if(SIZE2<8) return -1;
+  const c=new Float32Array(SIZE2);
+  for(let i=0;i<SIZE2;i++){ for(let j=0;j<SIZE2-i;j++) c[i]+=buf2[j]*buf2[j+i]; }
+  let d=0; while(d<SIZE2-1 && c[d]>c[d+1]) d++;
+  let maxval=-1,maxpos=-1;
+  for(let i=d;i<SIZE2;i++){ if(c[i]>maxval){ maxval=c[i]; maxpos=i; } }
+  if(maxpos<=0) return -1;
+  return sampleRate/maxpos;
+}
+let ktPitchNode=null, ktPitchRaf=null, ktScoreAccum=0, ktScoreTicks=0, ktLastSentTs=0;
+function ktStartPitchLoop(){
+  if(ktPitchRaf) return;
+  if(!S.micTrack) return;
+  try{
+    const ac=ctx(); if(ac.state==='suspended') ac.resume().catch(()=>{});
+    const src=ac.createMediaStreamSource(new MediaStream([S.micTrack]));
+    const analyser=ac.createAnalyser(); analyser.fftSize=2048;
+    src.connect(analyser);
+    ktPitchNode={src,analyser,buf:new Float32Array(analyser.fftSize)};
+    ktScoreAccum=0; ktScoreTicks=0; S.ktMyScore=0; ktLastSentTs=0;
+    ktPitchTick();
+  }catch(_){}
+}
+function ktPitchTick(){
+  ktPitchRaf=requestAnimationFrame(ktPitchTick);
+  if(!ktPitchNode) return;
+  ktPitchNode.analyser.getFloatTimeDomainData(ktPitchNode.buf);
+  const freq=ktAutoCorrelate(ktPitchNode.buf,ctx().sampleRate);
+  const fill=$('#ktPitchFill'), bar=$('#ktPitchBar');
+  ktScoreTicks++;
+  if(freq>0){
+    // 人の声のだいたいのレンジ（E2〜E6くらい）に正規化してバーの高さにする
+    const norm=Math.max(0,Math.min(1,Math.log2(freq/82)/Math.log2(1200/82)));
+    if(fill) fill.style.height=(norm*100)+'%';
+    if(bar) bar.classList.add('voiced');
+    ktScoreAccum+=1;
+  }else{
+    if(fill) fill.style.height='0%';
+    if(bar) bar.classList.remove('voiced');
+  }
+  const now=Date.now();
+  if(now-ktLastSentTs>1500){
+    ktLastSentTs=now;
+    const pct=ktScoreTicks?Math.round(Math.min(100,(ktScoreAccum/ktScoreTicks)*130)):0; // 声を出せていた時間の割合ベースの「それっぽい」簡易採点
+    S.ktMyScore=pct;
+    const numEl=$('#ktScoreNum'); if(numEl) numEl.textContent=pct;
+    send({t:'ktScore',score:pct});
+  }
+}
+function ktStopPitchLoop(){
+  if(ktPitchRaf){ cancelAnimationFrame(ktPitchRaf); ktPitchRaf=null; }
+  if(ktPitchNode){ try{ktPitchNode.src.disconnect()}catch(_){} ktPitchNode=null; }
+  const fill=$('#ktPitchFill'), bar=$('#ktPitchBar');
+  if(fill) fill.style.height='0%'; if(bar) bar.classList.remove('voiced');
+}
+let ktPickedSong=null;
+function ktRenderPanel(){
+  const singerP=S.roster.find(p=>p.id===S.ktSinger);
+  const meP=S.roster.find(p=>p.id===S.myId);
+  const song=KARAOKE_SONGS.find(s=>s.key===S.ktSong);
+  $('#ktStatus').textContent=S.ktSinger?`🎤 ${singerP?singerP.name:'？'} さんが「${song?song.title:'?'}」を熱唱中`:'今は誰も歌っていません';
+  const iAmFront=!S.ktSinger && S.ktQueue[0]===S.myId;
+  const canStartFree=!S.ktSinger && !S.ktQueue.length;
+  const showPicker=!S.ktSinger && (iAmFront||canStartFree);
+  const picker=$('#ktSongPicker');
+  picker.style.display=showPicker?'flex':'none';
+  picker.innerHTML='';
+  if(showPicker){
+    KARAOKE_SONGS.forEach(s=>{
+      const b=document.createElement('button'); b.className='ktSongBtn'+(ktPickedSong===s.key?' sel':'');
+      b.textContent=`${s.title}（${Math.floor(s.dur/60)}:${String(s.dur%60).padStart(2,'0')}）`;
+      b.onclick=()=>{ ktPickedSong=s.key; ktRenderPanel(); };
+      picker.appendChild(b);
+    });
+    const startBtn=document.createElement('button'); startBtn.className='btn primary';
+    startBtn.style.cssText='width:auto;padding:8px 18px;margin-top:4px';
+    startBtn.textContent='この曲で歌う';
+    startBtn.onclick=()=>{
+      if(!ktPickedSong) return toast('曲を選んでください');
+      send({t:'ktStart',key:ktPickedSong}); ktPickedSong=null;
+    };
+    picker.appendChild(startBtn);
+  }
+  const inQueue=S.ktQueue.includes(S.myId);
+  $('#ktJoinBtn').style.display=(inQueue||S.ktSinger===S.myId||showPicker)?'none':'';
+  $('#ktLeaveBtn').style.display=inQueue?'':'none';
+  $('#ktNextBtn').style.display=(S.ktSinger===S.myId||(meP&&meP.host&&S.ktSinger))?'':'none';
+  $('#ktScoreNum').textContent=S.ktSinger?(S.ktSinger===S.myId?(S.ktMyScore||0):(S.ktLastScoreOther||0)):0;
+  const ql=$('#ktQueueList');
+  ql.innerHTML='<h5>順番待ち</h5>'+(S.ktQueue.length?S.ktQueue.map((id,i)=>{
+    const p=S.roster.find(x=>x.id===id);
+    return `<div class="ktQRow"><b>${i+1}.</b><span>${esc(p?p.name:'退出済み')}${id===S.myId?'（あなた）':''}</span></div>`;
+  }).join(''):'<div style="font-size:12px;color:var(--dim)">誰も並んでいません</div>');
+}
+$('#plusKaraoke').onclick=()=>{ $('#mPlus').classList.remove('on'); S.ktOpen=true; $('#ktOverlay').classList.add('on'); ktRenderPanel(); };
+$('#ktClose').onclick=()=>{ S.ktOpen=false; $('#ktOverlay').classList.remove('on'); };
+$('#ktJoinBtn').onclick=()=>{ send({t:'ktJoin'}); toast('キューに並びました'); };
+$('#ktLeaveBtn').onclick=()=>{ send({t:'ktLeave'}); };
+$('#ktNextBtn').onclick=()=>{ send({t:'ktNext'}); };
 $('#locOnce').onclick=()=>{ $('#mLoc').classList.remove('on'); shareLocationOnce(); };
 $('#locLive').onclick=()=>{ $('#mLoc').classList.remove('on'); startLiveLocationShare(); };
 $('#locStop').onclick=()=>{ $('#mLoc').classList.remove('on'); stopLocationShare(); };
@@ -2749,6 +3286,20 @@ LANGS.forEach(([v,n])=>{const o=new Option(n,v);$('#selLang').add(o)});
 TRLANGS.forEach(([v,n])=>{const o=new Option(n,v);$('#selTr').add(o)});
 $('#selLang').value='ja-JP'; $('#selTr').value='en';  S.trTo='en';
 $('#swCap').onclick=()=>setCaps(!S.capsOn);
+$('#swCapShow').classList.toggle('on',S.capShowOverlay);
+$('#swCapShow').onclick=()=>{
+  // 表示だけのON/OFF。認識・チャットへの記録（オンなら）はこれとは無関係に動き続ける
+  S.capShowOverlay=!S.capShowOverlay; $('#swCapShow').classList.toggle('on',S.capShowOverlay);
+  localStorage.setItem('kdm-capshow',S.capShowOverlay?'1':'0');
+  if(!S.capShowOverlay){ $('#caps').innerHTML=''; capEls.clear(); }
+  toast(S.capShowOverlay?'字幕の表示をオンにしました':'字幕の表示だけオフにしました（認識・記録は続きます）');
+};
+$('#swCapChat').classList.toggle('on',S.capToChat);
+$('#swCapChat').onclick=()=>{
+  S.capToChat=!S.capToChat; $('#swCapChat').classList.toggle('on',S.capToChat);
+  localStorage.setItem('kdm-capchat',S.capToChat?'1':'0');
+  toast(S.capToChat?'確定した字幕をチャットにも記録するようにしました':'字幕のチャット記録をオフにしました');
+};
 $('#selLang').onchange=e=>{ S.lang=e.target.value; if(S.capsOn)startRec(); };
 $('#swTr').onclick=()=>{ S.trOn=!S.trOn; $('#swTr').classList.toggle('on',S.trOn); toast(S.trOn?'翻訳をオンにしました':'翻訳をオフにしました'); };
 $('#selTr').onchange=e=>S.trTo=e.target.value;
