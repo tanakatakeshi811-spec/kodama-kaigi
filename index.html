@@ -98,14 +98,24 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
 .body{flex:1;display:flex;min-height:0}
 .stage{flex:1;position:relative;padding:12px;min-width:0;display:flex;flex-direction:column;gap:10px}
-#ytStage{display:none;width:100%;flex:0 0 auto;height:56%;max-height:520px;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+/* 動画パネル：#ytStageは常設の枠、中の#ytPlayerWrapは常に実在するDOM要素で、
+   YouTube/Vimeo/TwitchのプレイヤーAPIが対象要素を丸ごと差し替え/破棄しても
+   #ytPlayerWrap自体は消えない（各サービスへの切替・再読込のたびに子要素#ytPlayerを作り直す） */
+#ytStage{position:relative;display:none;width:100%;flex:0 0 auto;height:56%;max-height:520px;border-radius:14px;overflow:hidden;background:#000;box-shadow:0 14px 40px rgba(0,0,0,.4)}
 #ytStage.on{display:block}
 #ytStage.vertical{width:auto;max-width:100%;align-self:center;aspect-ratio:9/16}
-#ytPlayer{width:100%;height:100%}
-#ytPlayer iframe{width:100%!important;height:100%!important;display:block;border:0}
+#ytStage:fullscreen{width:100vw!important;height:100vh!important;max-height:none!important;border-radius:0;box-shadow:none;aspect-ratio:auto!important}
+#ytPlayerWrap,#ytPlayer{width:100%;height:100%}
+#ytPlayerWrap iframe{width:100%!important;height:100%!important;display:block;border:0}
+#btnYtFull{position:absolute;top:8px;right:8px;z-index:2;width:34px;height:34px;background:rgba(6,9,16,.68);color:#fff;backdrop-filter:blur(6px)}
+#btnYtFull:hover{background:rgba(6,9,16,.88);color:var(--mint)}
+#btnYtFull.on{background:rgba(95,227,192,.85);color:#04241d}
 @media(min-width:761px){
-  /* PCでは画面に対して大きすぎないよう控えめに（およそ画面高さの4割・上限380px） */
-  #ytStage{height:38vh;max-height:380px}
+  /* PCでは画面上部に大きく出さず、左側に小さくドッキングして表示する（全画面ボタンで必要な時だけ拡大） */
+  .stage{flex-direction:row;align-items:flex-start}
+  #ytStage{width:300px;flex:0 0 300px;height:auto;aspect-ratio:16/9;max-height:none;align-self:flex-start}
+  #ytStage.vertical{width:180px;flex:0 0 180px;aspect-ratio:9/16;align-self:flex-start}
+  .grid{align-self:stretch}
 }
 .grid{display:grid;gap:10px;width:100%;flex:1;min-height:0;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));align-content:center;justify-content:center}
 .grid.pinmode{display:flex;flex-wrap:wrap;align-content:flex-start}
@@ -279,12 +289,19 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .itpLog .e .o{color:var(--dim)}
 .itpLog .e .t{color:var(--txt);font-weight:600}
 
+/* 招待(URL・QR)・ロックは、PCでは.topバー、スマホでは.ctrlバー側に出す。
+   スマホの.topは合言葉・タイトル・接続状況チップだけで幅がギリギリなため、
+   詰め込むと表示自体がはみ出て操作できなくなる（実際に起きていた不具合） */
+.mobileOnly{display:none}
 @media(max-width:760px){
   .side{position:absolute;inset:0 0 0 auto;width:100%;flex:none;z-index:20}
   .stage{padding:8px}
   .cbtn{min-width:50px;height:48px;padding:0 10px}
   .cbtn small{display:none}
   .top .title{font-size:13px}
+  .top{gap:8px;padding:9px 10px}
+  #btnCopy,#btnQR,#btnLock{display:none}
+  .mobileOnly{display:flex}
   #caps{bottom:8px;width:calc(100% - 20px)}
   #itpBox{left:8px;right:8px;width:auto;max-width:none;bottom:84px}
   #ytStage{height:38vh;max-height:280px}
@@ -358,14 +375,19 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <button class="iconbtn" id="btnQR" title="QRコード・招待URL">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h3v3M20 14v3M17 20h3.01"/></svg>
     </button>
-    <button class="iconbtn" id="btnLock" title="新規参加をロック">
+    <button class="iconbtn lockBtn" id="btnLock" title="新規参加をロック">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
     </button>
   </div>
 
   <div class="body">
     <div class="stage">
-      <div id="ytStage"><div id="ytPlayer"></div></div>
+      <div id="ytStage">
+        <div id="ytPlayerWrap"><div id="ytPlayer"></div></div>
+        <button class="iconbtn" id="btnYtFull" title="全画面">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+        </button>
+      </div>
       <div class="grid" id="grid"></div>
       <div id="caps"></div>
     </div>
@@ -439,6 +461,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <button class="cbtn" id="cGoogle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg><small>検索</small></button>
     <button class="cbtn" id="cChat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3v-5.5A8 8 0 0 1 11 4h2a8 8 0 0 1 8 8z"/></svg><small>チャット</small><span class="bdg" id="chatBdg" style="display:none">0</span></button>
     <button class="cbtn" id="cPpl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M17 5.5a3.5 3.5 0 0 1 0 6.9M18 20a6.5 6.5 0 0 0-2.5-5.1"/></svg><small>参加者</small></button>
+    <button class="cbtn mobileOnly" id="cInvite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h3v3M20 14v3M17 20h3.01"/></svg><small>招待</small></button>
+    <button class="cbtn mobileOnly lockBtn" id="cLock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><small>ロック</small></button>
     <button class="cbtn" id="cSet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2 2 2 0 1 1-4 0 1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 15a2 2 0 1 1 0-4 1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6a2 2 0 1 1 4 0 1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 21 11a2 2 0 1 1 0 4z"/></svg><small>設定</small></button>
     <button class="cbtn leave" id="cLeave"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11"/></svg><small>退出</small></button>
   </div>
@@ -809,12 +833,12 @@ const Comp={
       if(S.video && S.camTrack && this.camVideo.videoWidth){
         const pw=Math.round(w*0.22), ph=Math.round(pw*9/16), px=w-pw-24, py=h-ph-24;
         c.save(); roundRectPath(c,px,py,pw,ph,10); c.clip();
-        drawEffect(c,this.camVideo,px,py,pw,ph,S.fx.video,'cover');
+        drawEffect(c,this.camVideo,px,py,pw,ph,S.fx.video,pickFit(this.camVideo.videoWidth,this.camVideo.videoHeight,pw,ph));
         c.restore();
         c.lineWidth=3; c.strokeStyle='rgba(233,237,247,.85)'; roundRectPath(c,px,py,pw,ph,10); c.stroke();
       }
     }else if(S.fx.video!=='none' && this.camVideo.videoWidth){
-      drawEffect(c,this.camVideo,0,0,w,h,S.fx.video,'cover');
+      drawEffect(c,this.camVideo,0,0,w,h,S.fx.video,pickFit(this.camVideo.videoWidth,this.camVideo.videoHeight,w,h));
     }
   }
 };
@@ -1083,7 +1107,7 @@ function onMessage(m){
         if(card) card.replaceWith(renderPollCard(entry));
       }
       break;}
-    case 'room': S.roomName=m.name; S.locked=m.locked; $('#mTitle').textContent=S.roomName; $('#btnLock').classList.toggle('on',S.locked); break;
+    case 'room': S.roomName=m.name; S.locked=m.locked; $('#mTitle').textContent=S.roomName; $$('.lockBtn').forEach(b=>b.classList.toggle('on',S.locked)); break;
     case 'muteask': if(S.audio){ setMic(false); toast('ホストからミュートの依頼がありました'); } break;
     case 'kick': toast('ホストにより退出しました'); bail(); break;
     case 'yt': applyYtMessage(m); break;
@@ -1132,6 +1156,7 @@ function enterMeeting(){
   $('#capsCode').innerHTML=S.code.split('').map(c=>`<span>${c}</span>`).join('');
   $('#inName').value=S.name;
   $('#btnLock').style.display=S.isHost?'':'none';
+  $('#cLock').style.display=S.isHost?'':'none';
   $('#hostTools').style.display=S.isHost?'':'none';
   $('#cMic').classList.toggle('off',!S.audio);
   $('#cCam').classList.toggle('off',!S.video);
@@ -1173,6 +1198,36 @@ function tick(){
 }
 function setNet(ok){ $('#chipNet').querySelector('.dot').classList.toggle('bad',!ok); $('#netTxt').textContent=ok?(S.isHost?'ホスト':'接続中'):'再接続中'; }
 
+/* 映像のフィット判定（原理的な方法）：
+   「動画の縦横比」と「実際に表示されるタイルの縦横比」を毎回比較し、
+   両者が近ければcover（画面いっぱいに、はみ出た分だけ軽くトリミング）、
+   大きくズレていればcontain（全体が見えるようレターボックス）にする。
+   縦長/横長といった固定の閾値ではなく、タイルの実測サイズ基準にすることで、
+   ピン留め・画面共有ワイプ・スマホ回転などレイアウトが変わっても同じロジックで正しく判定できる。
+   映像タイル（DOM）・screen share合成canvas（Comp）の両方でこの関数を共有する。 */
+const ASPECT_MISMATCH_THRESHOLD=1.6;
+function fitMismatch(w1,h1,w2,h2){
+  if(!w1||!h1||!w2||!h2) return 1;
+  const r1=w1/h1, r2=w2/h2;
+  return Math.max(r1/r2, r2/r1);
+}
+function pickFit(vw,vh,bw,bh){
+  return fitMismatch(vw,vh,bw,bh)>ASPECT_MISMATCH_THRESHOLD ? 'contain' : 'cover';
+}
+function updateTileFit(el,v){
+  const vw=v.videoWidth, vh=v.videoHeight;
+  const tw=el.clientWidth, th=el.clientHeight;
+  if(!vw||!vh||!tw||!th) return;
+  el.classList.toggle('oddAspect', pickFit(vw,vh,tw,th)==='contain');
+}
+/* タイルの表示サイズが変わるたび（ウィンドウリサイズ・ピン留め切替・参加者数変化での grid 再レイアウトなど）
+   に再判定する。個別のイベントを手動で全部拾うより、実際のサイズ変化を監視する方が原理的で漏れがない */
+const tileResizeObserver=new ResizeObserver(entries=>{
+  entries.forEach(entry=>{
+    const el=entry.target, v=el.querySelector('video');
+    if(v) updateTileFit(el,v);
+  });
+});
 function renderTiles(soft){
   const g=$('#grid');
   const ids=S.roster.map(p=>p.id);
@@ -1192,17 +1247,14 @@ function renderTiles(soft){
       el.querySelector('.pinb').onclick=e=>{ e.stopPropagation(); togglePin(); };
       el.onclick=e=>{ if(e.target.closest('button')) return; togglePin(); };
       g.appendChild(el);
+      tileResizeObserver.observe(el);
     }
     const v=el.querySelector('video');
     const stream = p.id===S.myId ? S.out : S.streams.get(p.id);
     if(stream && v.srcObject!==stream){
       v.srcObject=stream; v.play().catch(()=>{});
       if(S.devices.spk&&v.setSinkId)v.setSinkId(S.devices.spk).catch(()=>{});
-      // 縦長・極端なアスペクト比のカメラ映像はcoverだと顔が見切れるので、その時だけcontain寄りにする
-      v.onloadedmetadata=()=>{
-        const vw=v.videoWidth, vh=v.videoHeight;
-        el.classList.toggle('oddAspect', !!(vw&&vh&&(vh>vw*1.15||vw>vh*2.4)));
-      };
+      v.onloadedmetadata=()=>updateTileFit(el,v);
     }
     el.querySelector('.nm').textContent=p.name+(p.host?'（ホスト）':'')+(p.id===S.myId?'（あなた）':'');
     el.querySelector('.cdot').style.background=p.color;
@@ -1767,39 +1819,40 @@ function flyReact(em){
   setTimeout(()=>d.remove(),2700);
 }
 
-// 招待コピー・QR・ロック
-$('#btnCopy').onclick=async()=>{
-  const txt=`「${S.roomName}」に参加してください\n合言葉：${S.code}\n${buildInviteUrl()}`;
-  try{ await navigator.clipboard.writeText(txt); toast('招待をコピーしました'); }
-  catch(_){ prompt('コピーしてください',txt); }
-};
+// 招待コピー・QR・ロック（PCの.topバー・スマホの.ctrlバー、どちらのボタンからも同じ処理を呼ぶ）
 function buildInviteUrl(){
   const u=new URL(location.href); u.search=''; u.searchParams.set('code',S.code);
   return u.toString();
 }
-$('#btnQR').onclick=()=>{
+async function copyInviteText(){
+  const txt=`「${S.roomName}」に参加してください\n合言葉：${S.code}\n${buildInviteUrl()}`;
+  try{ await navigator.clipboard.writeText(txt); toast('招待をコピーしました'); }
+  catch(_){ prompt('コピーしてください',txt); }
+}
+function openInviteModal(){
   const url=buildInviteUrl();
   $('#inviteUrl').value=url;
   const box=$('#qrBox'); box.innerHTML='';
   if(window.QRCode){ new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}); }
   else box.innerHTML='<div style="color:#333;font-size:12px;padding:40px 10px">QRコードを読み込めませんでした</div>';
   $('#mInvite').classList.add('on');
-};
+}
+$('#btnCopy').onclick=copyInviteText;
+$('#btnQR').onclick=openInviteModal;
+$('#cInvite').onclick=openInviteModal; // スマホはモーダル内にコピー導線もまとまっているのでこちらに一本化
 $('#btnCopyUrl').onclick=async()=>{
   try{ await navigator.clipboard.writeText($('#inviteUrl').value); toast('URLをコピーしました'); }
   catch(_){ prompt('コピーしてください',$('#inviteUrl').value); }
 };
-$('#btnCopyInvite').onclick=async()=>{
-  const txt=`「${S.roomName}」に参加してください\n合言葉：${S.code}\n${buildInviteUrl()}`;
-  try{ await navigator.clipboard.writeText(txt); toast('招待文をコピーしました'); }
-  catch(_){ prompt('コピーしてください',txt); }
-};
-$('#btnLock').onclick=()=>{
+$('#btnCopyInvite').onclick=copyInviteText;
+function toggleLock(){
   if(!S.isHost) return;
-  S.locked=!S.locked; $('#btnLock').classList.toggle('on',S.locked);
+  S.locked=!S.locked; $$('.lockBtn').forEach(b=>b.classList.toggle('on',S.locked));
   deliver({t:'room',name:S.roomName,locked:S.locked});
-  toast(S.locked?'新しい参加をロックしました':'ロックを解除しました');
-};
+  toast(S.locked?'新しい参加をロックしました（この状態の間は新しく誰も入れません）':'ロックを解除しました');
+}
+$('#btnLock').onclick=toggleLock;
+$('#cLock').onclick=toggleLock;
 $('#btnMuteAll').onclick=()=>{ S.conns.forEach(c=>{try{c.send({t:'muteask'})}catch(_){}}); toast('全員にミュートを依頼しました'); };
 
 /* 設定 */
@@ -1842,13 +1895,35 @@ $('#btnCapDl').onclick=()=>{
    ニコニコ動画・TikTokは外部からの再生/一時停止/シーク制御が公式サポートされておらず
    安定した同期が見込めないため見送り。Netflix等の定額配信はDRMのため埋め込み自体が不可能。
    ============================================================ */
+/* 各サービスのプレイヤーAPIは対象要素を丸ごと差し替え/破棄する仕様（YouTube・Vimeoは
+   渡したdivをiframeに置き換え、destroy()でそのiframeごと消す。Twitchも内部でDOMを作り直す）。
+   そのため「#ytPlayerを直接使い回す」実装だと、一度閉じた後に#ytPlayerがDOM上から消えてしまい、
+   次に開いた時に取得先が見つからず壊れる（前回までの修正で症状だけ直したつもりが再発していた根本原因）。
+   対策として、常設のラッパー#ytPlayerWrapの中に「使い捨ての#ytPlayer」を毎回作り直してから
+   各プレイヤーAPIに渡すようにする。ラッパー自体はどのサービスのAPIも触らないので消えない。 */
+function freshPlayerHost(){
+  const wrap=$('#ytPlayerWrap');
+  if(!wrap) return null;
+  wrap.innerHTML='';
+  const div=document.createElement('div'); div.id='ytPlayer';
+  wrap.appendChild(div);
+  return div;
+}
+/* 非同期でAPI読み込み待ちの間に「閉じる／別サービスに切替」されると、
+   古いコールバックが後から発火して新しい方を上書きしてしまうことがある。
+   世代カウンタで「発行された時点より後に何か変わっていないか」を毎回確認する */
+let watchGen=0;
+
 const Yt={ // YouTube（IFrame Player API）
   ready:false, _cbs:[], player:null, videoId:'', applyingRemote:false,
   whenReady(cb){ if(this.ready||(window.YT&&window.YT.Player)){cb();return;} this._cbs.push(cb); },
   load(id){
     this.videoId=id;
+    const gen=watchGen;
     this.whenReady(()=>{
+      if(gen!==watchGen) return;
       if(this.player){ this.player.loadVideoById(id); return; }
+      freshPlayerHost();
       this.player=new YT.Player('ytPlayer',{
         videoId:id, playerVars:{rel:0,playsinline:1},
         events:{ onStateChange:e=>this.onState(e) }
@@ -1863,9 +1938,12 @@ const Yt={ // YouTube（IFrame Player API）
   remote(m){
     if(!m.id) return;
     if(this.videoId!==m.id || !this.player) this.load(m.id);
+    const gen=watchGen;
     this.whenReady(()=>{
+      if(gen!==watchGen) return;
       this.applyingRemote=true;
       const go=()=>{
+        if(!this.player) return;
         if(m.a==='play'){
           const cur=this.player.getCurrentTime?this.player.getCurrentTime():0;
           if(Math.abs(cur-m.time)>1.2) this.player.seekTo(m.time,true);
@@ -1899,9 +1977,11 @@ const VimeoP={ // Vimeo（公式 @vimeo/player、YouTubeと同じくpostMessage�
   whenReady: loadExternalScript('https://player.vimeo.com/api/player.js',()=>!!(window.Vimeo&&window.Vimeo.Player)),
   load(id){
     this.videoId=id;
+    const gen=watchGen;
     this.whenReady(()=>{
+      if(gen!==watchGen) return;
       if(this.player){ this.player.loadVideo(+id).catch(()=>{}); return; }
-      $('#ytPlayer').innerHTML='';
+      freshPlayerHost();
       this.player=new Vimeo.Player('ytPlayer',{id:+id,width:640,height:360});
       this.player.on('play',()=>this.onState('play'));
       this.player.on('pause',()=>this.onState('pause'));
@@ -1914,10 +1994,12 @@ const VimeoP={ // Vimeo（公式 @vimeo/player、YouTubeと同じくpostMessage�
   remote(m){
     if(!m.id) return;
     if(this.videoId!==String(m.id) || !this.player) this.load(m.id);
+    const gen=watchGen;
     this.whenReady(()=>{
+      if(gen!==watchGen) return;
       this.applyingRemote=true;
       setTimeout(()=>{
-        if(!this.player){ this.applyingRemote=false; return; }
+        if(gen!==watchGen||!this.player){ this.applyingRemote=false; return; }
         Promise.resolve(this.player.getCurrentTime()).then(cur=>{
           if(m.a==='play'){
             if(Math.abs((cur||0)-m.time)>1.2) this.player.setCurrentTime(m.time).catch(()=>{});
@@ -1939,20 +2021,23 @@ const TwitchP={ // Twitch Embed（ライブ配信を一緒に見る用途。play
     this.raw=idStr;
     const isVideo=/^video:/.test(idStr);
     const opts=isVideo?{video:idStr.slice(6)}:{channel:idStr};
+    const gen=watchGen;
     this.whenReady(()=>{
-      $('#ytPlayer').innerHTML='';
+      if(gen!==watchGen) return;
+      freshPlayerHost();
       this.player=new Twitch.Player('ytPlayer',Object.assign({width:'100%',height:'100%',parent:[location.hostname||'localhost']},opts));
     });
   },
-  close(){ this.player=null; this.raw=''; $('#ytPlayer').innerHTML=''; }
+  close(){ this.player=null; this.raw=''; }
 };
 
 let watchSvc='youtube';
 function watchTeardown(){
+  watchGen++;
   if(watchSvc==='youtube') Yt.close();
   else if(watchSvc==='vimeo') VimeoP.close();
   else if(watchSvc==='twitch') TwitchP.close();
-  $('#ytPlayer').innerHTML='';
+  const wrap=$('#ytPlayerWrap'); if(wrap) wrap.innerHTML='';
 }
 function detectWatchUrl(url){
   const u=String(url||'').trim(); let m;
@@ -1968,18 +2053,24 @@ function watchStageOn(svc,vertical){
   $('#ytCtl').style.display = full?'':'none';
   $('#ytCtlLite').style.display = full?'none':'';
 }
+/* URL貼り付け・YouTube検索結果クリックなど「自分から新しい動画を開く」操作の共通入口 */
+function watchLoadDirect(svc,id,vertical){
+  watchGen++;
+  if(svc!==watchSvc) watchTeardown();
+  watchSvc=svc; watchStageOn(svc,vertical);
+  if(svc==='youtube') Yt.load(id);
+  else if(svc==='vimeo') VimeoP.load(id);
+  else if(svc==='twitch') TwitchP.load(id);
+  send({t:'yt',a:'play',svc,id,time:0,vertical:!!vertical});
+}
 function watchLoadUrl(url){
   const hit=detectWatchUrl(url);
   if(!hit) return toast('対応していない動画のURLです（YouTube・Vimeo・Twitchに対応）');
-  if(hit.svc!==watchSvc) watchTeardown();
-  watchSvc=hit.svc; watchStageOn(hit.svc,hit.vertical);
-  if(hit.svc==='youtube') Yt.load(hit.id);
-  else if(hit.svc==='vimeo') VimeoP.load(hit.id);
-  else if(hit.svc==='twitch') TwitchP.load(hit.id);
-  send({t:'yt',a:'play',svc:hit.svc,id:hit.id,time:0,vertical:!!hit.vertical});
+  watchLoadDirect(hit.svc,hit.id,hit.vertical);
 }
 function applyYtMessage(m){
   if(m.a==='close'){ watchClose(false); return; }
+  watchGen++;
   const svc=m.svc||'youtube';
   if(svc!==watchSvc) watchTeardown();
   watchSvc=svc; watchStageOn(svc,m.vertical);
@@ -1990,9 +2081,21 @@ function applyYtMessage(m){
 function watchClose(notify){
   if(notify!==false) send({t:'yt',a:'close'});
   watchTeardown();
+  if(document.fullscreenElement===$('#ytStage')){ try{document.exitFullscreen()}catch(_){} }
   $('#ytStage').classList.remove('on'); $('#ytStage').classList.remove('vertical');
   $('#ytCtl').style.display='none'; $('#ytCtlLite').style.display='none'; $('#ytUrlIn').value='';
 }
+$('#btnYtFull').onclick=async()=>{
+  const el=$('#ytStage');
+  if(document.fullscreenElement===el){ try{ await document.exitFullscreen(); }catch(_){} }
+  else{
+    try{ await (el.requestFullscreen?el.requestFullscreen():Promise.reject()); }
+    catch(_){ toast('この端末では全画面表示に対応していません'); }
+  }
+};
+document.addEventListener('fullscreenchange',()=>{
+  $('#btnYtFull').classList.toggle('on', document.fullscreenElement===$('#ytStage'));
+});
 $('#btnYtLoad').onclick=()=>{
   const url=$('#ytUrlIn').value.trim(); if(!url) return;
   watchLoadUrl(url);
@@ -2026,11 +2129,7 @@ $('#btnYtSearch').onclick=async()=>{
       const sn=it.snippet||{};
       const b=document.createElement('button'); b.className='ytres';
       b.innerHTML=`<img src="${(sn.thumbnails&&sn.thumbnails.default&&sn.thumbnails.default.url)||''}"><span>${esc(sn.title||'')}</span>`;
-      b.onclick=()=>{
-        if(watchSvc!=='youtube') watchTeardown();
-        watchSvc='youtube'; watchStageOn('youtube',false);
-        Yt.load(id); send({t:'yt',a:'play',svc:'youtube',id,time:0,vertical:false});
-      };
+      b.onclick=()=>watchLoadDirect('youtube',id,false);
       box.appendChild(b);
     });
   }catch(e){
