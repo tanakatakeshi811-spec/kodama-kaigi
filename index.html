@@ -165,6 +165,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .msg .mh time{font-size:10.5px;color:#5f6a86;font-family:var(--mono)}
 .msg p{margin:0;font-size:13.5px;line-height:1.65;background:var(--panel);border:1px solid var(--line);padding:9px 11px;border-radius:11px;border-top-left-radius:3px;word-break:break-word;white-space:pre-wrap}
 .msg.sys p{background:transparent;border:none;padding:4px 0;color:var(--dim);font-size:12px;text-align:center}
+.msg.ai .mh b{color:#a78bfa}
+.msg.ai p{border-left:3px solid #a78bfa;background:rgba(167,139,250,.08)}
 .msg p a{color:var(--mint)}
 .chatImgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .chatImg{width:96px;height:96px;object-fit:cover;border-radius:9px;border:1px solid var(--line);cursor:pointer;transition:.15s}
@@ -321,6 +323,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button data-tab="make" class="on">会議を開く</button>
       <button data-tab="join">コードで参加</button>
       <button data-tab="find">さがす</button>
+      <button data-tab="persist">持続的会議</button>
     </div>
 
     <!-- 作成 -->
@@ -355,6 +358,21 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="row"><label class="f">表示名</label><input id="fName" class="in" maxlength="18" placeholder="なまえ"></div>
       <div class="list" id="roomList"><div class="empty">読み込み中…</div></div>
       <button class="btn ghost" id="btnRefresh">一覧を更新</button>
+    </div>
+
+    <!-- 持続的会議 -->
+    <div id="t-persist" hidden>
+      <div class="row"><label class="f">表示名</label><input id="pName" class="in" maxlength="18" placeholder="なまえ"></div>
+      <div class="list" id="persistList"><div class="empty">このブラウザで開いたことのある持続的会議はまだありません</div></div>
+      <div class="row"><label class="f">新しく始める場合の会議名</label><input id="pRoom" class="in" maxlength="30" placeholder="いつもの部活ミーティング"></div>
+      <div class="row">
+        <div class="sw" id="pPubSw">
+          <div><b style="font-size:13.5px">一覧に公開する</b><small>「さがす」から誰でも見つけられます</small></div>
+          <div class="toggle" id="pPub"></div>
+        </div>
+      </div>
+      <button class="btn primary" id="btnPersistNew">新しく持続的会議を始める</button>
+      <p class="hint">同じ合言葉で何度でも再開でき、チャット履歴とメンバーの記録を引き継げます（このブラウザがホスト役の間だけ有効です）。<br><b style="color:var(--amber)">合言葉が使い回されるので、知らない人が入ってこないよう基本的にロックをかけて使うことをおすすめします。</b></p>
     </div>
   </div>
 
@@ -394,12 +412,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
     <!-- チャット -->
     <aside class="side" id="sideChat">
-      <div class="sh"><b>チャット</b><button class="iconbtn" data-close="sideChat">✕</button></div>
+      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnAiSum" title="AIで要約">✨</button><button class="iconbtn" data-close="sideChat">✕</button></div>
       <div class="scroll" id="chatLog"></div>
       <div class="compose">
         <button id="btnPlus" title="添付・機能">＋</button>
         <button id="btnChatMic" title="音声入力">🎤</button>
-        <textarea id="chatIn" placeholder="メッセージ（Enterで送信）"></textarea>
+        <textarea id="chatIn" placeholder="メッセージ（Enterで送信・@AIでAIに質問）"></textarea>
         <button id="btnSend">➤</button>
       </div>
     </aside>
@@ -516,6 +534,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <div class="sec"><h4>外部サービス</h4>
       <div class="frow"><span>YouTube APIキー</span><input type="text" id="inYtKey" placeholder="任意（検索結果をアプリ内に表示）" style="max-width:220px"></div>
       <p class="hint" style="margin-top:-4px">Google Cloud Consoleで「YouTube Data API v3」を有効にしてAPIキーを発行すると、YouTube検索の結果がアプリの中に直接表示されるようになります（無料枠は1日あたり検索およそ100回程度）。未設定の場合は、これまで通り新しいタブでYouTube検索が開きます。</p>
+      <div class="frow"><span>Gemini APIキー</span><input type="text" id="inGeminiKey" placeholder="任意（チャットのAI機能に使用）" style="max-width:220px"></div>
+      <p class="hint" style="margin-top:-4px">Google AI Studio（aistudio.google.com）で無料発行できます。設定するとチャットで「@AI ○○」と話しかけて質問したり、「AIで要約」ボタンで会話をまとめたりできるようになります。呼び出しはあなたのキーを使って、あなたのブラウザから直接Geminiに送られます（未設定の間はAI機能は使えません）。</p>
     </div>
 
     <div class="sec"><h4>ショートカット</h4>
@@ -561,11 +581,23 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button class="btn ghost" id="plusPhoto">📷　写真を送る</button>
       <button class="btn ghost" id="plusLink">🔗　リンクを貼る</button>
       <button class="btn ghost" id="plusPoll">📊　アンケートを作る</button>
+      <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
 </div>
 <input type="file" id="photoFile" accept="image/*" multiple hidden>
+
+<!-- 放課後の居残りに招待 -->
+<div class="modal" id="mInokori">
+  <div class="sheet" style="max-width:360px">
+    <h3>放課後の居残りに誘う</h3>
+    <div class="sub">3D鬼ごっこゲーム。あちらの部屋コード（4文字）を入れてください</div>
+    <div class="row"><input class="in" id="inokoriCode" maxlength="4" placeholder="例：AB12" style="text-transform:uppercase"></div>
+    <button class="btn primary" id="btnInokoriSend">チャットに招待を貼る</button>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
+  </div>
+</div>
 
 <!-- アンケート作成 -->
 <div class="modal" id="mPoll">
@@ -657,7 +689,8 @@ const S={
   pin:null, unread:0, joined:false, shareTrack:null, t0:0, ac:null, meters:new Map(), rec:null, recOn:false, ptt:false,
   fx:{video:'none',voice:'none'}, ytState:null,
   itp:{lang:'ja-JP',to:'auto',tts:false,running:false},
-  roomSound:localStorage.getItem('kdm-roomsound')!=='0'
+  roomSound:localStorage.getItem('kdm-roomsound')!=='0',
+  persistent:false, persistMembers:[]
 };
 
 /* ---------- 小道具 ---------- */
@@ -674,12 +707,14 @@ function me(){return S.roster.find(p=>p.id===S.myId)||{color:'#5fe3c0',name:S.na
    ============================================================ */
 $$('.tabs button').forEach(b=>b.onclick=()=>{
   $$('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
-  ['make','join','find'].forEach(t=>$('#t-'+t).hidden = t!==b.dataset.tab);
+  ['make','join','find','persist'].forEach(t=>$('#t-'+t).hidden = t!==b.dataset.tab);
   if(b.dataset.tab==='find') Dir.search();
+  if(b.dataset.tab==='persist') renderPersistList();
 });
 const savedName=localStorage.getItem('kdm-name')||'';
-['#hName','#gName','#fName'].forEach(s=>$(s).value=savedName);
+['#hName','#gName','#fName','#pName'].forEach(s=>$(s).value=savedName);
 $('#hPubSw').onclick=()=>$('#hPub').classList.toggle('on');
+$('#pPubSw').onclick=()=>$('#pPub').classList.toggle('on');
 
 // コード入力欄
 const codeBoxes=$$('#codeIn input');
@@ -718,6 +753,16 @@ $('#btnJoin').onclick=async()=>{
   catch(e){ console.error(e); toast(e.message||'参加できませんでした'); $('#btnJoin').disabled=false; $('#btnJoin').textContent='参加する'; }
 };
 $('#btnRefresh').onclick=()=>Dir.search();
+$('#btnPersistNew').onclick=async()=>{
+  const n=$('#pName').value.trim(); if(!n) return toast('表示名を入れてください');
+  S.name=n; localStorage.setItem('kdm-name',n);
+  S.roomName=$('#pRoom').value.trim()||n+'の会議';
+  S.published=$('#pPub').classList.contains('on');
+  S.persistent=true;
+  $('#btnPersistNew').disabled=true; $('#btnPersistNew').textContent='準備中…';
+  try{ await startMedia(); await hostStart(); }
+  catch(e){ console.error(e); toast('開けませんでした：'+(e.message||e)); $('#btnPersistNew').disabled=false; $('#btnPersistNew').textContent='新しく持続的会議を始める'; }
+};
 
 /* ============================================================
    メディア（自分の送出ストリームは常に固定・中身を差し替える）
@@ -964,23 +1009,35 @@ function makePeer(id){
     p.on('error',e=>{clearTimeout(to);rej(e)});
   });
 }
-async function hostStart(){
+async function hostStart(opts){
+  opts=opts||{};
   let peer=null;
-  for(let i=0;i<6&&!peer;i++){
-    const code=genCode();
-    try{ peer=await makePeer(PREFIX+code); S.code=code; }
-    catch(e){ if(e.type!=='unavailable-id') throw e; }
+  if(opts.resumeCode){
+    try{ peer=await makePeer(PREFIX+opts.resumeCode); S.code=opts.resumeCode; }
+    catch(e){ throw new Error(e.type==='unavailable-id'?'この合言葉の会議はまだ使用中のようです。少し待ってからもう一度お試しください':(e.message||'再開できませんでした')); }
+  }else{
+    for(let i=0;i<6&&!peer;i++){
+      const code=genCode();
+      try{ peer=await makePeer(PREFIX+code); S.code=code; }
+      catch(e){ if(e.type!=='unavailable-id') throw e; }
+    }
+    if(!peer) throw new Error('空いている合言葉が見つかりません');
   }
-  if(!peer) throw new Error('空いている合言葉が見つかりません');
   S.peer=peer; S.myId=peer.id; S.isHost=true;
+  if(S.persistent){
+    const saved=loadPersistData(S.code);
+    if(saved){ S.chat=saved.chat||[]; S.persistMembers=saved.members||[]; if(opts.resumeCode) S.roomName=saved.roomName||S.roomName; }
+  }
   addRoster({id:S.myId,name:S.name,host:true,audio:S.audio,video:S.video,hand:false,share:false});
   peer.on('connection',conn=>hostAccept(conn));
   peer.on('call',call=>answer(call));
   peer.on('error',e=>{ if(e.type==='peer-unavailable')return; console.warn(e); });
   peer.on('disconnected',()=>{ setNet(false); peer.reconnect(); });
   enterMeeting();
+  if(S.chat.length) renderChat();
   if(S.published) Dir.publish();
-  sysBroadcast('会議を開きました。合言葉は '+S.code+' です');
+  if(S.persistent) savePersistData();
+  sysBroadcast(opts.resumeCode?'持続的会議を再開しました。合言葉は '+S.code+' です':'会議を開きました。合言葉は '+S.code+' です');
 }
 function hostAccept(conn){
   conn.on('open',()=>{
@@ -988,11 +1045,13 @@ function hostAccept(conn){
     if(S.roster.length>=12){ conn.send({t:'denied',why:'満員です'}); setTimeout(()=>conn.close(),400); return; }
     const nm=((conn.metadata&&conn.metadata.name)||'ゲスト').slice(0,18);
     S.conns.set(conn.peer,conn);
-    addRoster({id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false});
+    const newP={id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false};
+    addRoster(newP);
     conn.send({t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked},
                roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState});
     broadcast({t:'roster',roster:S.roster});
     sysBroadcast(nm+' が参加しました','join',conn.peer);
+    if(S.persistent) notePersistMember(nm,newP.color);
   });
   conn.on('data',d=>hostHandle(conn.peer,d));
   conn.on('close',()=>dropPeer(conn.peer));
@@ -1003,6 +1062,7 @@ function dropPeer(id){
   S.conns.delete(id); S.roster=S.roster.filter(x=>x.id!==id);
   killCall(id);
   if(p) sysBroadcast(p.name+' が退出しました','leave',id);
+  if(p&&S.persistent) notePersistMember(p.name,p.color);
   broadcast({t:'roster',roster:S.roster});
   renderTiles(); renderPpl();
 }
@@ -1023,9 +1083,10 @@ function hostHandle(from,m){
       p.name=String(m.name||'').slice(0,18)||p.name; deliver({t:'roster',roster:S.roster}); break;
     case 'chat':{
       const imgs=Array.isArray(m.imgs)?m.imgs.filter(s=>typeof s==='string'&&s.startsWith('data:image/')).slice(0,4):[];
-      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,2000),imgs,ts:Date.now()};
-      if(!msg.text&&!imgs.length)break; S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
-      deliver({t:'chat',msg}); break;}
+      const invite=(m.invite&&INVITE_GAMES[m.invite.game])?{game:m.invite.game,code:String(m.invite.code||'').toUpperCase().slice(0,8)}:null;
+      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,4000),imgs,ai:!!m.ai,invite,ts:Date.now()};
+      if(!msg.text&&!imgs.length&&!invite)break; S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
+      deliver({t:'chat',msg}); schedulePersistSave(); break;}
     case 'cap':
       deliver({t:'cap',from,name:p.name,color:p.color,text:String(m.text||'').slice(0,400),final:!!m.final,lang:m.lang}); break;
     case 'react':
@@ -1036,12 +1097,12 @@ function hostHandle(from,m){
       if(!q||opts.length<2)break;
       const poll={poll:true,id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,7),q,opts,votes:{},from,name:p.name,color:p.color,ts:Date.now()};
       S.chat.push(poll); if(S.chat.length>300)S.chat.shift();
-      deliver({t:'poll',poll}); break;}
+      deliver({t:'poll',poll}); schedulePersistSave(); break;}
     case 'vote':{
       const entry=S.chat.find(c=>c.poll&&c.id===m.id); if(!entry)break;
       const opt=+m.opt; if(!(opt>=0&&opt<entry.opts.length))break;
       entry.votes[from]=opt;
-      deliver({t:'pollVote',id:entry.id,votes:entry.votes}); break;}
+      deliver({t:'pollVote',id:entry.id,votes:entry.votes}); schedulePersistSave(); break;}
     case 'yt':{
       const a=String(m.a||''); const id=String(m.id||'').slice(0,64); const time=+m.time||0;
       const svc=['youtube','vimeo','twitch'].includes(m.svc)?m.svc:'youtube';
@@ -1311,6 +1372,18 @@ function linkify(text){
   }
   return esc(text).replace(/(https?:\/\/[^\s]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
+/* 他プロジェクト（放課後の居残り等）への招待カード。既存のリンクカードのスタイルをそのまま流用 */
+const INVITE_GAMES={
+  inokori:{icon:'🏃',title:'放課後の居残り',url:'https://tanakatakeshi811-spec.github.io/houkago-inokori/'}
+};
+function renderInviteCard(m){
+  const info=INVITE_GAMES[m.invite.game]; if(!info) return '';
+  const code=esc(m.invite.code||'');
+  return `<a href="${esc(info.url)}" target="_blank" rel="noopener" class="linkcard">
+    <span class="lc-ico">${info.icon}</span>
+    <span class="lc-body"><b>${esc(m.name)}さんが「${info.title}」に誘っています</b><small>部屋コード：${code}　${esc(info.url)}</small></span>
+  </a>`;
+}
 function renderPollCard(poll){
   const wrap=document.createElement('div');
   wrap.className='pollCard'; wrap.dataset.pollId=poll.id;
@@ -1338,10 +1411,12 @@ function addChatEl(m){
   if(m.sys){ d.className='msg sys'; d.innerHTML=`<p>${esc(m.text)}</p>`; }
   else if(m.poll){ d.className='msg'; d.appendChild(renderPollCard(m)); }
   else{
-    d.className='msg';
+    d.className='msg'+(m.ai?' ai':'');
     const body=m.text?linkify(m.text):'';
     const imgsHtml=(m.imgs&&m.imgs.length)?`<div class="chatImgs">${m.imgs.map(src=>`<img src="${src}" class="chatImg">`).join('')}</div>`:'';
-    d.innerHTML=`<div class="mh"><b style="color:${m.color}">${esc(m.name)}</b><time>${new Date(m.ts).toTimeString().slice(0,5)}</time></div>${body?`<p>${body}</p>`:''}${imgsHtml}`;
+    const inviteHtml=m.invite?renderInviteCard(m):'';
+    const dispName=m.ai?'✨ AI':esc(m.name);
+    d.innerHTML=`<div class="mh"><b style="color:${m.ai?'':m.color}">${dispName}</b><time>${new Date(m.ts).toTimeString().slice(0,5)}</time></div>${body?`<p>${body}</p>`:''}${imgsHtml}${inviteHtml}`;
     if(imgsHtml) d.querySelectorAll('.chatImg').forEach(img=>img.onclick=()=>openImgViewer(img.src));
   }
   l.appendChild(d); l.scrollTop=l.scrollHeight;
@@ -1354,6 +1429,67 @@ function sysBroadcast(t,kind,aboutId){ /* ホストだけが発行できるお�
   const msg={sys:true,text:t,kind,aboutId,ts:Date.now()};
   S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
   deliver({t:'chat',msg});
+}
+
+/* ============================================================
+   持続的会議：専用サーバーが無い設計上、実体は「ホスト役のブラウザのlocalStorage」。
+   同じブラウザが同じ合言葉で会議を開き直した時だけ、メンバーの記録とチャット履歴を復元する
+   （＝ホスト役のブラウザを一度も開かない限り、本当の意味では会議は存在しない制約は残る）
+   ============================================================ */
+const PERSIST_PREFIX='kdm-persist-', PERSIST_LIST_KEY='kdm-persist-list';
+function persistList(){
+  try{ return JSON.parse(localStorage.getItem(PERSIST_LIST_KEY)||'[]'); }catch(_){ return []; }
+}
+function loadPersistData(code){
+  try{ const raw=localStorage.getItem(PERSIST_PREFIX+code); return raw?JSON.parse(raw):null; }catch(_){ return null; }
+}
+function savePersistData(){
+  if(!S.isHost||!S.persistent||!S.code) return;
+  try{
+    const data={
+      roomName:S.roomName,
+      chat:S.chat.filter(m=>!m.imgs||!m.imgs.length).slice(-100), // 画像はlocalStorage容量を圧迫するので保存対象から外す
+      members:S.persistMembers||[],
+      ts:Date.now()
+    };
+    localStorage.setItem(PERSIST_PREFIX+S.code, JSON.stringify(data));
+    const list=persistList().filter(x=>x.code!==S.code);
+    list.unshift({code:S.code,name:S.roomName,members:data.members.length,ts:Date.now()});
+    localStorage.setItem(PERSIST_LIST_KEY, JSON.stringify(list.slice(0,20)));
+  }catch(_){}
+}
+function notePersistMember(name,color){
+  if(!S.isHost||!S.persistent) return;
+  S.persistMembers=S.persistMembers||[];
+  const ex=S.persistMembers.find(x=>x.name===name);
+  if(ex){ ex.lastSeen=Date.now(); if(color) ex.color=color; }
+  else S.persistMembers.push({name,color,lastSeen:Date.now()});
+  savePersistData();
+}
+let persistSaveT=null;
+function schedulePersistSave(){
+  if(!S.isHost||!S.persistent) return;
+  clearTimeout(persistSaveT); persistSaveT=setTimeout(savePersistData,2000);
+}
+function renderPersistList(){
+  const box=$('#persistList'); const list=persistList();
+  if(!list.length){ box.innerHTML='<div class="empty">このブラウザで開いたことのある持続的会議はまだありません</div>'; return; }
+  box.innerHTML='';
+  list.forEach(entry=>{
+    const b=document.createElement('button'); b.className='room';
+    const d=new Date(entry.ts);
+    b.innerHTML=`<div class="rn"><b>${esc(entry.name||'会議')}</b><span>${esc(entry.code)}・${d.getMonth()+1}/${d.getDate()} 更新</span></div><div class="pill">${entry.members||0}人</div>`;
+    b.onclick=async()=>{
+      const n=$('#pName').value.trim(); if(!n) return toast('表示名を入れてください');
+      S.name=n; localStorage.setItem('kdm-name',n);
+      S.published=$('#pPub').classList.contains('on');
+      S.persistent=true;
+      b.disabled=true;
+      try{ await startMedia(); await hostStart({resumeCode:entry.code}); }
+      catch(e){ console.error(e); toast(e.message||'再開できませんでした'); b.disabled=false; }
+    };
+    box.appendChild(b);
+  });
 }
 /* 入退室サウンド（音声ファイルは使わずWeb AudioのOscillatorNodeでその場で組み立てる） */
 function chime(notes,{dur=0.32,gap=0.075,type='sine',peak=0.16}={}){
@@ -1718,10 +1854,12 @@ $$('[data-close]').forEach(b=>b.onclick=()=>togglePanel(b.dataset.close));
 $$('[data-closemodal]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
 $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m)m.classList.remove('on'); });
 
-// チャット送信
+// チャット送信（先頭が「@AI 」ならAIへの質問として扱い、通常送信のあとに返信を投げる）
 function sendChat(){
   const t=$('#chatIn').value.trim(); if(!t)return;
   send({t:'chat',text:t}); $('#chatIn').value=''; $('#chatIn').style.height='42px';
+  const aiMatch=t.match(/^@AI\s+([\s\S]+)/i);
+  if(aiMatch) askAI(aiMatch[1].trim());
 }
 $('#btnSend').onclick=sendChat;
 $('#chatIn').onkeydown=e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();} };
@@ -1747,6 +1885,17 @@ $('#btnPollSend').onclick=()=>{
   send({t:'poll',q,opts});
   $('#mPoll').classList.remove('on');
 };
+$('#plusInokori').onclick=()=>{
+  $('#mPlus').classList.remove('on'); $('#inokoriCode').value='';
+  $('#mInokori').classList.add('on'); setTimeout(()=>$('#inokoriCode').focus(),50);
+};
+$('#btnInokoriSend').onclick=()=>{
+  const code=$('#inokoriCode').value.trim().toUpperCase();
+  if(code.length<4) return toast('部屋コードを入力してください');
+  send({t:'chat',text:'',invite:{game:'inokori',code}});
+  $('#mInokori').classList.remove('on');
+};
+$('#inokoriCode').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnInokoriSend').click(); } };
 
 // 写真の送信（送信前にリサイズ・圧縮してbase64化。1枚あたり長辺1280px・JPEG品質0.72程度）
 function resizeImageToDataURL(file,maxSide,quality){
@@ -2147,6 +2296,60 @@ $('#inYtKey').onchange=e=>{
   toast(v?'YouTube APIキーを保存しました':'YouTube APIキーを削除しました');
 };
 
+/* ============================================================
+   チャットのAI機能（Gemini API）
+   呼び出しは常に「その操作をした本人のブラウザ」から、本人が設定したAPIキーで直接行う
+   （ホストが代理実行することはしない）。モデル名は固定バージョンではなく、
+   Google公式の自動更新エイリアス gemini-flash-latest を使うことで、
+   モデルの世代が変わってもURLを書き換えずに済むようにしている
+   ============================================================ */
+function geminiApiKey(){ return (localStorage.getItem('kdm-gemini-key')||'').trim(); }
+$('#inGeminiKey').value=geminiApiKey();
+$('#inGeminiKey').onchange=e=>{
+  const v=e.target.value.trim();
+  if(v) localStorage.setItem('kdm-gemini-key',v); else localStorage.removeItem('kdm-gemini-key');
+  toast(v?'Gemini APIキーを保存しました':'Gemini APIキーを削除しました');
+};
+async function callGemini(prompt){
+  const key=geminiApiKey();
+  if(!key) throw new Error('APIキーが設定されていません');
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-goog-api-key':key},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
+  });
+  let d; try{ d=await r.json(); }catch(_){ d=null; }
+  if(!r.ok || (d&&d.error)) throw new Error((d&&d.error&&d.error.message)||('HTTP '+r.status));
+  const parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
+  const text=parts.map(p=>p.text||'').join('').trim();
+  if(!text) throw new Error('空の応答でした（安全フィルタ等でブロックされた可能性があります）');
+  return text;
+}
+async function askAI(question){
+  if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  try{
+    const reply=await callGemini('あなたはビデオ会議アプリのチャットに参加しているアシスタントです。次の質問に、チャットで読みやすいよう簡潔に日本語で答えてください。\n\n質問：'+question);
+    send({t:'chat',text:reply,ai:true});
+  }catch(e){
+    console.warn(e);
+    toast('AIの応答に失敗しました：'+(e.message||'不明なエラー'));
+  }
+}
+$('#btnAiSum').onclick=async()=>{
+  if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  const recent=S.chat.filter(m=>!m.sys&&!m.poll).slice(-40);
+  if(!recent.length) return toast('まだ要約できるチャットがありません');
+  const transcript=recent.map(m=>`${m.ai?'AI':m.name}: ${m.text||(m.imgs&&m.imgs.length?'[画像]':'')}`).join('\n');
+  toast('要約を作成しています…');
+  try{
+    const reply=await callGemini('次はビデオ会議アプリのチャットログです。話の流れが分かるように、簡潔に日本語で要約してください。\n\n'+transcript);
+    send({t:'chat',text:'📋 会話の要約\n\n'+reply,ai:true});
+  }catch(e){
+    console.warn(e);
+    toast('要約に失敗しました：'+(e.message||'不明なエラー'));
+  }
+};
+
 /* Google検索（うまく行けばDuckDuckGoのInstant Answer APIでアプリ内に回答を出す。
    キー不要でCORS対応している唯一の汎用検索APIだが「インスタント回答」止まりで、
    Googleと同じ検索結果一覧が出せるわけではない点は割り切り。ダメなら正直に新しいタブへ） */
@@ -2184,7 +2387,7 @@ addEventListener('keydown',e=>{
   else if(e.code==='Space'&&!S.ptt&&!S.audio){ e.preventDefault(); S.ptt=true; setMic(true); toast('話しています…',900); }
 });
 addEventListener('keyup',e=>{ if(e.code==='Space'&&S.ptt){ S.ptt=false; setMic(false); } });
-addEventListener('beforeunload',e=>{ if($('#meet').classList.contains('on')){ e.preventDefault(); e.returnValue=''; } });
+addEventListener('beforeunload',e=>{ if(S.persistent) savePersistData(); if($('#meet').classList.contains('on')){ e.preventDefault(); e.returnValue=''; } });
 
 /* ============================================================
    公開一覧（ディレクトリ：最初に公開した人がハブ役を務める）
