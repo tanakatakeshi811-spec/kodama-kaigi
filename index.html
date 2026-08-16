@@ -70,6 +70,11 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .code-in input{width:58px;height:70px;text-align:center;font-family:var(--mono);font-size:30px;font-weight:700;text-transform:uppercase;background:#0c1120;border:1px solid var(--line);border-radius:14px;color:var(--txt)}
 .code-in input:focus{border-color:var(--mint);outline:none;box-shadow:0 0 0 4px rgba(95,227,192,.12)}
 .hint{color:var(--dim);font-size:12px;line-height:1.7;margin-top:12px}
+.ytRateRow{display:flex;align-items:center;gap:9px;margin-top:12px;justify-content:center}
+.ytRateLabel{font-size:11.5px;color:var(--dim);white-space:nowrap}
+#ytRateSlider{flex:1;max-width:170px;accent-color:var(--mint)}
+#ytRateVal{font-size:12px;font-family:var(--mono);color:var(--mint);min-width:48px;text-align:right}
+#ytRateInput{width:66px;padding:5px 6px;border-radius:7px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:12px;text-align:center}
 .list{display:flex;flex-direction:column;gap:9px;max-height:330px;overflow:auto;margin-bottom:14px}
 .room{display:flex;align-items:center;gap:13px;padding:13px;background:#0c1120;border:1px solid var(--line);border-radius:12px;text-align:left;width:100%;transition:.16s}
 .room:hover{border-color:var(--mint-d);transform:translateX(2px)}
@@ -125,6 +130,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .grid.pinmode .tile{flex:0 0 148px;height:100px}
 .grid.pinmode .tile.pin{order:-1;flex:1 0 100%;height:calc(100% - 112px);min-height:180px}
 .tile{position:relative;background:#0b0f1c;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;aspect-ratio:16/9;min-height:0;cursor:pointer;transition:box-shadow .18s,border-color .18s}
+.tile.screenTile{border-color:var(--mint-d)}
 .grid.pinmode .tile{aspect-ratio:auto}
 .tile.speaking{border-color:var(--mint);box-shadow:0 0 0 2px rgba(95,227,192,.35),0 0 26px rgba(95,227,192,.18)}
 .tile video{width:100%;height:100%;object-fit:cover;display:block;background:#0b0f1c}
@@ -169,6 +175,18 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .jaOpts button.sel{border-color:var(--coral);color:var(--coral);background:rgba(255,95,116,.12)}
 .jaHint{font-size:10.5px;color:var(--dim);margin-top:8px}
 @media (max-width:760px){#jinroActionBox{width:160px;left:8px;top:58px}}
+/* ソフトクリームモード中の本物のカメラ映像プレビュー（画面共有の自分プレビューと同じ実装パターン）。
+   両者が同時に出ても重ならないよう、あえて逆側の隅（右下）に配置している */
+#softcreamSelfPreview{position:fixed;right:14px;bottom:96px;width:150px;background:rgba(10,13,22,.94);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:24;display:none}
+#softcreamSelfPreview.on{display:block;animation:modalBgIn .18s ease}
+#softcreamSelfPreview video{width:100%;aspect-ratio:4/3;object-fit:cover;background:#000;display:block}
+#softcreamSelfPreview.mirror video{transform:scaleX(-1)}
+#softcreamSelfPreview .ssp-info{padding:6px 9px}
+#softcreamSelfPreview .ssp-info b{font-size:10.5px;color:var(--amber);font-weight:700}
+@media (max-width:760px){#softcreamSelfPreview{width:104px;right:8px;bottom:88px}}
+/* FPS・通信状況の簡易デバッグ表示 */
+#debugOverlay{position:fixed;left:10px;bottom:96px;background:rgba(6,9,16,.8);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--mint);z-index:22;display:none;pointer-events:none;line-height:1.7;white-space:nowrap}
+#debugOverlay.on{display:block}
 /* ワードウルフ・人狼ゲーム共通のカードスタイル（既存のじゃんけんカードを踏襲） */
 .wwCard,.jinroCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
 .wwDesc{font-size:12.5px;color:var(--dim);line-height:1.6;margin:4px 0 8px}
@@ -525,6 +543,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <div class="jaOpts" id="jaOpts"></div>
         <div class="jaHint" id="jaHint"></div>
       </div>
+      <!-- ソフトクリームモード中、アバターだけでは分からなくなる本人の素の表情を確認できる小さいプレビュー -->
+      <div id="softcreamSelfPreview">
+        <video id="softcreamSelfVideo" autoplay playsinline muted></video>
+        <div class="ssp-info"><b>🍦 本物のカメラ映像</b></div>
+      </div>
+      <!-- FPS・通信状況の簡易デバッグ表示（設定でONにした時だけ） -->
+      <div id="debugOverlay"></div>
     </div>
 
     <!-- チャット -->
@@ -570,15 +595,25 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
           <div style="display:flex;gap:8px">
             <input class="in" id="ytUrlIn" placeholder="YouTube・Vimeo・TwitchのURL">
             <button class="btn primary" id="btnYtLoad" style="width:auto;padding:0 16px">開く</button>
+            <button class="btn ghost" id="btnYtSave" style="width:auto;padding:0 14px" title="今のURL（または再生中の動画）を保存">保存</button>
           </div>
           <p class="hint">YouTube・Vimeo・Twitchに対応。ニコニコ動画やTikTokは外部からの再生制御に公式対応していないため今回は見送っています</p>
+        </div>
+        <div class="row"><label class="f">保存済み</label>
+          <div class="list" id="ytSavedList"><div class="empty">保存した動画はまだありません</div></div>
         </div>
         <div id="ytCtl" style="display:none">
           <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
             <button class="btn ghost" id="btnYtPlay" style="width:auto;padding:8px 14px;font-size:13px">再生／一時停止</button>
             <button class="btn ghost" id="btnYtClose" style="width:auto;padding:8px 14px;font-size:13px">閉じる</button>
           </div>
-          <p class="hint" style="text-align:center">画面の上のほうで、みんなの画面に同期して再生されています</p>
+          <div class="ytRateRow" title="右クリックで数値を直接入力できます">
+            <span class="ytRateLabel">再生速度</span>
+            <input type="range" id="ytRateSlider" min="0.25" max="2" step="0.05" value="1" aria-label="再生速度スライダー（右クリックで数値入力）">
+            <input type="number" id="ytRateInput" min="0.1" max="4" step="0.05" style="display:none" aria-label="再生速度を数値で入力">
+            <span id="ytRateVal">1.00x</span>
+          </div>
+          <p class="hint" style="text-align:center">画面の上のほうで、みんなの画面に同期して再生されています。再生速度も全員そろいます（右クリックで細かい数値を直接入力できます）</p>
         </div>
         <div id="ytCtlLite" style="display:none">
           <div style="display:flex;gap:8px;margin-top:6px;justify-content:center">
@@ -620,6 +655,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="frow"><span>カメラ</span><select id="selCam"></select></div>
       <div class="frow"><span>スピーカー</span><select id="selSpk"></select></div>
       <div class="frow"><span>ノイズ抑制・エコー除去</span><div class="toggle on" id="swNs"></div></div>
+      <div class="frow"><span>映像・音声がおかしい時</span><button class="btn ghost" id="btnReloadMedia" style="width:auto;padding:7px 14px;font-size:12px">🔄　カメラ・マイクを再読み込み</button></div>
+      <p class="hint" style="margin-top:-4px">会議から抜けたりページを再読み込みしたりせずに、その場でカメラ・マイクを取得し直します。映像や音声が急に映らなくなった・固まった時にお試しください。</p>
     </div>
 
     <div class="sec"><h4>字幕</h4>
@@ -638,6 +675,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <div class="sec"><h4>表示</h4>
       <div class="frow"><span>自分の映像を鏡にする</span><div class="toggle on" id="swMirror"></div></div>
       <div class="frow"><span>入退室サウンド</span><div class="toggle on" id="swRoomSound"></div></div>
+      <div class="frow"><span>FPS・通信状況を表示</span><div class="toggle" id="swDebug"></div></div>
       <div class="frow"><span>表示名</span><input type="text" id="inName" maxlength="18"></div>
     </div>
 
@@ -713,18 +751,31 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 <div class="modal" id="mPlus">
   <div class="sheet" style="max-width:340px">
     <h3>チャットに追加</h3>
-    <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px">
-      <button class="btn ghost" id="plusPhoto">📷　写真を送る</button>
-      <button class="btn ghost" id="plusFile">📎　ファイルを送る</button>
-      <button class="btn ghost" id="plusLink">🔗　リンクを貼る</button>
-      <button class="btn ghost" id="plusPoll">📊　アンケートを作る</button>
-      <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
-      <button class="btn ghost" id="plusLoc">📍　位置情報を共有</button>
-      <button class="btn ghost" id="plusJanken">✊　じゃんけんで決める</button>
-      <button class="btn ghost" id="plusWb">🖊　ホワイトボード</button>
-      <button class="btn ghost" id="plusKaraoke">🎤　カラオケ</button>
-      <button class="btn ghost" id="plusWW">🐺　ワードウルフ</button>
-      <button class="btn ghost" id="plusJinro">🌙　人狼ゲーム（簡易版）</button>
+    <div class="sec" style="margin-top:10px;margin-bottom:14px">
+      <h4>送る・共有する</h4>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn ghost" id="plusPhoto">📷　写真を送る</button>
+        <button class="btn ghost" id="plusFile">📎　ファイルを送る</button>
+        <button class="btn ghost" id="plusLink">🔗　リンクを貼る</button>
+        <button class="btn ghost" id="plusLoc">📍　位置情報を共有</button>
+      </div>
+    </div>
+    <div class="sec" style="margin-bottom:14px">
+      <h4>決める・話し合う</h4>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn ghost" id="plusPoll">📊　アンケートを作る</button>
+        <button class="btn ghost" id="plusJanken">✊　じゃんけんで決める</button>
+        <button class="btn ghost" id="plusWb">🖊　ホワイトボード</button>
+      </div>
+    </div>
+    <div class="sec" style="margin-bottom:0">
+      <h4>みんなで遊ぶ</h4>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <button class="btn ghost" id="plusKaraoke">🎤　カラオケ</button>
+        <button class="btn ghost" id="plusWW">🐺　ワードウルフ</button>
+        <button class="btn ghost" id="plusJinro">🌙　人狼ゲーム（簡易版）</button>
+        <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
+      </div>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
@@ -903,6 +954,7 @@ const S={
   name:'', code:'', roomName:'', isHost:false, published:false, locked:false,
   peer:null, myId:'', conns:new Map(), hostConn:null,
   roster:[], calls:new Map(), streams:new Map(), chat:[], capLog:[],
+  screenCalls:new Map(), screenStreams:new Map(), _selfScreenStream:null,
   out:null, camTrack:null, micTrack:null, blackTrack:null, silentTrack:null,
   audio:true, video:true, hand:false, sharing:false,
   devices:{mic:'',cam:'',spk:''}, ns:true, mirror:true,
@@ -917,7 +969,8 @@ const S={
   wbStrokes:[], wbBuf:new Map(), wbOpen:false,
   recording:false,
   ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0,
-  miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[]
+  miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[],
+  debugOn:localStorage.getItem('kdm-debug')==='1', pingMs:null
 };
 /* ホスト権威で管理する各ミニゲームの「秘密の」内部台帳。S本体（全員に配布されうる公開状態）とは
    別に持ち、ホスト以外のクライアントでは常にnullのまま（＝他人の役職・単語は原理的にJSレベルでも保持しない） */
@@ -1304,29 +1357,43 @@ function drawEffect(ctx,v,x,y,w,h,mode,fit){
   }
   if(fit==='contain') drawContain(ctx,v,x,y,w,h); else drawCover(ctx,v,x,y,w,h);
 }
+/* カメラの映像エフェクト（モザイク・黒塗り・ソフトクリーム・背景合成）専用の合成canvas。
+   画面共有は別チャネルの独立タイル方式に変わったため、以前のような「画面共有とカメラをこの中で
+   1本の映像に合成する」役割は無くなり、Compは純粋に「カメラ映像にエフェクトをかける」ためだけの
+   ものになった（既存のエフェクト機能への影響を避けるため、あえて構造は温存している） */
 const Comp={
-  canvas:null, ctx:null, camVideo:null, shareVideo:null, raf:null, timer:null, running:false, stream:null, track:null, _camT:null, _shareT:null,
+  canvas:null, ctx:null, camVideo:null, raf:null, timer:null, running:false, stream:null, track:null, _camT:null,
   ensure(){
     if(this.canvas) return;
     this.canvas=document.createElement('canvas'); this.canvas.width=1280; this.canvas.height=720;
     this.ctx=this.canvas.getContext('2d',{alpha:false});
     this.camVideo=document.createElement('video'); this.camVideo.muted=true; this.camVideo.playsInline=true;
-    this.shareVideo=document.createElement('video'); this.shareVideo.muted=true; this.shareVideo.playsInline=true;
+  },
+  /* カメラ・画面共有の生映像を映す中継用<video>は、映像のみ(音声トラック無し)のMediaStreamだと
+     バックグラウンドタブでのデコード自体をブラウザに止められやすい（Chromeは「音声トラックを持つ動画」を
+     優先的にデコードし続ける傾向があるとWebSearchで確認）ため、無音のダミー音声トラック(S.silentTrack、
+     既存の出力プレースホルダーと同じもの)をあえて一緒に添えて「音声付きの動画」に見せかけている
+     （<video>自体はmuted=trueなので実際に音が鳴ることはない） */
+  makeSrcStream(videoTrack){
+    const tracks=[videoTrack]; if(S.silentTrack) tracks.push(S.silentTrack);
+    return new MediaStream(tracks);
   },
   start(){
     this.ensure();
-    if(S.camTrack && this._camT!==S.camTrack){ this._camT=S.camTrack; this.camVideo.srcObject=new MediaStream([S.camTrack]); this.camVideo.play().catch(()=>{}); }
+    if(S.camTrack && this._camT!==S.camTrack){ this._camT=S.camTrack; this.camVideo.srcObject=this.makeSrcStream(S.camTrack); this.camVideo.play().catch(()=>{}); }
     if(!S.camTrack){ this._camT=null; this.camVideo.srcObject=null; }
-    if(S.shareTrack && this._shareT!==S.shareTrack){ this._shareT=S.shareTrack; this.shareVideo.srcObject=new MediaStream([S.shareTrack]); this.shareVideo.play().catch(()=>{}); }
-    if(!S.shareTrack){ this._shareT=null; this.shareVideo.srcObject=null; }
     this.running=true;
     this.drive();
   },
   stop(){ this.running=false; if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; } if(this.timer){ clearInterval(this.timer); this.timer=null; } },
   /* タブが非表示（document.hidden）になるとブラウザがrequestAnimationFrameを大幅に間引く／止めることがあり、
-     画面共有中はそれがそのままcanvas合成の更新停止→canvas.captureStream()が同じ静止フレームを送り続ける
-     ＝相手から見て「画面共有が止まって見える」原因になる。見た目の描画頻度が落ちるのは許容し、
-     「映像データ自体が完全に止まる」ことだけは避けるため、非表示中だけsetIntervalへ駆動源を切り替える */
+     エフェクト適用中はそれがそのままcanvas合成の更新停止→canvas.captureStream()が同じ静止フレームを
+     送り続ける原因になる。見た目の描画頻度が落ちるのは許容し、「映像データ自体が完全に止まる」ことだけは
+     避けるため、非表示中だけsetIntervalへ駆動源を切り替える。（なお実測・WebSearchでの裏取りにより、
+     PeerJS/WebRTCの接続が生きている間はChromeの「バックグラウンドタブの間引きタイマー」自体は基本的に
+     免除されると分かっているが、それとは別の複数の要因が重なっていた可能性があるため、下記の
+     requestFrame()・上記の疑似音声トラックと合わせて多層的に対策している。画面共有自体は別チャネルの
+     独立コールに変わったため、この対策の直接の対象では無くなった） */
   drive(){
     if(!this.running) return;
     if(this.raf){ cancelAnimationFrame(this.raf); this.raf=null; }
@@ -1339,25 +1406,23 @@ const Comp={
     }
   },
   draw(){
+    // 稀にブラウザ側が中継用<video>を勝手に一時停止してしまうことがあるための自己修復
+    // （既に再生中ならplay()は何もしないので、毎フレーム呼んでも無害）
+    if(this.camVideo.srcObject && this.camVideo.paused) this.camVideo.play().catch(()=>{});
     const c=this.ctx, w=this.canvas.width, h=this.canvas.height;
     c.fillStyle='#0b0f1c'; c.fillRect(0,0,w,h);
-    if(S.sharing && this.shareVideo.videoWidth){
-      drawContain(c,this.shareVideo,0,0,w,h);
-      if(S.video && S.camTrack && this.camVideo.videoWidth){
-        const pw=Math.round(w*0.22), ph=Math.round(pw*9/16), px=w-pw-24, py=h-ph-24;
-        c.save(); roundRectPath(c,px,py,pw,ph,10); c.clip();
-        drawEffect(c,this.camVideo,px,py,pw,ph,S.fx.video,pickFit(this.camVideo.videoWidth,this.camVideo.videoHeight,pw,ph));
-        c.restore();
-        c.lineWidth=3; c.strokeStyle='rgba(233,237,247,.85)'; roundRectPath(c,px,py,pw,ph,10); c.stroke();
-      }
-    }else if(S.fx.video!=='none' && this.camVideo.videoWidth){
+    if(S.fx.video!=='none' && this.camVideo.videoWidth){
       drawEffect(c,this.camVideo,0,0,w,h,S.fx.video,pickFit(this.camVideo.videoWidth,this.camVideo.videoHeight,w,h));
     }
+    // canvas.captureStream()自体の自動フレーム送出タイマーもバックグラウンドタブで間引かれることがある
+    // （Chromiumの既知の挙動）ため、フレームを描くたびに明示的にrequestFrame()で「今すぐ送って」と念押しする。
+    // 対応していないブラウザでは単に無視されるだけなので、安全に併用できる
+    if(this.track && typeof this.track.requestFrame==='function'){ try{ this.track.requestFrame(); }catch(_){} }
   }
 };
 document.addEventListener('visibilitychange',()=>{ if(Comp.running) Comp.drive(); });
 function rebuildVideoPipeline(){
-  const needCompose = S.sharing || S.fx.video!=='none';
+  const needCompose = S.fx.video!=='none';
   if(needCompose){
     Comp.start();
     if(!Comp.stream){ Comp.stream=Comp.canvas.captureStream(24); Comp.track=Comp.stream.getVideoTracks()[0]; }
@@ -1366,6 +1431,7 @@ function rebuildVideoPipeline(){
     Comp.stop();
     replaceOut('video', S.camTrack||S.blackTrack);
   }
+  if(typeof updateSoftcreamPreview==='function') updateSoftcreamPreview();
 }
 
 /* ============================================================
@@ -1466,6 +1532,36 @@ $('#selSpk').onchange=e=>{
   S.devices.spk=e.target.value;
   $$('#grid video').forEach(v=>{ if(v.setSinkId) v.setSinkId(e.target.value).catch(()=>{}); });
 };
+/* カメラ・マイクの再読み込み。startMedia()の初回取得とほぼ同じ処理だが、
+   S.outを作り直さず（既にPeer接続やrenderTilesから参照されているため）既存のS.micTrack/S.camTrackを
+   止めてから新しいトラックへ差し替え、replaceOut()を内部で呼ぶVoiceFX.apply()/rebuildVideoPipeline()に
+   反映を任せる、という選択中のデバイス切り替え(selMic/selCam)と全く同じ流れにしている */
+async function reloadMedia(){
+  const btn=$('#btnReloadMedia'); if(btn) btn.disabled=true;
+  toast('カメラ・マイクを再読み込みしています…');
+  let gotAudio=false, gotVideo=false;
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({
+      audio:{echoCancellation:S.ns,noiseSuppression:S.ns,autoGainControl:S.ns},
+      video:{width:{ideal:1280},height:{ideal:720}}
+    });
+    const newMic=st.getAudioTracks()[0]||null, newCam=st.getVideoTracks()[0]||null;
+    if(newMic){ if(S.micTrack)S.micTrack.stop(); newMic.enabled=S.audio; S.micTrack=newMic; gotAudio=true; }
+    if(newCam){ if(S.camTrack)S.camTrack.stop(); newCam.enabled=S.video; S.camTrack=newCam; gotVideo=true; }
+  }catch(e){
+    // 映像＋音声同時での取得に失敗したら、音声だけでも取れないか試す（startMedia()の初回フォールバックと同じ考え方）
+    try{
+      const a=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:S.ns,noiseSuppression:S.ns,autoGainControl:S.ns}});
+      const newMic=a.getAudioTracks()[0]||null;
+      if(newMic){ if(S.micTrack)S.micTrack.stop(); newMic.enabled=S.audio; S.micTrack=newMic; gotAudio=true; }
+    }catch(_){}
+  }
+  VoiceFX.apply(S.fx.voice); rebuildVideoPipeline(); meterLocal(); listDevices();
+  if(btn) btn.disabled=false;
+  if(gotAudio||gotVideo) toast('再読み込みしました'+(!gotVideo?'（カメラは取得できませんでした）':!gotAudio?'（マイクは取得できませんでした）':''));
+  else toast('カメラ・マイクを取得できませんでした。他のアプリで使用中でないかご確認ください');
+}
+$('#btnReloadMedia').onclick=reloadMedia;
 
 /* ============================================================
    ホスト
@@ -1503,7 +1599,7 @@ async function hostStart(opts){
   }
   addRoster({id:S.myId,name:S.name,host:true,audio:S.audio,video:S.video,hand:false,share:false});
   peer.on('connection',conn=>hostAccept(conn));
-  peer.on('call',call=>answer(call));
+  peer.on('call',handleIncomingCall);
   peer.on('error',e=>{ if(e.type==='peer-unavailable')return; console.warn(e); });
   peer.on('disconnected',()=>{ setNet(false); peer.reconnect(); });
   enterMeeting();
@@ -1700,8 +1796,10 @@ function hostHandle(from,m){
       const a=String(m.a||''); const id=String(m.id||'').slice(0,64); const time=+m.time||0;
       const svc=['youtube','vimeo','twitch'].includes(m.svc)?m.svc:'youtube';
       const vertical=!!m.vertical;
-      if(a==='close') S.ytState=null; else S.ytState={a,id:id||(S.ytState&&S.ytState.id)||'',svc,vertical,time,ts:Date.now()};
-      deliver({t:'yt',a,id,svc,vertical,time}); break;}
+      const rate=(m.rate!=null && isFinite(+m.rate))?Math.max(0.1,Math.min(4,+m.rate)):((S.ytState&&S.ytState.rate)||1);
+      if(a==='close') S.ytState=null;
+      else S.ytState={a:a==='rate'?((S.ytState&&S.ytState.a)||'play'):a, id:id||(S.ytState&&S.ytState.id)||'', svc, vertical, time, rate, ts:Date.now()};
+      deliver({t:'yt',a,id,svc,vertical,time,rate}); break;}
     case 'wbStroke':{
       // ホストは検証・整形だけ行い、実際の記録(S.wbStrokes積み上げ)は他の全メッセージ同様onMessage側でホスト自身も含めて統一して行う
       const id=String(m.id||'').slice(0,40); if(!id) break;
@@ -1834,6 +1932,8 @@ function hostHandle(from,m){
       const aliveCount=Object.keys(HostSecret.alive).filter(k=>HostSecret.alive[k]).length;
       if(Object.keys(HostSecret.dayVotes).length>=aliveCount) jinroCloseVote(m.id);
       schedulePersistSave(); break;}
+    case 'ping':
+      hostSendTo(from,{t:'pong',ts:m.ts}); break;
     case 'mod':
       if(from!==S.myId) break;
       break;
@@ -1954,7 +2054,7 @@ async function guestJoin(code){
   const peer=await makePeer();
   S.peer=peer; S.myId=peer.id; S.isHost=false; S.code=code;
   let settled=false; // denied/locked拒否など、閉じる理由が既にはっきりしている場合は close時の二重案内を出さない
-  peer.on('call',call=>answer(call));
+  peer.on('call',handleIncomingCall);
   peer.on('error',e=>{ if(e.type==='peer-unavailable'&&!S.joined){ toast('その合言葉の会議は見つかりません'); bail(); } });
   const conn=peer.connect(PREFIX+code,{metadata:{name:S.name},reliable:true,serialization:'json'});
   S.hostConn=conn;
@@ -1973,7 +2073,7 @@ async function guestJoin(code){
       if(m.yt && m.yt.id){
         let time=m.yt.time||0;
         if(m.yt.a==='play') time+=Math.max(0,(Date.now()-m.yt.ts)/1000);
-        applyYtMessage({a:m.yt.a==='pause'?'pause':'play', id:m.yt.id, svc:m.yt.svc, vertical:m.yt.vertical, time});
+        applyYtMessage({a:m.yt.a==='pause'?'pause':'play', id:m.yt.id, svc:m.yt.svc, vertical:m.yt.vertical, time, rate:m.yt.rate});
       }
       return;
     }
@@ -2127,12 +2227,22 @@ function onMessage(m){
       S.jinroRole=null; S.jinroWolves=null; S.jinroWolfMateIds=null; S.jinroSeerResults=[];
       jinroRenderAction();
       break;}
+    case 'pong':
+      if(!S.isHost){ S.pingMs=Date.now()-m.ts; updateDebugOverlay(); } // ホストは自分自身へのpingなので測定対象外
+      break;
   }
 }
 
 /* ============================================================
    メディア接続（映像・音声はメッシュ）
    ============================================================ */
+/* 着信コールの振り分け：画面共有用コール(metadata.kind==='screen')かどうかで処理を分ける。
+   画面共有はカメラ・音声の通常コールとは別チャネルの、受信専用（answer()には何も渡さない＝
+   こちらから送り返すものが無い）一方向コールとして扱う */
+function handleIncomingCall(call){
+  if(call.metadata && call.metadata.kind==='screen') answerScreenCall(call);
+  else answer(call);
+}
 function answer(call){
   call.answer(S.out);
   bindCall(call);
@@ -2151,6 +2261,7 @@ function killCall(id){
   const m=S.meters.get(id); if(m&&m.ctxSrc){try{m.ctxSrc.disconnect()}catch(_){}}
   S.meters.delete(id);
   if(S.recording) RecAudio.removeTrack(id);
+  killScreenCall(id); S.screenStreams.delete(id);
 }
 function ensureCalls(){
   if(!S.peer) return;
@@ -2162,6 +2273,58 @@ function ensureCalls(){
     }
   });
   [...S.calls.keys()].forEach(id=>{ if(!S.roster.some(p=>p.id===id)) killCall(id); });
+}
+/* ============================================================
+   画面共有専用のコール（カメラ・音声とは独立したチャネル）
+   カメラと画面共有を1本の映像トラックに無理やり合成する（旧Comp方式）のではなく、
+   共有中の本人が、繋がっている全員へ「画面共有専用の受信専用コール」を個別に発信する形にした。
+   これにより受信側はカメラのタイルとは別に「〇〇さんの画面」という独立したタイルを持てる
+   ============================================================ */
+function answerScreenCall(call){
+  const id=call.peer;
+  call.answer(); // 受信専用。こちらから送り返す映像は無い
+  const old=S.screenCalls.get('recv:'+id); if(old&&old!==call){ try{old.close()}catch(_){} }
+  S.screenCalls.set('recv:'+id,call);
+  call.on('stream',st=>{ S.screenStreams.set(id,st); renderTiles(true); });
+  call.on('close',()=>{ S.screenStreams.delete(id); S.screenCalls.delete('recv:'+id); renderTiles(true); });
+  call.on('error',()=>{});
+}
+function ensureScreenCalls(){
+  if(!S.peer) return;
+  if(S.sharing && S.shareTrack){
+    if(!S._selfScreenStream || S._selfScreenStream.getVideoTracks()[0]!==S.shareTrack) S._selfScreenStream=new MediaStream([S.shareTrack]);
+    S.roster.forEach(p=>{
+      if(p.id===S.myId) return;
+      const key='send:'+p.id;
+      if(!S.screenCalls.has(key)){
+        try{
+          const call=S.peer.call(p.id,S._selfScreenStream,{metadata:{kind:'screen'}});
+          S.screenCalls.set(key,call);
+          call.on('close',()=>{ if(S.screenCalls.get(key)===call) S.screenCalls.delete(key); });
+          call.on('error',()=>{});
+        }catch(_){}
+      }
+    });
+  }
+  // 送信中(send:)・受信中(recv:)どちらも、相手がロスターから消えたら後始末する
+  // （自分が共有していない時でも、他人からの受信中コールの掃除は毎回行う必要があるため早期returnの外に置く）
+  [...S.screenCalls.keys()].forEach(key=>{
+    const id=key.slice(key.indexOf(':')+1);
+    if(!S.roster.some(p=>p.id===id)){ const c=S.screenCalls.get(key); if(c) try{c.close()}catch(_){} S.screenCalls.delete(key); S.screenStreams.delete(id); }
+  });
+}
+function killScreenCall(id){
+  ['send:'+id,'recv:'+id].forEach(key=>{
+    const c=S.screenCalls.get(key); if(c) try{c.close()}catch(_){}
+    S.screenCalls.delete(key);
+  });
+}
+function stopAllOutgoingScreenCalls(){
+  [...S.screenCalls.keys()].forEach(key=>{
+    if(!key.startsWith('send:')) return;
+    const c=S.screenCalls.get(key); if(c) try{c.close()}catch(_){}
+    S.screenCalls.delete(key);
+  });
 }
 
 /* ============================================================
@@ -2179,7 +2342,45 @@ function enterMeeting(){
   $('#cCam').classList.toggle('off',!S.video);
   S.t0=Date.now(); setInterval(tick,1000); setNet(true);
   meterLocal(); loop(); syncViewportHeight();
+  applyDebugOverlay(); // 設定が既にONだった場合、入室と同時に自動で有効化する
 }
+/* ============================================================
+   デバッグ表示（FPS・ping）。デフォルトOFFの軽量な補助表示。
+   FPS: 専用のrequestAnimationFrameループで1秒ごとに算出（他の合成用rAFループとは独立）
+   Ping: 既存のhostSendTo()を使い、3秒おきに{t:'ping'}を送って{t:'pong'}が返るまでの時間を測る。
+   ゲストは実際にP2Pデータチャネルを1往復するので意味のある値になるが、ホスト自身への送信は
+   ネットワークを介さず即座にonMessageへ渡る設計のため、ホストの時は測定対象外として表示する
+   ============================================================ */
+let fpsRaf=null, fpsFrames=0, fpsLast=0, fpsValue=0, pingTimer=null;
+function fpsTick(now){
+  fpsFrames++;
+  if(now-fpsLast>=1000){ fpsValue=Math.round(fpsFrames*1000/(now-fpsLast)); fpsFrames=0; fpsLast=now; updateDebugOverlay(); }
+  fpsRaf=requestAnimationFrame(fpsTick);
+}
+function startFpsLoop(){ if(fpsRaf) return; fpsLast=performance.now(); fpsRaf=requestAnimationFrame(fpsTick); }
+function stopFpsLoop(){ if(fpsRaf){ cancelAnimationFrame(fpsRaf); fpsRaf=null; } }
+function startPingLoop(){
+  if(pingTimer||S.isHost) return; // ホストは測定対象外なので回さない
+  const tick=()=>{ if(S.hostConn&&S.hostConn.open) send({t:'ping',ts:Date.now()}); };
+  tick(); pingTimer=setInterval(tick,3000);
+}
+function stopPingLoop(){ if(pingTimer){ clearInterval(pingTimer); pingTimer=null; } }
+function updateDebugOverlay(){
+  const el=$('#debugOverlay'); if(!el||!el.classList.contains('on')) return;
+  const pingText=S.isHost?'—（ホストのため対象外）':(S.pingMs!=null?S.pingMs+'ms':'計測中…');
+  el.innerHTML=`FPS: ${fpsValue}<br>Ping: ${pingText}`;
+}
+function applyDebugOverlay(){
+  $('#debugOverlay').classList.toggle('on',S.debugOn);
+  if(S.debugOn){ startFpsLoop(); startPingLoop(); updateDebugOverlay(); }
+  else{ stopFpsLoop(); stopPingLoop(); }
+}
+$('#swDebug').classList.toggle('on',S.debugOn);
+$('#swDebug').onclick=()=>{
+  S.debugOn=!S.debugOn; $('#swDebug').classList.toggle('on',S.debugOn);
+  localStorage.setItem('kdm-debug',S.debugOn?'1':'0');
+  applyDebugOverlay();
+};
 /* ソフトキーボードが開閉すると visualViewport のサイズが変わるのに
    position:fixed の #meet が追従できず、入力欄がキーボードとの間に浮く問題への対策。
    iOS/Android両方で、開閉を繰り返しても毎回ズレなく追従するよう複数の経路から再計算する */
@@ -2247,9 +2448,11 @@ const tileResizeObserver=new ResizeObserver(entries=>{
 });
 function renderTiles(soft){
   const g=$('#grid');
-  const ids=S.roster.map(p=>p.id);
-  // 不要タイル削除
-  [...g.children].forEach(el=>{ if(!ids.includes(el.dataset.id)) el.remove(); });
+  const camIds=S.roster.map(p=>p.id);
+  const shareIds=S.roster.filter(p=>p.share).map(p=>p.id+':screen');
+  const validIds=new Set([...camIds,...shareIds]);
+  // 不要タイル削除（カメラタイル・画面共有タイルの両方を対象に）
+  [...g.children].forEach(el=>{ if(!validIds.has(el.dataset.id)) el.remove(); });
   S.roster.forEach(p=>{
     let el=g.querySelector(`[data-id="${p.id}"]`);
     if(!el){
@@ -2281,8 +2484,9 @@ function renderTiles(soft){
     el.querySelector('.cdot').style.background=p.color;
     el.querySelector('.av i').style.background=p.color;
     el.querySelector('.av i').textContent=initial(p.name);
-    el.classList.toggle('camoff', !(p.video||p.share));
-    el.classList.toggle('mirror', p.id===S.myId && S.mirror && !S.sharing);
+    // 画面共有とカメラは別タイルに分離したので、カメラタイルのON/OFFは純粋にカメラの状態だけで判定する
+    el.classList.toggle('camoff', !p.video);
+    el.classList.toggle('mirror', p.id===S.myId && S.mirror);
     el.classList.toggle('pin', S.pin===p.id);
     if(p.id===S.myId) el.classList.toggle('recording', S.recording);
     const f=el.querySelector('.tflags'); f.innerHTML='';
@@ -2290,9 +2494,37 @@ function renderTiles(soft){
     if(p.share) f.innerHTML+='<i>🖥</i>';
     if(p.hand) f.innerHTML+='<i>✋</i>';
   });
+  // 画面共有タイル：カメラとは完全に独立した別タイルとして、共有中の人ごとに1枚ずつ追加する
+  S.roster.filter(p=>p.share).forEach(p=>{
+    const sid=p.id+':screen';
+    let el=g.querySelector(`[data-id="${sid}"]`);
+    if(!el){
+      el=document.createElement('div'); el.className='tile screenTile'; el.dataset.id=sid;
+      el.innerHTML=`<video autoplay playsinline ${p.id===S.myId?'muted':''}></video>
+        <div class="tname"><span class="cdot"></span><span class="nm"></span></div>
+        <button class="pinb" title="ピン留め" aria-label="このタイルをピン留め">📌</button>`;
+      const togglePin=()=>{ S.pin=S.pin===sid?null:sid; renderTiles(); };
+      el.querySelector('.pinb').onclick=e=>{ e.stopPropagation(); togglePin(); };
+      el.onclick=e=>{ if(e.target.closest('button')) return; togglePin(); };
+      g.appendChild(el);
+      tileResizeObserver.observe(el);
+    }
+    const v=el.querySelector('video');
+    let stream=null;
+    if(p.id===S.myId){
+      if(S.shareTrack){
+        if(!S._selfScreenStream || S._selfScreenStream.getVideoTracks()[0]!==S.shareTrack) S._selfScreenStream=new MediaStream([S.shareTrack]);
+        stream=S._selfScreenStream;
+      }
+    }else stream=S.screenStreams.get(p.id);
+    if(stream && v.srcObject!==stream){ v.srcObject=stream; v.play().catch(()=>{}); v.onloadedmetadata=()=>updateTileFit(el,v); }
+    el.querySelector('.nm').textContent='🖥 '+(p.id===S.myId?'あなた':p.name)+'の画面';
+    el.querySelector('.cdot').style.background=p.color;
+    el.classList.toggle('pin', S.pin===sid);
+  });
   g.classList.toggle('pinmode',!!S.pin);
   $('#pplN').textContent=S.roster.length;
-  if(!soft) ensureCalls(); else ensureCalls();
+  ensureCalls(); ensureScreenCalls();
 }
 function renderPpl(){
   const l=$('#pplList'); l.innerHTML='';
@@ -3117,7 +3349,9 @@ $('#cShare').onclick=async()=>{
   try{
     const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15},audio:true});
     const t=st.getVideoTracks()[0];
-    S.shareTrack=t; S.sharing=true; rebuildVideoPipeline();
+    S.shareTrack=t; S.sharing=true;
+    // カメラ・音声とは別チャネルの「画面共有専用コール」を全員へ発信し、独立したタイルとして届ける
+    ensureScreenCalls(); renderTiles(true);
     $('#cShare').classList.add('act'); sendState();
     updateShareSelfPreview();
     t.onended=stopShare;
@@ -3126,25 +3360,42 @@ $('#cShare').onclick=async()=>{
 function stopShare(){
   if(!S.sharing) return;
   if(S.shareTrack)S.shareTrack.stop();
-  S.sharing=false; S.shareTrack=null; rebuildVideoPipeline();
+  S.sharing=false; S.shareTrack=null; S._selfScreenStream=null;
+  stopAllOutgoingScreenCalls();
   if(S.camTrack)S.camTrack.enabled=S.video;
   $('#cShare').classList.remove('act'); sendState(); renderTiles(true);
   updateShareSelfPreview();
 }
 /* 画面共有中、自分が何を共有しているか自分でも一目で分かる小さいプレビュー。
-   S.out（=合成後の実際の送出映像。カメラワイプ込み）をそのまま映すことで
-   「相手に実際に見えているもの」と完全に同じ内容を表示する */
+   画面共有は独立チャネル(S._selfScreenStream)になったため、それをそのまま映すことで
+   「相手に実際に見えているもの」と完全に同じ内容を表示する（以前はS.outを流用していたが、
+   S.outはもうカメラ専用になったため、この変更に合わせて参照先を差し替えた） */
 function updateShareSelfPreview(){
   const el=$('#shareSelfPreview');
-  if(S.sharing){
+  if(S.sharing && S.shareTrack){
+    if(!S._selfScreenStream || S._selfScreenStream.getVideoTracks()[0]!==S.shareTrack) S._selfScreenStream=new MediaStream([S.shareTrack]);
     el.classList.add('on');
     const v=$('#shareSelfVideo');
-    if(v.srcObject!==S.out){ v.srcObject=S.out; v.play().catch(()=>{}); }
+    if(v.srcObject!==S._selfScreenStream){ v.srcObject=S._selfScreenStream; v.play().catch(()=>{}); }
   }else{
     el.classList.remove('on');
   }
 }
 $('#shareSelfStop').onclick=()=>stopShare();
+/* ソフトクリームモード中、自分のタイルがアバターに置き換わって素の表情が誰にも見えなくなる分、
+   画面共有の自分プレビューと全く同じ実装パターンで、本物のカメラ映像だけを小さく別枠に出す。
+   S.out（合成後）ではなくS.camTrack（生のカメラ）を直接映す点が画面共有プレビューとの違い */
+function updateSoftcreamPreview(){
+  const el=$('#softcreamSelfPreview'); if(!el) return;
+  const active=S.fx.video==='softcream' && !!S.camTrack;
+  if(active){
+    el.classList.add('on'); el.classList.toggle('mirror',S.mirror);
+    const v=$('#softcreamSelfVideo');
+    if(!v.srcObject || v.srcObject.getVideoTracks()[0]!==S.camTrack){ v.srcObject=new MediaStream([S.camTrack]); v.play().catch(()=>{}); }
+  }else{
+    el.classList.remove('on');
+  }
+}
 $('#cCap').onclick=()=>{ setCaps(!S.capsOn); };
 function setCaps(on){
   if(on && chatRecOn) stopChatMic();
@@ -3929,7 +4180,7 @@ $('#swTr').onclick=()=>{ S.trOn=!S.trOn; $('#swTr').classList.toggle('on',S.trOn
 $('#selTr').onchange=e=>S.trTo=e.target.value;
 $('#selEng').onchange=e=>S.engine=e.target.value;
 $('#rgSize').oninput=e=>{ S.capSize=+e.target.value; document.documentElement.style.setProperty('--capsize',S.capSize+'px'); };
-$('#swMirror').onclick=()=>{ S.mirror=!S.mirror; $('#swMirror').classList.toggle('on',S.mirror); renderTiles(true); };
+$('#swMirror').onclick=()=>{ S.mirror=!S.mirror; $('#swMirror').classList.toggle('on',S.mirror); renderTiles(true); updateSoftcreamPreview(); };
 $('#swRoomSound').classList.toggle('on',S.roomSound);
 $('#swRoomSound').onclick=()=>{
   S.roomSound=!S.roomSound; $('#swRoomSound').classList.toggle('on',S.roomSound);
@@ -3990,7 +4241,7 @@ const Yt={ // YouTube（IFrame Player API）
       freshPlayerHost();
       this.player=new YT.Player('ytPlayer',{
         videoId:id, playerVars:{rel:0,playsinline:1},
-        events:{ onStateChange:e=>this.onState(e) }
+        events:{ onStateChange:e=>this.onState(e), onPlaybackRateChange:e=>this.onRateChange(e.data) }
       });
     });
   },
@@ -3999,7 +4250,23 @@ const Yt={ // YouTube（IFrame Player API）
     if(e.data===YT.PlayerState.PLAYING) send({t:'yt',a:'play',svc:'youtube',id:this.videoId,time:this.player.getCurrentTime()});
     else if(e.data===YT.PlayerState.PAUSED) send({t:'yt',a:'pause',svc:'youtube',id:this.videoId,time:this.player.getCurrentTime()});
   },
+  /* setPlaybackRate()に細かい値を渡しても、YouTube側が動画ごとに決まった段階(0.25/0.5/…/2倍あたり)に
+     丸めてしまう仕様（着手前にWebSearchで確認）。「何倍を指定したか」ではなく「実際に何倍になったか」を
+     この公式イベント経由で受け取り、それをUIにも他の参加者への同期にも使う設計にした */
+  onRateChange(rate){
+    updateRateUI(rate);
+    if(this.applyingRemote) return;
+    send({t:'yt',a:'rate',svc:'youtube',id:this.videoId,rate});
+  },
+  setRate(rate){ if(this.player&&this.player.setPlaybackRate){ try{ this.player.setPlaybackRate(rate); }catch(_){} } },
   remote(m){
+    if(m.a==='rate'){
+      if(m.rate==null) return;
+      this.applyingRemote=true;
+      this.setRate(+m.rate);
+      setTimeout(()=>{this.applyingRemote=false},500);
+      return;
+    }
     if(!m.id) return;
     if(this.videoId!==m.id || !this.player) this.load(m.id);
     const gen=watchGen;
@@ -4015,6 +4282,7 @@ const Yt={ // YouTube（IFrame Player API）
         }else if(m.a==='pause'){
           this.player.seekTo(m.time,true); this.player.pauseVideo();
         }
+        if(m.rate!=null) this.setRate(+m.rate);
         setTimeout(()=>{this.applyingRemote=false},500);
       };
       if(this.player && this.player.getPlayerState) go(); else setTimeout(go,600);
@@ -4049,13 +4317,35 @@ const VimeoP={ // Vimeo（公式 @vimeo/player、YouTubeと同じくpostMessage�
       this.player=new Vimeo.Player('ytPlayer',{id:+id,width:640,height:360});
       this.player.on('play',()=>this.onState('play'));
       this.player.on('pause',()=>this.onState('pause'));
+      this.player.on('playbackratechange',d=>this.onRateChange(d&&d.playbackRate));
     });
   },
   onState(kind){
     if(this.applyingRemote||!this.player) return;
     this.player.getCurrentTime().then(t=>send({t:'yt',a:kind,svc:'vimeo',id:this.videoId,time:t})).catch(()=>{});
   },
+  /* Vimeoは0.5〜2倍の範囲で任意の細かい値をそのまま受け付けてくれる（YouTubeのような段階への
+     丸めは無い）が、setPlaybackRate自体がVimeo Pro/Business等の有料プランの動画でしか使えない
+     API仕様（着手前にWebSearchで確認）。無料プランの動画では失敗するので、その場合は
+     「この動画では対応していません」と正直に案内するだけに留め、無理な代替策は取らない */
+  setRate(rate){
+    if(!this.player||!this.player.setPlaybackRate) return;
+    this.player.setPlaybackRate(rate).catch(()=>{ toast('この動画では再生速度の変更に対応していません（Vimeo側の制限です）'); });
+  },
+  onRateChange(rate){
+    if(rate==null) return;
+    updateRateUI(rate);
+    if(this.applyingRemote) return;
+    send({t:'yt',a:'rate',svc:'vimeo',id:this.videoId,rate});
+  },
   remote(m){
+    if(m.a==='rate'){
+      if(m.rate==null) return;
+      this.applyingRemote=true;
+      this.setRate(+m.rate);
+      setTimeout(()=>{this.applyingRemote=false},500);
+      return;
+    }
     if(!m.id) return;
     if(this.videoId!==String(m.id) || !this.player) this.load(m.id);
     const gen=watchGen;
@@ -4072,6 +4362,7 @@ const VimeoP={ // Vimeo（公式 @vimeo/player、YouTubeと同じくpostMessage�
             this.player.setCurrentTime(m.time).catch(()=>{});
             this.player.pause().catch(()=>{});
           }
+          if(m.rate!=null) this.setRate(+m.rate);
         }).catch(()=>{}).finally(()=>{ setTimeout(()=>{this.applyingRemote=false},400); });
       },300);
     });
@@ -4116,6 +4407,7 @@ function watchStageOn(svc,vertical){
   const full=svc==='youtube'||svc==='vimeo';
   $('#ytCtl').style.display = full?'':'none';
   $('#ytCtlLite').style.display = full?'none':'';
+  updateRateUI(1); // 新しい動画を開くタイミングでの呼び出しなので、表示上いったん等倍に戻しておく（実際の速度は後続のyt/rateメッセージで上書きされる）
 }
 /* URL貼り付け・YouTube検索結果クリックなど「自分から新しい動画を開く」操作の共通入口 */
 function watchLoadDirect(svc,id,vertical){
@@ -4134,8 +4426,16 @@ function watchLoadUrl(url){
 }
 function applyYtMessage(m){
   if(m.a==='close'){ watchClose(false); return; }
-  watchGen++;
   const svc=m.svc||'youtube';
+  // 再生速度だけの変更は、再生中の動画の読み込み状態(watchGen)に一切触れない。
+  // ここでwatchGen++やwatchTeardown()を呼ぶと、たまたま読み込み中だった別の動画の
+  // whenReadyコールバックを誤って無効化してしまう恐れがあるため、素通しでプレイヤーに委譲するだけにする
+  if(m.a==='rate'){
+    if(svc==='youtube') Yt.remote(m);
+    else if(svc==='vimeo') VimeoP.remote(m);
+    return;
+  }
+  watchGen++;
   if(svc!==watchSvc) watchTeardown();
   watchSvc=svc; watchStageOn(svc,m.vertical);
   if(svc==='youtube') Yt.remote(m);
@@ -4170,6 +4470,106 @@ $('#btnYtPlay').onclick=()=>{
 };
 $('#btnYtClose').onclick=()=>watchClose();
 $('#btnYtClose2').onclick=()=>watchClose();
+
+/* 再生速度：スライダーは見た目こそ滑らかに動くが、実際に反映される値はサービス側の制約
+   （YouTubeは動画ごとに決まった段階に丸められる、Vimeoは対応プランでないと失敗する）に従う。
+   「指定した値」ではなく「実際に適用された値」をonRateChange経由で受け取ってUIに描き直す設計 */
+function applyWatchRate(rate){
+  rate=Math.max(0.1,Math.min(4,+rate||1));
+  if(watchSvc==='youtube') Yt.setRate(rate);
+  else if(watchSvc==='vimeo') VimeoP.setRate(rate);
+  else if(watchSvc==='twitch') toast('Twitchでは再生速度の変更に対応していません');
+}
+function updateRateUI(rate){
+  rate=+rate||1;
+  const sliderMax=2, sliderMin=0.25;
+  const clamped=Math.max(sliderMin,Math.min(sliderMax,rate));
+  $('#ytRateSlider').value=clamped;
+  const outOfRange=Math.abs(rate-clamped)>0.001;
+  $('#ytRateVal').textContent=rate.toFixed(2)+'x'+(outOfRange?'（範囲外）':'');
+}
+let ytRateApplyT=null;
+$('#ytRateSlider').addEventListener('input',()=>{
+  const v=+$('#ytRateSlider').value;
+  $('#ytRateVal').textContent=v.toFixed(2)+'x';
+  clearTimeout(ytRateApplyT);
+  ytRateApplyT=setTimeout(()=>applyWatchRate(v),150); // ドラッグ中に叩きすぎないよう軽くデバウンス
+});
+$('#ytRateSlider').addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  $('#ytRateInput').value=$('#ytRateSlider').value;
+  $('#ytRateInput').style.display=''; $('#ytRateSlider').style.display='none';
+  $('#ytRateInput').focus(); $('#ytRateInput').select();
+});
+function ytRateInputCommit(){
+  const v=Math.max(0.1,Math.min(4,+$('#ytRateInput').value||1));
+  $('#ytRateInput').style.display='none'; $('#ytRateSlider').style.display='';
+  applyWatchRate(v);
+}
+$('#ytRateInput').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ e.preventDefault(); ytRateInputCommit(); }
+  else if(e.key==='Escape'){ $('#ytRateInput').style.display='none'; $('#ytRateSlider').style.display=''; }
+});
+$('#ytRateInput').addEventListener('blur',ytRateInputCommit);
+
+/* ============================================================
+   動画URLの保存（各自の端末のlocalStorageのみ。参加者間では共有しない個人用のブックマーク）
+   タイトルはYouTube/Vimeoが提供する認証不要のoEmbedエンドポイントで取得を試みるだけに留め、
+   取得できなくてもURL・IDの表示だけで動作するようにしている（無理に頑張らない、という判断）
+   ============================================================ */
+const YT_SAVED_KEY='kdm-yt-saved';
+function ytSavedList(){ try{ return JSON.parse(localStorage.getItem(YT_SAVED_KEY)||'[]'); }catch(_){ return []; } }
+function ytSavedSave(list){ localStorage.setItem(YT_SAVED_KEY, JSON.stringify(list.slice(0,30))); }
+function currentWatchUrl(){
+  const typed=$('#ytUrlIn').value.trim();
+  if(typed) return typed;
+  if(watchSvc==='youtube'&&Yt.videoId) return 'https://www.youtube.com/watch?v='+Yt.videoId;
+  if(watchSvc==='vimeo'&&VimeoP.videoId) return 'https://vimeo.com/'+VimeoP.videoId;
+  return '';
+}
+async function fetchOEmbedTitle(svc,url){
+  const ep = svc==='youtube' ? 'https://www.youtube.com/oembed?format=json&url='+encodeURIComponent(url)
+           : svc==='vimeo' ? 'https://vimeo.com/api/oembed.json?url='+encodeURIComponent(url) : null;
+  if(!ep) return null;
+  try{ const r=await fetch(ep); if(!r.ok) return null; const d=await r.json(); return (d&&d.title)?String(d.title).slice(0,120):null; }
+  catch(_){ return null; }
+}
+async function saveCurrentWatchUrl(){
+  const url=currentWatchUrl();
+  if(!url) return toast('保存するURLがありません（URL欄に入力するか、動画を再生した状態でお試しください）');
+  const hit=detectWatchUrl(url);
+  if(!hit) return toast('対応していない動画のURLです（YouTube・Vimeo・Twitchに対応）');
+  const list=ytSavedList();
+  if(list.some(x=>x.svc===hit.svc&&x.id===hit.id)) return toast('すでに保存済みです');
+  const entry={svc:hit.svc,id:hit.id,url,title:null,ts:Date.now()};
+  list.unshift(entry); ytSavedSave(list); renderYtSaved();
+  toast('保存しました');
+  const title=await fetchOEmbedTitle(hit.svc,url); // タイトル取得は非同期・失敗しても保存自体は既に成功している
+  if(title){
+    const l2=ytSavedList(); const found=l2.find(x=>x.svc===entry.svc&&x.id===entry.id);
+    if(found){ found.title=title; ytSavedSave(l2); renderYtSaved(); }
+  }
+}
+function renderYtSaved(){
+  const box=$('#ytSavedList'); if(!box) return;
+  const list=ytSavedList();
+  if(!list.length){ box.innerHTML='<div class="empty">保存した動画はまだありません</div>'; return; }
+  box.innerHTML='';
+  const svcLabel={youtube:'YouTube',vimeo:'Vimeo',twitch:'Twitch'};
+  list.forEach(entry=>{
+    const row=document.createElement('div'); row.className='room-row';
+    const b=document.createElement('button'); b.className='room';
+    const label=entry.title||((svcLabel[entry.svc]||entry.svc)+'：'+entry.id);
+    b.innerHTML=`<div class="rn"><b>${esc(label)}</b><span>${esc(svcLabel[entry.svc]||entry.svc)}</span></div>`;
+    b.onclick=()=>{ $('#ytUrlIn').value=entry.url; watchLoadDirect(entry.svc,entry.id,false); };
+    const del=document.createElement('button'); del.className='roomExport'; del.title='削除' ; del.setAttribute('aria-label','この保存を削除'); del.textContent='✕';
+    del.onclick=e=>{ e.stopPropagation(); ytSavedSave(ytSavedList().filter(x=>!(x.svc===entry.svc&&x.id===entry.id))); renderYtSaved(); };
+    row.appendChild(b); row.appendChild(del);
+    box.appendChild(row);
+  });
+}
+$('#btnYtSave').onclick=saveCurrentWatchUrl;
+renderYtSaved();
 
 /* YouTube検索：APIキーがあればアプリ内に結果一覧を表示、なければ新しいタブで検索を開く */
 function ytApiKey(){ return (localStorage.getItem('kdm-yt-key')||'').trim(); }
