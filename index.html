@@ -288,6 +288,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .gres a{color:var(--mint);font-size:12px;word-break:break-all}
 .gres.link{color:var(--mint);font-weight:600}
 .gres.link:hover{border-color:var(--mint-d);background:#111a2c}
+.gres-sources{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.gres-sources a{font-size:11.5px;color:var(--dim);text-decoration:none;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 10px;word-break:break-all}
+.gres-sources a:hover{color:var(--mint);border-color:var(--mint-d)}
 .compose{display:flex;gap:8px;padding:11px;border-top:1px solid var(--line);align-items:flex-end}
 .compose textarea{flex:1;resize:none;height:42px;max-height:110px;background:#0c1120;border:1px solid var(--line);border-radius:11px;padding:11px 12px;font-size:13.5px;line-height:1.4;transition:.15s}
 .compose textarea:focus{outline:none;border-color:var(--mint-d)}
@@ -296,6 +299,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 #btnChatMic,#btnPlus{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
 #btnChatMic:hover,#btnPlus:hover{background:#243050;color:var(--txt)}
 #btnChatMic.on{background:rgba(95,227,192,.16);color:var(--mint);border-color:rgba(95,227,192,.4)}
+#btnSearchMic{width:44px;height:42px;border-radius:11px;background:var(--panel2);color:var(--dim);border:1px solid var(--line);display:grid;place-items:center;flex:0 0 auto;font-size:16px;transition:.15s}
+#btnSearchMic:hover{background:#243050;color:var(--txt)}
+#btnSearchMic.on{background:rgba(95,227,192,.16);color:var(--mint);border-color:rgba(95,227,192,.4)}
 #imgView{position:fixed;inset:0;background:rgba(4,6,12,.92);display:none;align-items:center;justify-content:center;z-index:70;padding:24px;cursor:zoom-out}
 #imgView.on{display:flex;animation:modalBgIn .16s ease}
 #imgView img{max-width:100%;max-height:100%;border-radius:10px;cursor:default;box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -609,8 +615,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
           </div>
           <div class="ytRateRow" title="右クリックで数値を直接入力できます">
             <span class="ytRateLabel">再生速度</span>
-            <input type="range" id="ytRateSlider" min="0.25" max="2" step="0.05" value="1" aria-label="再生速度スライダー（右クリックで数値入力）">
-            <input type="number" id="ytRateInput" min="0.1" max="4" step="0.05" style="display:none" aria-label="再生速度を数値で入力">
+            <input type="range" id="ytRateSlider" min="0.25" max="10" step="0.05" value="1" aria-label="再生速度スライダー（右クリックで数値入力）">
+            <input type="number" id="ytRateInput" step="0.05" style="display:none" aria-label="再生速度を数値で入力（上限なし）">
             <span id="ytRateVal">1.00x</span>
           </div>
           <p class="hint" style="text-align:center">画面の上のほうで、みんなの画面に同期して再生されています。再生速度も全員そろいます（右クリックで細かい数値を直接入力できます）</p>
@@ -837,12 +843,15 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
-<!-- 検索（DuckDuckGoで即答を試み、ダメなら新しいタブへ） -->
+<!-- 検索（Gemini APIキー設定時はGoogle検索連携、未設定時はDuckDuckGoで即答を試み、ダメなら新しいタブへ） -->
 <div class="modal" id="mGoogle">
   <div class="sheet" style="max-width:400px">
     <h3>調べもの検索</h3>
-    <div class="sub">用語の説明などはこの場に出ます。見つからない場合は新しいタブで検索を開きます</div>
-    <div class="row"><input class="in" id="gSearchIn" placeholder="調べたいこと"></div>
+    <div class="sub">Gemini APIキーを設定している場合はGeminiのGoogle検索連携で回答します。未設定の場合はDuckDuckGoで即答を試み、見つからなければ新しいタブで検索を開きます</div>
+    <div class="row"><div style="display:flex;gap:8px">
+      <input class="in" id="gSearchIn" placeholder="調べたいこと">
+      <button id="btnSearchMic" title="音声入力" aria-label="検索欄への音声入力の開始・停止">🎤</button>
+    </div></div>
     <button class="btn primary" id="btnGSearch">検索する</button>
     <div id="gResults" style="margin-top:12px"></div>
     <div class="row" style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px">
@@ -1796,7 +1805,8 @@ function hostHandle(from,m){
       const a=String(m.a||''); const id=String(m.id||'').slice(0,64); const time=+m.time||0;
       const svc=['youtube','vimeo','twitch'].includes(m.svc)?m.svc:'youtube';
       const vertical=!!m.vertical;
-      const rate=(m.rate!=null && isFinite(+m.rate))?Math.max(0.1,Math.min(4,+m.rate)):((S.ytState&&S.ytState.rate)||1);
+      // UI側では速度の上限を設けない方針のため、ホスト側のサニティ上限もゆるめに（異常値のブロードキャストだけ防ぐ）
+      const rate=(m.rate!=null && isFinite(+m.rate))?Math.max(0.05,Math.min(16,+m.rate)):((S.ytState&&S.ytState.rate)||1);
       if(a==='close') S.ytState=null;
       else S.ytState={a:a==='rate'?((S.ytState&&S.ytState.a)||'play'):a, id:id||(S.ytState&&S.ytState.id)||'', svc, vertical, time, rate, ts:Date.now()};
       deliver({t:'yt',a,id,svc,vertical,time,rate}); break;}
@@ -3013,31 +3023,73 @@ function playJoinSound(){ chime([523.25,659.25,783.99],{dur:0.34,gap:0.075,type:
 function playLeaveSound(){ chime([392.00,293.66,246.94],{dur:0.42,gap:0.09,type:'triangle',peak:0.13}); } // G4→D4→B3 落ち着いた下降
 
 /* ============================================================
-   字幕・翻訳
-   ============================================================ */
-let rec=null, recWant=false;
+   共有音声認識(SharedRec)
+   着手前にWebSearchで確認した通り、Chromeは同じタブで複数のSpeechRecognitionインスタンスを
+   同時に動かすと"aborted"/"audio-capture"エラーで競合する（1タブ実質1セッションまでという
+   制約は2026年時点でも変わっていない）。そのため「字幕」「チャット音声入力」「検索音声入力」を
+   それぞれ別インスタンスで立てるのではなく、1つの共有インスタンスが認識を回し続け、
+   結果を購読中の全リスナーに同時に配る(pub/sub)方式に作り替えた。これにより、この3つは
+   同時に使えるようになる。各機能固有のロジック(字幕の表示・チャットへの記録・検索欄への反映)は
+   従来通りそれぞれのリスナー関数の中にそのまま残している。
+   同時通訳(itp)だけは、話す言語をS.langとは別に設定できる独立した機能という性質上
+   （例：普段は日本語で字幕を出しつつ、通訳ウィジェットだけ一時的に英語で使う、等）、
+   従来通りの専用インスタンス+ウォッチドッグ構成をそのまま維持し、共有認識器とは引き続き
+   排他にした（itp使用中は字幕・チャット音声入力・検索音声入力が一時停止する） */
+const SharedRec={
+  rec:null, running:false, wantRunning:false, listeners:new Set(), lang:'ja-JP',
+  subscribe(fn){
+    if(itpRunning){ toast('同時通訳を使用中は使えません。先に通訳を停止してください'); return false; }
+    this.listeners.add(fn);
+    if(!this.running) this._boot();
+    return true;
+  },
+  unsubscribe(fn){
+    this.listeners.delete(fn);
+    if(!this.listeners.size) this.stopAll();
+  },
+  restartForLangChange(){
+    if(!this.running) return;
+    this.wantRunning=true;
+    if(this.rec){ try{this.rec.stop()}catch(_){} this.rec=null; }
+    this.running=false;
+    setTimeout(()=>{ if(this.wantRunning && this.listeners.size) this._boot(); },150);
+  },
+  _boot(){
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){ toast('この端末では音声認識が使えません（Chrome推奨）'); return; }
+    this.lang=S.lang;
+    this.rec=new SR(); this.rec.lang=this.lang; this.rec.continuous=true; this.rec.interimResults=true;
+    this.rec.onresult=e=>{
+      let interim='',fin='';
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
+      }
+      fin=fin.trim(); interim=interim.trim();
+      this.listeners.forEach(fn=>{ try{ fn(fin,interim); }catch(_){} });
+    };
+    this.rec.onend=()=>{ this.running=false; if(this.wantRunning&&this.listeners.size){ setTimeout(()=>{ if(this.wantRunning&&this.listeners.size) this._boot(); },250); } };
+    this.rec.onerror=e=>{ if(e.error==='not-allowed'){ toast('マイクの許可が必要です'); this.stopAll(); } };
+    this.wantRunning=true;
+    try{ this.rec.start(); this.running=true; }catch(_){}
+  },
+  stopAll(){
+    this.wantRunning=false; this.running=false;
+    if(this.rec){ try{this.rec.stop()}catch(_){} this.rec=null; }
+  }
+};
+function capListener(fin,interim){
+  if(fin){
+    send({t:'cap',text:fin,final:true,lang:S.lang});
+    if(S.capToChat) send({t:'chat',text:fin,cap:true}); // 確定した字幕だけをチャットにも記録する設定がONの時
+  }else if(interim) send({t:'cap',text:interim,final:false,lang:S.lang});
+}
+let recWant=false;
 function startRec(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast('この端末では音声認識が使えません（Chrome推奨）'); return false; }
-  stopRec();
-  rec=new SR(); rec.lang=S.lang; rec.continuous=true; rec.interimResults=true;
-  rec.onresult=e=>{
-    let interim='',fin='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
-    }
-    if(fin.trim()){
-      send({t:'cap',text:fin.trim(),final:true,lang:S.lang});
-      if(S.capToChat) send({t:'chat',text:fin.trim(),cap:true}); // 確定した字幕だけをチャットにも記録する設定がONの時
-    }
-    else if(interim.trim()) send({t:'cap',text:interim.trim(),final:false,lang:S.lang});
-  };
-  rec.onend=()=>{ if(recWant) setTimeout(()=>{try{rec.start()}catch(_){}},250); };
-  rec.onerror=e=>{ if(e.error==='not-allowed'){ recWant=false; toast('マイクの許可が必要です'); } };
-  recWant=true; try{rec.start()}catch(_){}
+  recWant=true;
+  if(!SharedRec.subscribe(capListener)){ recWant=false; return false; }
   return true;
 }
-function stopRec(){ recWant=false; if(rec){try{rec.stop()}catch(_){ } rec=null;} }
+function stopRec(){ recWant=false; SharedRec.unsubscribe(capListener); }
 
 const capEls=new Map(), trCache=new Map();
 function showCap(m){
@@ -3198,8 +3250,11 @@ async function itpStart(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR) return toast('この端末では音声認識が使えません（Chrome推奨）');
   if(!S.micTrack) return toast('マイクが使えません');
+  // itpは独立した言語設定を持つ専用インスタンスのため、共有認識器(字幕・チャット音声入力・検索音声入力)は
+  // 全て一旦止めてから始める（マイクの競合を避けるため、itpとこの3つは引き続き排他）
   if(S.capsOn) setCaps(false);
   if(chatRecOn) stopChatMic();
+  if(typeof searchRecOn!=='undefined' && searchRecOn) stopSearchMic();
   itpRunning=true; S.itp.running=true;
   itpRec=itpNewRec();
   try{ itpRec.start(); }catch(_){}
@@ -3398,8 +3453,8 @@ function updateSoftcreamPreview(){
 }
 $('#cCap').onclick=()=>{ setCaps(!S.capsOn); };
 function setCaps(on){
-  if(on && chatRecOn) stopChatMic();
-  if(on && itpRunning) itpStop();
+  // 字幕・チャット音声入力・検索音声入力は共有認識器(SharedRec)を介して同時に使えるようになったため、
+  // 互いを止め合う必要はなくなった。同時通訳(itp)とだけは、SharedRec.subscribe()の中で引き続き排他にしている
   S.capsOn=on; $('#swCap').classList.toggle('on',on); $('#cCap').classList.toggle('act',on);
   if(on){ if(!startRec()){S.capsOn=false;$('#cCap').classList.remove('act');$('#swCap').classList.remove('on');return;} toast('字幕をオンにしました'); }
   else{ stopRec(); $('#caps').innerHTML=''; capEls.clear(); }
@@ -4069,7 +4124,7 @@ $('#chatFile').onchange=async e=>{
 };
 
 // 検索（DuckDuckGoのInstant Answer APIを試し、ダメなら新しいタブで開く。実装本体は後方のbtnGSearchハンドラ）
-$('#cGoogle').onclick=()=>{ $('#gSearchIn').value=''; $('#gUrlIn').value=''; $('#gResults').innerHTML=''; $('#mGoogle').classList.add('on'); setTimeout(()=>$('#gSearchIn').focus(),50); };
+$('#cGoogle').onclick=()=>{ $('#gSearchIn').value=''; $('#gUrlIn').value=''; $('#gResults').innerHTML=''; searchRecBase=''; $('#mGoogle').classList.add('on'); setTimeout(()=>$('#gSearchIn').focus(),50); };
 $('#gSearchIn').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnGSearch').click(); } };
 // 検索エンジンを経由せず、貼ったURLをそのまま新しいタブで開くだけのシンプルな導線
 function openDirectUrl(){
@@ -4081,35 +4136,48 @@ function openDirectUrl(){
 $('#btnGUrlOpen').onclick=openDirectUrl;
 $('#gUrlIn').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); openDirectUrl(); } };
 
-// チャットへの音声入力（字幕用の認識とは別インスタンス。字幕オン中は衝突を避けるため使用不可にする）
-let chatRec=null, chatRecOn=false, chatRecBase='';
+// チャットへの音声入力（共有認識器SharedRecの購読者の1つ。字幕・検索音声入力と同時に使える）
+let chatRecOn=false, chatRecBase='';
+function chatMicListener(fin,interim){
+  if(fin){ chatRecBase=(chatRecBase+fin).replace(/\s+$/,'')+' '; $('#chatIn').value=chatRecBase; }
+  else $('#chatIn').value=chatRecBase+interim;
+  $('#chatIn').dispatchEvent(new Event('input'));
+}
 function toggleChatMic(){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR) return toast('この端末では音声入力が使えません（Chrome推奨）');
   if(chatRecOn) return stopChatMic();
-  if(S.capsOn) return toast('字幕がオンの間は使えません。先に字幕をオフにしてください');
-  if(itpRunning) return toast('同時通訳がオンの間は使えません。先に通訳を停止してください');
   chatRecBase=$('#chatIn').value ? $('#chatIn').value.replace(/\s+$/,'')+' ' : '';
-  chatRec=new SR(); chatRec.lang=S.lang; chatRec.continuous=true; chatRec.interimResults=true;
-  chatRec.onresult=e=>{
-    let interim='',fin='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const r=e.results[i]; if(r.isFinal) fin+=r[0].transcript; else interim+=r[0].transcript;
-    }
-    if(fin){ chatRecBase=(chatRecBase+fin).replace(/\s+$/,'')+' '; $('#chatIn').value=chatRecBase; }
-    else $('#chatIn').value=chatRecBase+interim;
-    $('#chatIn').dispatchEvent(new Event('input'));
-  };
-  chatRec.onerror=e=>{ if(e.error==='not-allowed'){ toast('マイクの許可が必要です'); stopChatMic(); } };
-  chatRec.onend=()=>{ if(chatRecOn){ try{chatRec.start()}catch(_){} } };
+  if(!SharedRec.subscribe(chatMicListener)) return;
   chatRecOn=true; $('#btnChatMic').classList.add('on');
-  try{ chatRec.start(); toast('音声入力を開始しました'); }catch(_){}
+  toast('音声入力を開始しました');
 }
 function stopChatMic(){
   chatRecOn=false; $('#btnChatMic').classList.remove('on');
-  if(chatRec){ try{chatRec.stop()}catch(_){} chatRec=null; }
+  SharedRec.unsubscribe(chatMicListener);
 }
 $('#btnChatMic').onclick=toggleChatMic;
+
+// 検索欄への音声入力（共有認識器SharedRecの購読者。字幕・チャット音声入力と同時に使える）
+let searchRecOn=false, searchRecBase='';
+function searchMicListener(fin,interim){
+  if(fin){ searchRecBase=(searchRecBase+fin).replace(/\s+$/,'')+' '; $('#gSearchIn').value=searchRecBase; }
+  else $('#gSearchIn').value=searchRecBase+interim;
+}
+function toggleSearchMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return toast('この端末では音声入力が使えません（Chrome推奨）');
+  if(searchRecOn) return stopSearchMic();
+  searchRecBase=$('#gSearchIn').value ? $('#gSearchIn').value.replace(/\s+$/,'')+' ' : '';
+  if(!SharedRec.subscribe(searchMicListener)) return;
+  searchRecOn=true; $('#btnSearchMic').classList.add('on');
+  toast('音声入力を開始しました');
+}
+function stopSearchMic(){
+  searchRecOn=false; $('#btnSearchMic').classList.remove('on');
+  SharedRec.unsubscribe(searchMicListener);
+}
+$('#btnSearchMic').onclick=toggleSearchMic;
 
 // 反応
 $('#rxPad').innerHTML=REACTIONS.map(e=>`<button style="font-size:27px;padding:7px 9px;border-radius:11px">${e}</button>`).join('');
@@ -4175,7 +4243,7 @@ $('#swCapChat').onclick=()=>{
   localStorage.setItem('kdm-capchat',S.capToChat?'1':'0');
   toast(S.capToChat?'確定した字幕をチャットにも記録するようにしました':'字幕のチャット記録をオフにしました');
 };
-$('#selLang').onchange=e=>{ S.lang=e.target.value; if(S.capsOn)startRec(); };
+$('#selLang').onchange=e=>{ S.lang=e.target.value; SharedRec.restartForLangChange(); };
 $('#swTr').onclick=()=>{ S.trOn=!S.trOn; $('#swTr').classList.toggle('on',S.trOn); toast(S.trOn?'翻訳をオンにしました':'翻訳をオフにしました'); };
 $('#selTr').onchange=e=>S.trTo=e.target.value;
 $('#selEng').onchange=e=>S.engine=e.target.value;
@@ -4473,20 +4541,23 @@ $('#btnYtClose2').onclick=()=>watchClose();
 
 /* 再生速度：スライダーは見た目こそ滑らかに動くが、実際に反映される値はサービス側の制約
    （YouTubeは動画ごとに決まった段階に丸められる、Vimeoは対応プランでないと失敗する）に従う。
-   「指定した値」ではなく「実際に適用された値」をonRateChange経由で受け取ってUIに描き直す設計 */
+   「指定した値」ではなく「実際に適用された値」をonRateChange経由で受け取ってUIに描き直す設計。
+   スライダー自体は0.25〜10倍までだが、右クリックで開く数値入力は上限を設けず、UI側では
+   一切値を切り詰めない（実際に反映されるかどうかの制約はYouTube/Vimeo側の話であり、
+   こちら側で先回りして入力を制限しないでほしいという要望のため） */
 function applyWatchRate(rate){
-  rate=Math.max(0.1,Math.min(4,+rate||1));
+  rate=+rate; if(!isFinite(rate)||rate<=0) rate=1;
   if(watchSvc==='youtube') Yt.setRate(rate);
   else if(watchSvc==='vimeo') VimeoP.setRate(rate);
   else if(watchSvc==='twitch') toast('Twitchでは再生速度の変更に対応していません');
 }
 function updateRateUI(rate){
-  rate=+rate||1;
-  const sliderMax=2, sliderMin=0.25;
+  rate=+rate; if(!isFinite(rate)||rate<=0) rate=1;
+  const sliderMax=10, sliderMin=0.25;
   const clamped=Math.max(sliderMin,Math.min(sliderMax,rate));
   $('#ytRateSlider').value=clamped;
   const outOfRange=Math.abs(rate-clamped)>0.001;
-  $('#ytRateVal').textContent=rate.toFixed(2)+'x'+(outOfRange?'（範囲外）':'');
+  $('#ytRateVal').textContent=rate.toFixed(2)+'x'+(outOfRange?'（スライダーの範囲外）':'');
 }
 let ytRateApplyT=null;
 $('#ytRateSlider').addEventListener('input',()=>{
@@ -4502,7 +4573,7 @@ $('#ytRateSlider').addEventListener('contextmenu',e=>{
   $('#ytRateInput').focus(); $('#ytRateInput').select();
 });
 function ytRateInputCommit(){
-  const v=Math.max(0.1,Math.min(4,+$('#ytRateInput').value||1));
+  let v=+$('#ytRateInput').value; if(!isFinite(v)||v<=0) v=1; // 上限は設けない。範囲チェックはYouTube/Vimeo側に委ねる
   $('#ytRateInput').style.display='none'; $('#ytRateSlider').style.display='';
   applyWatchRate(v);
 }
@@ -4558,12 +4629,15 @@ function renderYtSaved(){
   const svcLabel={youtube:'YouTube',vimeo:'Vimeo',twitch:'Twitch'};
   list.forEach(entry=>{
     const row=document.createElement('div'); row.className='room-row';
-    const b=document.createElement('button'); b.className='room';
+    const b=document.createElement('button'); b.className='room'; b.title='長押しで削除';
     const label=entry.title||((svcLabel[entry.svc]||entry.svc)+'：'+entry.id);
     b.innerHTML=`<div class="rn"><b>${esc(label)}</b><span>${esc(svcLabel[entry.svc]||entry.svc)}</span></div>`;
-    b.onclick=()=>{ $('#ytUrlIn').value=entry.url; watchLoadDirect(entry.svc,entry.id,false); };
+    const removeThis=()=>{ ytSavedSave(ytSavedList().filter(x=>!(x.svc===entry.svc&&x.id===entry.id))); renderYtSaved(); toast('削除しました'); };
+    let longFired=false;
+    attachLongPress(b,()=>{ longFired=true; removeThis(); });
+    b.onclick=()=>{ if(longFired){longFired=false;return;} $('#ytUrlIn').value=entry.url; watchLoadDirect(entry.svc,entry.id,false); };
     const del=document.createElement('button'); del.className='roomExport'; del.title='削除' ; del.setAttribute('aria-label','この保存を削除'); del.textContent='✕';
-    del.onclick=e=>{ e.stopPropagation(); ytSavedSave(ytSavedList().filter(x=>!(x.svc===entry.svc&&x.id===entry.id))); renderYtSaved(); };
+    del.onclick=e=>{ e.stopPropagation(); removeThis(); };
     row.appendChild(b); row.appendChild(del);
     box.appendChild(row);
   });
@@ -4741,9 +4815,41 @@ $('#btnAiSum').onclick=async()=>{
 /* Google検索（うまく行けばDuckDuckGoのInstant Answer APIでアプリ内に回答を出す。
    キー不要でCORS対応している唯一の汎用検索APIだが「インスタント回答」止まりで、
    Googleと同じ検索結果一覧が出せるわけではない点は割り切り。ダメなら正直に新しいタブへ） */
+/* GeminiのGoogle検索連携(grounding)。着手前にWebSearchで確認した通り、v1beta generateContentに
+   tools:[{google_search:{}}]を渡すだけで、Geminiが自分でWeb検索した上で根拠付きの回答を返してくれる
+   （回答文＋groundingMetadata.groundingChunksという出典一覧＋searchEntryPoint.renderedContentという
+   「検索候補」HTMLウィジェット）。無料枠がGemini 3系で月5,000回と確認できたため、通常のチャットAI機能と
+   同じ「本人のAPIキーで本人のブラウザから直接呼ぶ」設計のまま追加した。
+   利用規約上、searchEntryPointのHTMLウィジェットは表示することが求められているため、
+   （信頼できるGoogle自身のAPIレスポンスなのでescせず）そのまま埋め込んでいる */
+async function geminiGroundedSearch(q){
+  const key=geminiApiKey(); if(!key) return null;
+  const model=geminiModel();
+  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
+    method:'POST', headers:{'Content-Type':'application/json','x-goog-api-key':key},
+    body:JSON.stringify({ contents:[{parts:[{text:q}]}], tools:[{google_search:{}}] })
+  });
+  if(!r.ok) return null;
+  const d=await r.json();
+  const cand=d&&d.candidates&&d.candidates[0]; if(!cand) return null;
+  const text=((cand.content&&cand.content.parts)||[]).map(p=>p.text||'').join('').trim();
+  if(!text) return null;
+  const gm=cand.groundingMetadata||{};
+  const chunks=(gm.groundingChunks||[]).filter(c=>c.web&&c.web.uri).slice(0,6);
+  const sourcesHtml=chunks.length?`<div class="gres-sources">${chunks.map(c=>`<a href="${esc(c.web.uri)}" target="_blank" rel="noopener">🔗 ${esc(c.web.title||c.web.uri)}</a>`).join('')}</div>`:'';
+  const widget=(gm.searchEntryPoint&&gm.searchEntryPoint.renderedContent)?`<div class="gres-widget">${gm.searchEntryPoint.renderedContent}</div>`:'';
+  return `<div class="gres"><b>✨ Geminiによる回答（Google検索連携）</b><p>${esc(text).replace(/\n/g,'<br>')}</p></div>${sourcesHtml}${widget}`;
+}
 $('#btnGSearch').onclick=async()=>{
   const q=$('#gSearchIn').value.trim(); if(!q) return;
   const box=$('#gResults'); box.innerHTML='<div class="empty" style="padding:12px 4px;font-size:12.5px">調べています…</div>';
+  if(geminiApiKey()){
+    try{
+      const html=await geminiGroundedSearch(q);
+      if(html){ box.innerHTML=html; return; }
+    }catch(e){ console.warn(e); }
+    // Gemini検索が失敗した場合は、下のDuckDuckGoにそのままフォールバックする
+  }
   let ok=false;
   try{
     const r=await fetch('https://api.duckduckgo.com/?format=json&no_redirect=1&no_html=1&skip_disambig=1&q='+encodeURIComponent(q));
