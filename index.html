@@ -77,6 +77,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .room .rn b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .room .rn span{color:var(--dim);font-size:11.5px;font-family:var(--mono);letter-spacing:.1em}
 .pill{font-size:11px;padding:5px 10px;border-radius:20px;background:rgba(95,227,192,.12);color:var(--mint);font-weight:700;white-space:nowrap}
+.room-row{display:flex;gap:8px;align-items:stretch}
+.roomExport{flex:0 0 auto;width:42px;border-radius:12px;border:1px solid var(--line);background:#0c1120;color:var(--dim);display:grid;place-items:center;transition:.16s;font-size:15px}
+.roomExport:hover{color:var(--mint);border-color:var(--mint-d)}
 .empty{text-align:center;color:var(--dim);padding:34px 10px;font-size:13px;line-height:1.9}
 .foot{color:#5a6480;font-size:11.5px;text-align:center;margin-top:26px;line-height:1.9;max-width:560px}
 
@@ -158,6 +161,28 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .ssp-info b::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--coral);animation:recBlink 1.3s infinite;flex:0 0 auto}
 .ssp-info .btn{width:100%;padding:6px;font-size:11.5px}
 @media (max-width:760px){#shareSelfPreview{width:140px;right:8px;top:58px}}
+#jinroActionBox{position:fixed;left:14px;top:64px;width:210px;background:rgba(10,13,22,.96);border:1px solid var(--coral);border-radius:12px;padding:10px;box-shadow:0 14px 34px rgba(0,0,0,.5);z-index:24;display:none}
+#jinroActionBox.on{display:block;animation:modalBgIn .18s ease}
+.jaTitle{font-size:12px;font-weight:800;color:var(--coral);margin-bottom:8px}
+.jaOpts{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+.jaOpts button{padding:7px 9px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);font-size:12.5px;text-align:left;transition:.15s}
+.jaOpts button.sel{border-color:var(--coral);color:var(--coral);background:rgba(255,95,116,.12)}
+.jaHint{font-size:10.5px;color:var(--dim);margin-top:8px}
+@media (max-width:760px){#jinroActionBox{width:160px;left:8px;top:58px}}
+/* ワードウルフ・人狼ゲーム共通のカードスタイル（既存のじゃんけんカードを踏襲） */
+.wwCard,.jinroCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.wwDesc{font-size:12.5px;color:var(--dim);line-height:1.6;margin:4px 0 8px}
+.wwMyWord{font-size:13px;background:rgba(95,227,192,.1);border:1px solid var(--mint-d);border-radius:8px;padding:7px 10px;margin-bottom:8px}
+.wwOpts{display:flex;flex-direction:column;gap:6px}
+.wwOpt{display:flex;justify-content:space-between;align-items:center;background:#0c1120;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:12.5px;transition:.15s}
+.wwOpt:hover{border-color:var(--mint-d)}
+.wwOpt.voted{border-color:var(--mint);background:rgba(95,227,192,.12);color:var(--mint)}
+.wwN{color:var(--dim);font-size:11px}
+.wwFoot{margin-top:8px;font-size:11px;color:var(--dim);text-align:right}
+.wwResult{font-size:15px;font-weight:800;color:var(--mint);margin-bottom:6px}
+.wwReveal{font-size:12.5px;color:var(--dim);line-height:1.7}
+.jinroLogWrap{margin-top:8px;display:flex;flex-direction:column;gap:3px}
+.jinroLog{font-size:11px;color:var(--dim);background:#0c1120;border-radius:6px;padding:5px 8px}
 .cap{background:rgba(6,9,16,.8);backdrop-filter:blur(10px);border-left:3px solid var(--mint);border-radius:9px;padding:9px 13px;animation:capin .2s ease;transition:opacity .5s}
 .cap.fade{opacity:0}
 .cap b{font-size:11.5px;letter-spacing:.06em;display:block;margin-bottom:2px}
@@ -186,6 +211,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .chatImgs{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .chatImg{width:96px;height:96px;object-fit:cover;border-radius:9px;border:1px solid var(--line);cursor:pointer;transition:.15s}
 .chatImg:hover{filter:brightness(1.12);transform:scale(1.02);border-color:var(--mint-d)}
+.chatFile{display:flex;align-items:center;gap:10px;background:#0c1120;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-top:6px;text-decoration:none;color:var(--txt);transition:.15s;max-width:280px}
+.chatFile:hover{border-color:var(--mint-d);background:#0e1526}
+.chatFile .cf-ico{font-size:20px;flex:0 0 auto}
+.chatFile .cf-body{min-width:0}
+.chatFile .cf-body b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.chatFile .cf-body small{color:var(--dim);font-size:11px}
 .linkcard{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:9px 11px;text-decoration:none;color:var(--txt);transition:.15s}
 .linkcard:hover{border-color:var(--mint-d);background:#161f30}
 .linkcard .lc-ico{font-size:18px;flex:0 0 auto}
@@ -431,6 +462,10 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <!-- 持続的会議 -->
     <div id="t-persist" hidden>
       <div class="row"><label class="f">表示名</label><input id="pName" class="in" maxlength="18" placeholder="なまえ"></div>
+      <div class="row" style="justify-content:flex-end">
+        <input type="file" id="persistImportFile" accept="application/json" hidden>
+        <button class="btn ghost" id="btnPersistImport" style="width:auto;padding:7px 14px;font-size:12px">📥　バックアップから読み込む</button>
+      </div>
       <div class="list" id="persistList"><div class="empty">このブラウザで開いたことのある持続的会議はまだありません</div></div>
       <div class="row"><label class="f">新しく始める場合の会議名</label><input id="pRoom" class="in" maxlength="30" placeholder="いつもの部活ミーティング"></div>
       <div class="row">
@@ -455,13 +490,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <div class="chip" id="chipNet"><span class="dot"></span><span id="netTxt">接続中</span></div>
     <div class="sp"></div>
     <div class="chip" id="chipTime">00:00</div>
-    <button class="iconbtn" id="btnCopy" title="招待をコピー">
+    <button class="iconbtn" id="btnCopy" title="招待をコピー" aria-label="招待をコピー">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h8"/></svg>
     </button>
-    <button class="iconbtn" id="btnQR" title="QRコード・招待URL">
+    <button class="iconbtn" id="btnQR" title="QRコード・招待URL" aria-label="QRコード・招待URLを表示">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 17h3v3M20 14v3M17 20h3.01"/></svg>
     </button>
-    <button class="iconbtn lockBtn" id="btnLock" title="新規参加をロック">
+    <button class="iconbtn lockBtn" id="btnLock" title="新規参加をロック" aria-label="新規参加のロックを切り替え">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
     </button>
   </div>
@@ -470,7 +505,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <div class="stage">
       <div id="ytStage">
         <div id="ytPlayerWrap"><div id="ytPlayer"></div></div>
-        <button class="iconbtn" id="btnYtFull" title="全画面">
+        <button class="iconbtn" id="btnYtFull" title="全画面" aria-label="全画面表示を切り替え">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
         </button>
       </div>
@@ -484,23 +519,29 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
           <button class="btn ghost" id="shareSelfStop">共有を終了</button>
         </div>
       </div>
+      <!-- 人狼ゲーム：夜の行動（人狼の襲撃先選択・占い師の占い先選択）。役職を持つ本人にしか出さないローカル専用パネル -->
+      <div id="jinroActionBox">
+        <div class="jaTitle" id="jaTitle"></div>
+        <div class="jaOpts" id="jaOpts"></div>
+        <div class="jaHint" id="jaHint"></div>
+      </div>
     </div>
 
     <!-- チャット -->
     <aside class="side" id="sideChat">
-      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnAiSum" title="AIで要約">✨</button><button class="iconbtn" data-close="sideChat">✕</button></div>
+      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnAiSum" title="AIで要約" aria-label="AIで要約">✨</button><button class="iconbtn" data-close="sideChat" title="閉じる" aria-label="チャットを閉じる">✕</button></div>
       <div class="scroll" id="chatLog"></div>
       <div class="compose">
-        <button id="btnPlus" title="添付・機能">＋</button>
-        <button id="btnChatMic" title="音声入力">🎤</button>
-        <textarea id="chatIn" placeholder="メッセージ（Enterで送信・@AIでAIに質問）"></textarea>
-        <button id="btnSend">➤</button>
+        <button id="btnPlus" title="添付・機能" aria-label="添付・機能を追加">＋</button>
+        <button id="btnChatMic" title="音声入力" aria-label="音声入力の開始・停止">🎤</button>
+        <textarea id="chatIn" placeholder="メッセージ（Enterで送信・@AIでAIに質問）" aria-label="チャットメッセージ入力欄"></textarea>
+        <button id="btnSend" aria-label="送信">➤</button>
       </div>
     </aside>
 
     <!-- 参加者 -->
     <aside class="side" id="sidePpl">
-      <div class="sh"><b>参加者 <span id="pplN">0</span></b><button class="iconbtn" data-close="sidePpl">✕</button></div>
+      <div class="sh"><b>参加者 <span id="pplN">0</span></b><button class="iconbtn" data-close="sidePpl" title="閉じる" aria-label="参加者一覧を閉じる">✕</button></div>
       <div class="scroll">
         <div id="joinReqWrap" style="display:none;margin-bottom:14px">
           <div style="font-size:11px;letter-spacing:.1em;color:var(--amber);font-weight:800;margin-bottom:8px">⚠ 入室リクエスト</div>
@@ -515,7 +556,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
     <!-- 動画の同時視聴 -->
     <aside class="side" id="sideYt">
-      <div class="sh"><b>動画をみんなで見る</b><button class="iconbtn" data-close="sideYt">✕</button></div>
+      <div class="sh"><b>動画をみんなで見る</b><button class="iconbtn" data-close="sideYt" title="閉じる" aria-label="動画パネルを閉じる">✕</button></div>
       <div class="scroll" style="padding:14px">
         <div class="row"><label class="f">YouTubeで検索</label>
           <div style="display:flex;gap:8px">
@@ -674,6 +715,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <h3>チャットに追加</h3>
     <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px">
       <button class="btn ghost" id="plusPhoto">📷　写真を送る</button>
+      <button class="btn ghost" id="plusFile">📎　ファイルを送る</button>
       <button class="btn ghost" id="plusLink">🔗　リンクを貼る</button>
       <button class="btn ghost" id="plusPoll">📊　アンケートを作る</button>
       <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
@@ -681,11 +723,14 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button class="btn ghost" id="plusJanken">✊　じゃんけんで決める</button>
       <button class="btn ghost" id="plusWb">🖊　ホワイトボード</button>
       <button class="btn ghost" id="plusKaraoke">🎤　カラオケ</button>
+      <button class="btn ghost" id="plusWW">🐺　ワードウルフ</button>
+      <button class="btn ghost" id="plusJinro">🌙　人狼ゲーム（簡易版）</button>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
 </div>
 <input type="file" id="photoFile" accept="image/*" multiple hidden>
+<input type="file" id="chatFile" hidden>
 
 <!-- 位置情報の共有方法選択 -->
 <div class="modal" id="mLoc">
@@ -768,18 +813,18 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   <div class="wbTop">
     <b>ホワイトボード</b>
     <div class="wbTools">
-      <button class="wbColor sel" data-color="#e9edf7" style="background:#e9edf7"></button>
-      <button class="wbColor" data-color="#ff5f74" style="background:#ff5f74"></button>
-      <button class="wbColor" data-color="#ffc44d" style="background:#ffc44d"></button>
-      <button class="wbColor" data-color="#5fe3c0" style="background:#5fe3c0"></button>
-      <button class="wbColor" data-color="#7cc4ff" style="background:#7cc4ff"></button>
-      <button class="wbColor" data-color="#101418" style="background:#101418"></button>
-      <button class="iconbtn" id="wbEraser" title="消しゴム">🧹</button>
-      <button class="iconbtn" id="wbClearBtn" title="全消去">🗑</button>
+      <button class="wbColor sel" data-color="#e9edf7" style="background:#e9edf7" aria-label="色を選択：白"></button>
+      <button class="wbColor" data-color="#ff5f74" style="background:#ff5f74" aria-label="色を選択：コーラル"></button>
+      <button class="wbColor" data-color="#ffc44d" style="background:#ffc44d" aria-label="色を選択：アンバー"></button>
+      <button class="wbColor" data-color="#5fe3c0" style="background:#5fe3c0" aria-label="色を選択：ミント"></button>
+      <button class="wbColor" data-color="#7cc4ff" style="background:#7cc4ff" aria-label="色を選択：水色"></button>
+      <button class="wbColor" data-color="#101418" style="background:#101418" aria-label="色を選択：黒"></button>
+      <button class="iconbtn" id="wbEraser" title="消しゴム" aria-label="消しゴムに切り替え">🧹</button>
+      <button class="iconbtn" id="wbClearBtn" title="全消去" aria-label="全消去">🗑</button>
     </div>
-    <button class="iconbtn" id="wbClose" title="閉じる">✕</button>
+    <button class="iconbtn" id="wbClose" title="閉じる" aria-label="ホワイトボードを閉じる">✕</button>
   </div>
-  <div class="wbStage"><canvas id="wbCanvas" width="1200" height="700"></canvas></div>
+  <div class="wbStage"><canvas id="wbCanvas" width="1200" height="700" role="img" aria-label="共有ホワイトボードの描画キャンバス"></canvas></div>
 </div>
 
 <!-- カラオケ（著作権フリー音源での簡易カラオケ。曲のライセンス情報はナレッジファイル参照） -->
@@ -787,7 +832,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   <div class="wbTop">
     <b>🎤 カラオケ</b>
     <div class="wbTools" id="ktStatus" style="font-size:12.5px;color:var(--dim)"></div>
-    <button class="iconbtn" id="ktClose" title="閉じる">✕</button>
+    <button class="iconbtn" id="ktClose" title="閉じる" aria-label="カラオケを閉じる">✕</button>
   </div>
   <div class="ktStage">
     <div class="ktMain">
@@ -806,7 +851,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
 <!-- 同時通訳（個人用。翻訳結果は他の参加者には送られない） -->
 <div id="itpBox">
-  <div class="itpHead"><span class="itpDot" id="itpDot"></span><b>同時通訳</b><button class="iconbtn" id="itpClose" style="width:28px;height:28px">✕</button></div>
+  <div class="itpHead"><span class="itpDot" id="itpDot"></span><b>同時通訳</b><button class="iconbtn" id="itpClose" style="width:28px;height:28px" title="閉じる" aria-label="同時通訳パネルを閉じる">✕</button></div>
   <div class="itpRow">
     <select id="itpLangIn" title="聞き取る言語"></select>
     <select id="itpLangTo" title="翻訳先"></select>
@@ -814,7 +859,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   <div class="itpRow2">
     <div style="display:flex;align-items:center;gap:8px">
       <label class="itpChk"><input type="checkbox" id="itpTts">読み上げ</label>
-      <button class="iconbtn" id="itpTtsTest" title="読み上げをテスト" style="width:28px;height:28px">🔊</button>
+      <button class="iconbtn" id="itpTtsTest" title="読み上げをテスト" aria-label="読み上げをテスト" style="width:28px;height:28px">🔊</button>
     </div>
     <button class="btn primary" id="itpBtn" style="width:auto;padding:8px 18px;font-size:13px">開始</button>
   </div>
@@ -871,8 +916,12 @@ const S={
   locSharing:false,
   wbStrokes:[], wbBuf:new Map(), wbOpen:false,
   recording:false,
-  ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0
+  ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0,
+  miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[]
 };
+/* ホスト権威で管理する各ミニゲームの「秘密の」内部台帳。S本体（全員に配布されうる公開状態）とは
+   別に持ち、ホスト以外のクライアントでは常にnullのまま（＝他人の役職・単語は原理的にJSレベルでも保持しない） */
+let HostSecret=null;
 
 /* ---------- 小道具 ---------- */
 const esc=t=>t.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -1544,9 +1593,37 @@ function dropPeer(id){
     if(S.ktSinger===id){ S.ktSinger=null; S.ktSong=null; S.ktPlayTs=0; }
     deliver({t:'ktState',queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs});
   }
+  // ミニゲーム進行中に参加者が退出した場合の後始末（詰まったまま止まらないようにする）
+  if(HostSecret&&HostSecret.type==='ww'&&HostSecret.players.includes(id)){
+    const entry=S.chat.find(c=>c.ww&&c.id===HostSecret.id);
+    if(entry&&entry.state!=='result'){
+      entry.state='result'; entry.accusedId=null; entry.cancelled=true;
+      entry.wolfId=HostSecret.wolfId; entry.majorityWord=HostSecret.majorityWord; entry.minorityWord=HostSecret.minorityWord; entry.correct=false;
+      deliver({t:'wwReveal',id:HostSecret.id,accusedId:null,wolfId:HostSecret.wolfId,majorityWord:HostSecret.majorityWord,minorityWord:HostSecret.minorityWord,correct:false,cancelled:true});
+    }
+    S.miniGame=null; HostSecret=null;
+  }
+  if(HostSecret&&HostSecret.type==='jinro'&&HostSecret.players.includes(id)){
+    HostSecret.alive[id]=false; // 退出は「死亡」扱いにして進行を止めない
+    const entry=S.chat.find(c=>c.jinro&&c.id===HostSecret.id);
+    if(entry&&entry.phase!=='end'){
+      entry.alive=HostSecret.players.filter(pid=>HostSecret.alive[pid]);
+      entry.dead=HostSecret.players.filter(pid=>!HostSecret.alive[pid]);
+      entry.log=(entry.log||[]).concat((p?p.name:'誰か')+'さんが退出しました');
+      deliver({t:'jinroPhase',id:HostSecret.id,phase:entry.phase,round:entry.round,alive:entry.alive,dead:entry.dead,log:entry.log});
+      jinroCheckWinAndAdvance(HostSecret.id);
+    }
+  }
   renderTiles(); renderPpl();
 }
 function broadcast(m,except){ S.conns.forEach((c,id)=>{ if(id!==except&&c.open) try{c.send(m)}catch(_){}}); }
+/* ミニゲーム（ワードウルフ・人狼など）の役職ごとの個別配布に使う共通の仕組み。
+   「本人にだけ」届けるだけで、他の受信者には一切送らない（ホスト自身が対象の時はネットワークを介さず
+   直接onMessageへ渡す）。今後ミニゲームを増やす時もこの1関数を使い回せばよい設計にした */
+function hostSendTo(id,m){
+  if(id===S.myId){ onMessage(m); return; }
+  const c=S.conns.get(id); if(c&&c.open) try{c.send(m)}catch(_){}
+}
 function addRoster(p){
   p.color=colorOf(S.roster.length);
   S.roster.push(p); renderTiles(); renderPpl();
@@ -1564,8 +1641,13 @@ function hostHandle(from,m){
     case 'chat':{
       const imgs=Array.isArray(m.imgs)?m.imgs.filter(s=>typeof s==='string'&&s.startsWith('data:image/')).slice(0,4):[];
       const invite=(m.invite&&INVITE_GAMES[m.invite.game])?{game:m.invite.game,code:String(m.invite.code||'').toUpperCase().slice(0,8)}:null;
-      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,4000),imgs,ai:!!m.ai,cap:!!m.cap,invite,ts:Date.now()};
-      if(!msg.text&&!imgs.length&&!invite)break; S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
+      // 画像以外の一般ファイル。base64化で元サイズの約1.37倍に膨らむため、クライアント側の20MB上限に
+      // 対応する余裕を持たせた28MBをホスト側の最終的なサニティチェックとしている
+      const file=(m.file&&typeof m.file.data==='string'&&m.file.data.indexOf('data:')===0&&m.file.data.length<28*1024*1024)
+        ?{name:String(m.file.name||'file').slice(0,120),size:Math.max(0,+m.file.size||0),type:String(m.file.type||'').slice(0,80),data:m.file.data}
+        :null;
+      const msg={from,name:p.name,color:p.color,text:String(m.text||'').slice(0,4000),imgs,file,ai:!!m.ai,cap:!!m.cap,invite,ts:Date.now()};
+      if(!msg.text&&!imgs.length&&!file&&!invite)break; S.chat.push(msg); if(S.chat.length>300)S.chat.shift();
       deliver({t:'chat',msg}); schedulePersistSave(); break;}
     case 'cap':
       deliver({t:'cap',from,name:p.name,color:p.color,text:String(m.text||'').slice(0,400),final:!!m.final,lang:m.lang}); break;
@@ -1657,6 +1739,101 @@ function hostHandle(from,m){
     case 'ktScore':
       if(from!==S.ktSinger) break; // 採点の対象は現在の歌い手のマイクだけ
       deliver({t:'ktScore',score:Math.max(0,Math.min(100,+m.score||0)),from}); break;
+    /* ---------------- ワードウルフ ---------------- */
+    case 'wwStart':{
+      if(S.miniGame){ hostSendTo(from,{t:'mgError',msg:'既に別のミニゲームが進行中です'}); break; }
+      const players=S.roster.map(x=>x.id);
+      if(players.length<3){ hostSendTo(from,{t:'mgError',msg:'ワードウルフには3人以上必要です'}); break; }
+      const id='ww'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const shuffled=[...players].sort(()=>Math.random()-0.5);
+      const wolfId=shuffled[0];
+      const pair=WW_PAIRS[Math.floor(Math.random()*WW_PAIRS.length)];
+      const swap=Math.random()<0.5;
+      const majorityWord=swap?pair[1]:pair[0], minorityWord=swap?pair[0]:pair[1];
+      HostSecret={type:'ww',id,players,wolfId,majorityWord,minorityWord,votes:{}};
+      S.miniGame={type:'ww',id};
+      players.forEach(pid=>hostSendTo(pid,{t:'wwWord',id,word:pid===wolfId?minorityWord:majorityWord}));
+      const entry={ww:true,id,from,players,votes:{},state:'talk',ts:Date.now()};
+      S.chat.push(entry); if(S.chat.length>300)S.chat.shift();
+      deliver({t:'wwEntry',entry});
+      schedulePersistSave(); break;}
+    case 'wwToVote':{
+      if(!HostSecret||HostSecret.type!=='ww'||HostSecret.id!==m.id) break;
+      const entry=S.chat.find(c=>c.ww&&c.id===m.id); if(!entry||entry.state!=='talk') break;
+      entry.state='vote';
+      deliver({t:'wwPhase',id:m.id,state:'vote'});
+      schedulePersistSave(); break;}
+    case 'wwVote':{
+      if(!HostSecret||HostSecret.type!=='ww'||HostSecret.id!==m.id) break;
+      const entry=S.chat.find(c=>c.ww&&c.id===m.id); if(!entry||entry.state!=='vote') break;
+      if(!HostSecret.players.includes(from)) break;
+      const target=String(m.target||''); if(!HostSecret.players.includes(target)||target===from) break;
+      HostSecret.votes[from]=target;
+      entry.votes=Object.assign({},HostSecret.votes);
+      deliver({t:'wwVoteUpdate',id:m.id,votes:entry.votes});
+      if(Object.keys(HostSecret.votes).length>=HostSecret.players.length) wwCloseVote(m.id);
+      schedulePersistSave(); break;}
+    /* ---------------- 人狼ゲーム（簡易版） ---------------- */
+    case 'jinroStart':{
+      if(S.miniGame){ hostSendTo(from,{t:'mgError',msg:'既に別のミニゲームが進行中です'}); break; }
+      const players=S.roster.map(x=>x.id);
+      if(players.length<4){ hostSendTo(from,{t:'mgError',msg:'人狼ゲームには4人以上必要です'}); break; }
+      const id='jr'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const shuffled=[...players].sort(()=>Math.random()-0.5);
+      const wolfCount=players.length>=7?2:1;
+      const wolfIds=shuffled.slice(0,wolfCount);
+      const rest=shuffled.slice(wolfCount);
+      const seerId=players.length>=5?rest[0]:null;
+      const alive={}; players.forEach(pid=>alive[pid]=true);
+      HostSecret={type:'jinro',id,players,wolfIds,seerId,alive,round:1,nightWolfVotes:{},nightSeerVote:null,dayVotes:{}};
+      S.miniGame={type:'jinro',id};
+      players.forEach(pid=>{
+        if(wolfIds.includes(pid)){
+          const mateIds=wolfIds.filter(w=>w!==pid);
+          const mates=mateIds.map(w=>{ const pp=S.roster.find(x=>x.id===w); return pp?pp.name:'？'; });
+          hostSendTo(pid,{t:'jinroRole',id,role:'wolf',mates,mateIds});
+        }else if(pid===seerId){
+          hostSendTo(pid,{t:'jinroRole',id,role:'seer'});
+        }else{
+          hostSendTo(pid,{t:'jinroRole',id,role:'villager'});
+        }
+      });
+      const entry={jinro:true,id,from,round:1,phase:'night',alive:[...players],dead:[],log:['🌙 第1夜:人狼が行動しています…'],votes:{},ts:Date.now()};
+      S.chat.push(entry); if(S.chat.length>300)S.chat.shift();
+      deliver({t:'jinroEntry',entry});
+      schedulePersistSave(); break;}
+    case 'jinroNightVote':{
+      if(!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==m.id) break;
+      if(!HostSecret.wolfIds.includes(from)||!HostSecret.alive[from]) break;
+      const target=String(m.target||''); if(!HostSecret.alive[target]||HostSecret.wolfIds.includes(target)) break;
+      HostSecret.nightWolfVotes[from]=target;
+      const aliveWolves=HostSecret.wolfIds.filter(w=>HostSecret.alive[w]);
+      if(aliveWolves.length && aliveWolves.every(w=>HostSecret.nightWolfVotes[w])) jinroResolveNight(m.id);
+      break;}
+    case 'jinroSeerVote':{
+      if(!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==m.id) break;
+      if(HostSecret.seerId!==from||!HostSecret.alive[from]) break;
+      const target=String(m.target||''); if(!HostSecret.alive[target]||target===from) break;
+      HostSecret.nightSeerVote=target;
+      hostSendTo(from,{t:'jinroSeerResult',id:m.id,target,isWolf:HostSecret.wolfIds.includes(target)});
+      break;}
+    case 'jinroToVote':{
+      if(!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==m.id) break;
+      const entry=S.chat.find(c=>c.jinro&&c.id===m.id); if(!entry||entry.phase!=='day') break;
+      entry.phase='vote'; entry.votes={}; HostSecret.dayVotes={};
+      deliver({t:'jinroPhase',id:m.id,phase:'vote',round:entry.round,alive:entry.alive,dead:entry.dead,log:entry.log});
+      schedulePersistSave(); break;}
+    case 'jinroVote':{
+      if(!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==m.id) break;
+      if(!HostSecret.alive[from]) break;
+      const entry=S.chat.find(c=>c.jinro&&c.id===m.id); if(!entry||entry.phase!=='vote') break;
+      const target=String(m.target||''); if(!HostSecret.alive[target]||target===from) break;
+      HostSecret.dayVotes[from]=target;
+      entry.votes=Object.assign({},HostSecret.dayVotes);
+      deliver({t:'jinroVoteUpdate',id:m.id,votes:entry.votes});
+      const aliveCount=Object.keys(HostSecret.alive).filter(k=>HostSecret.alive[k]).length;
+      if(Object.keys(HostSecret.dayVotes).length>=aliveCount) jinroCloseVote(m.id);
+      schedulePersistSave(); break;}
     case 'mod':
       if(from!==S.myId) break;
       break;
@@ -1681,6 +1858,92 @@ function closeJankenRound(id){
   }
   entry.result=result;
   deliver({t:'jankenReveal',id,picks:entry.picks,result});
+  schedulePersistSave();
+}
+
+/* ============================================================
+   ミニゲーム共通:ワードウルフ・人狼（簡易版）
+   どちらも「ホスト権威(hostHandle)で進行を管理し、公開情報はdeliver()で全員に、
+   秘密情報はhostSendTo()で本人にだけ配る」という、既存のじゃんけん／位置情報と
+   同じ設計パターンを踏襲している。役職・単語などの「秘密」はHostSecret(ホストの
+   プロセスだけが持つ変数。ゲストのJSではこの変数は常にnullのまま)にのみ置き、
+   S.chatに載る公開エントリ(entry)には結果発表まで一切含めないことで、
+   情報漏洩をデータ構造のレベルで防いでいる
+   ============================================================ */
+const WW_PAIRS=[
+  ['犬','猫'],['ラーメン','うどん'],['夏','冬'],['サッカー','バスケットボール'],['コーヒー','紅茶'],
+  ['海','山'],['スマホ','タブレット'],['電車','バス'],['寿司','刺身'],['教室','職員室'],
+  ['漫画','アニメ'],['YouTube','TikTok'],['カレー','シチュー'],['富士山','エベレスト'],['ピアノ','ギター'],
+  ['サンタクロース','トナカイ'],['カラオケ','ライブ'],['お茶','水'],['図書館','本屋'],['温泉','銭湯'],
+  ['ハンバーガー','ホットドッグ'],['花火','イルミネーション'],['傘','レインコート'],['修学旅行','遠足'],
+  ['ゲームセンター','ネットカフェ'],['桜','紅葉'],['パン','ご飯'],['自転車','バイク']
+];
+function wwCloseVote(id){
+  if(!S.isHost||!HostSecret||HostSecret.type!=='ww'||HostSecret.id!==id) return;
+  const entry=S.chat.find(c=>c.ww&&c.id===id); if(!entry||entry.state==='result') return;
+  entry.state='result';
+  const tally={}; Object.values(HostSecret.votes).forEach(t=>{ tally[t]=(tally[t]||0)+1; });
+  let accusedId=null,max=-1;
+  Object.entries(tally).forEach(([tid,c])=>{ if(c>max){max=c;accusedId=tid;} });
+  const correct=accusedId===HostSecret.wolfId;
+  deliver({t:'wwReveal',id,accusedId,wolfId:HostSecret.wolfId,majorityWord:HostSecret.majorityWord,minorityWord:HostSecret.minorityWord,correct});
+  S.miniGame=null; HostSecret=null;
+  schedulePersistSave();
+}
+function jinroResolveNight(id){
+  if(!S.isHost||!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==id) return;
+  const tally={}; Object.values(HostSecret.nightWolfVotes).forEach(t=>{ tally[t]=(tally[t]||0)+1; });
+  let victim=null,max=-1;
+  Object.entries(tally).forEach(([t,c])=>{ if(c>max){max=c;victim=t;} });
+  if(victim) HostSecret.alive[victim]=false;
+  HostSecret.nightWolfVotes={}; HostSecret.nightSeerVote=null;
+  const entry=S.chat.find(c=>c.jinro&&c.id===id); if(!entry) return;
+  const victimP=victim?S.roster.find(x=>x.id===victim):null;
+  entry.phase='day';
+  entry.alive=HostSecret.players.filter(pid=>HostSecret.alive[pid]);
+  entry.dead=HostSecret.players.filter(pid=>!HostSecret.alive[pid]);
+  entry.log=(entry.log||[]).concat(victimP?`☀️ 第${HostSecret.round}日:${victimP.name}さんが襲撃されました`:'☀️ 昨夜は誰も襲撃されませんでした');
+  deliver({t:'jinroPhase',id,phase:'day',round:entry.round,alive:entry.alive,dead:entry.dead,log:entry.log});
+  schedulePersistSave();
+  jinroCheckWinAndAdvance(id);
+}
+function jinroCloseVote(id){
+  if(!S.isHost||!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==id) return;
+  const entry=S.chat.find(c=>c.jinro&&c.id===id); if(!entry||entry.phase!=='vote') return;
+  const tally={}; Object.values(HostSecret.dayVotes).forEach(t=>{ tally[t]=(tally[t]||0)+1; });
+  let exiled=null,max=-1;
+  Object.entries(tally).forEach(([t,c])=>{ if(c>max){max=c;exiled=t;} });
+  let wasWolf=false;
+  if(exiled){ HostSecret.alive[exiled]=false; wasWolf=HostSecret.wolfIds.includes(exiled); }
+  const exiledP=exiled?S.roster.find(x=>x.id===exiled):null;
+  HostSecret.round++;
+  entry.round=HostSecret.round;
+  entry.alive=HostSecret.players.filter(pid=>HostSecret.alive[pid]);
+  entry.dead=HostSecret.players.filter(pid=>!HostSecret.alive[pid]);
+  entry.log=(entry.log||[]).concat(exiledP?`🗳 投票の結果、${exiledP.name}さんが追放されました（${wasWolf?'人狼でした':'人狼ではありませんでした'}）`:'🗳 投票がまとまりませんでした');
+  entry.phase='night';
+  entry.log=entry.log.concat(`🌙 第${entry.round}夜:人狼が行動しています…`);
+  deliver({t:'jinroPhase',id,phase:'night',round:entry.round,alive:entry.alive,dead:entry.dead,log:entry.log});
+  HostSecret.dayVotes={};
+  schedulePersistSave();
+  jinroCheckWinAndAdvance(id);
+}
+function jinroCheckWinAndAdvance(id){
+  if(!S.isHost||!HostSecret||HostSecret.type!=='jinro'||HostSecret.id!==id) return;
+  const aliveWolves=HostSecret.wolfIds.filter(w=>HostSecret.alive[w]);
+  const aliveVillagers=HostSecret.players.filter(pid=>HostSecret.alive[pid]&&!HostSecret.wolfIds.includes(pid));
+  let winner=null;
+  if(aliveWolves.length===0) winner='village';
+  else if(aliveWolves.length>=aliveVillagers.length) winner='wolf';
+  if(!winner) return;
+  const entry=S.chat.find(c=>c.jinro&&c.id===id); if(!entry) return;
+  entry.phase='end'; entry.winner=winner; entry.wolfIds=HostSecret.wolfIds; entry.seerId=HostSecret.seerId;
+  const wolfNames=HostSecret.wolfIds.map(w=>{const pp=S.roster.find(x=>x.id===w);return pp?pp.name:'？';});
+  const seerP=HostSecret.seerId?S.roster.find(x=>x.id===HostSecret.seerId):null;
+  entry.log=(entry.log||[]).concat(winner==='village'?'🎉 人狼を全員追放し、村人陣営の勝利です！':'🐺 人狼が村人と同数以上になり、人狼陣営の勝利です！');
+  entry.wolfNames=wolfNames; entry.seerName=seerP?seerP.name:null;
+  deliver({t:'jinroEnd',id,winner,wolfIds:HostSecret.wolfIds,wolfNames,seerId:HostSecret.seerId,seerName:seerP?seerP.name:null,log:entry.log});
+  S.miniGame=null; HostSecret=null;
   schedulePersistSave();
 }
 
@@ -1798,6 +2061,72 @@ function onMessage(m){
     case 'ktScore':
       if(m.from!==S.myId){ S.ktLastScoreOther=m.score; if(S.ktOpen) ktRenderPanel(); }
       break;
+    case 'mgError': toast(m.msg||'ミニゲームを開始できませんでした'); break;
+    /* ---------------- ワードウルフ ---------------- */
+    case 'wwEntry':
+      S.miniGame={type:'ww',id:m.entry.id};
+      pushChat(Object.assign({ww:true},m.entry));
+      break;
+    case 'wwWord':
+      S.miniGame={type:'ww',id:m.id}; S.wwWord=m.word;
+      toast('🐺 あなたの単語：「'+m.word+'」（誰にも言わないでね）',4200);
+      break;
+    case 'wwPhase':{
+      const entry=S.chat.find(c=>c.ww&&c.id===m.id);
+      if(entry){ entry.state=m.state; const card=$('#chatLog').querySelector(`.wwCard[data-ww-id="${m.id}"]`); if(card) card.replaceWith(renderWwCard(entry)); }
+      break;}
+    case 'wwVoteUpdate':{
+      const entry=S.chat.find(c=>c.ww&&c.id===m.id);
+      if(entry){ entry.votes=m.votes; const card=$('#chatLog').querySelector(`.wwCard[data-ww-id="${m.id}"]`); if(card) card.replaceWith(renderWwCard(entry)); }
+      break;}
+    case 'wwReveal':{
+      const entry=S.chat.find(c=>c.ww&&c.id===m.id);
+      if(entry){
+        Object.assign(entry,{state:'result',accusedId:m.accusedId,wolfId:m.wolfId,majorityWord:m.majorityWord,minorityWord:m.minorityWord,correct:m.correct,cancelled:!!m.cancelled});
+        const card=$('#chatLog').querySelector(`.wwCard[data-ww-id="${m.id}"]`); if(card) card.replaceWith(renderWwCard(entry));
+      }
+      if(S.miniGame&&S.miniGame.type==='ww'&&S.miniGame.id===m.id){ S.miniGame=null; S.wwWord=null; }
+      break;}
+    /* ---------------- 人狼ゲーム（簡易版） ---------------- */
+    case 'jinroEntry':
+      S.miniGame={type:'jinro',id:m.entry.id};
+      pushChat(Object.assign({jinro:true},m.entry));
+      jinroRenderAction();
+      break;
+    case 'jinroRole':
+      S.miniGame={type:'jinro',id:m.id};
+      S.jinroRole=m.role; S.jinroWolves=m.mates||null; S.jinroWolfMateIds=m.mateIds||null; S.jinroSeerResults=[];
+      toast(m.role==='wolf'?'🐺 あなたは人狼です'+((m.mates&&m.mates.length)?'（仲間:'+m.mates.join('、')+'）':'（他に人狼はいません）'):
+            m.role==='seer'?'🔮 あなたは占い師です':'🧑 あなたは村人です',4200);
+      jinroRenderAction();
+      break;
+    case 'jinroSeerResult':{
+      S.jinroSeerResults=(S.jinroSeerResults||[]).concat(m);
+      const pp=S.roster.find(x=>x.id===m.target);
+      toast('🔮 占いの結果:'+(pp?pp.name:'？')+'さんは'+(m.isWolf?'人狼でした':'人狼ではありませんでした'),4200);
+      break;}
+    case 'jinroPhase':{
+      const entry=S.chat.find(c=>c.jinro&&c.id===m.id);
+      if(entry){
+        entry.phase=m.phase; entry.round=m.round; entry.alive=m.alive; entry.dead=m.dead; entry.log=m.log; entry.votes={};
+        const card=$('#chatLog').querySelector(`.jinroCard[data-jinro-id="${m.id}"]`); if(card) card.replaceWith(renderJinroCard(entry));
+      }
+      jinroRenderAction();
+      break;}
+    case 'jinroVoteUpdate':{
+      const entry=S.chat.find(c=>c.jinro&&c.id===m.id);
+      if(entry){ entry.votes=m.votes; const card=$('#chatLog').querySelector(`.jinroCard[data-jinro-id="${m.id}"]`); if(card) card.replaceWith(renderJinroCard(entry)); }
+      break;}
+    case 'jinroEnd':{
+      const entry=S.chat.find(c=>c.jinro&&c.id===m.id);
+      if(entry){
+        Object.assign(entry,{phase:'end',winner:m.winner,wolfIds:m.wolfIds,wolfNames:m.wolfNames,seerId:m.seerId,seerName:m.seerName,log:m.log});
+        const card=$('#chatLog').querySelector(`.jinroCard[data-jinro-id="${m.id}"]`); if(card) card.replaceWith(renderJinroCard(entry));
+      }
+      if(S.miniGame&&S.miniGame.type==='jinro'&&S.miniGame.id===m.id){ S.miniGame=null; }
+      S.jinroRole=null; S.jinroWolves=null; S.jinroWolfMateIds=null; S.jinroSeerResults=[];
+      jinroRenderAction();
+      break;}
   }
 }
 
@@ -1929,8 +2258,8 @@ function renderTiles(soft){
         <div class="av"><i></i></div>
         <div class="tname"><span class="cdot"></span><span class="nm"></span></div>
         <div class="tflags"></div>
-        <button class="pinb" title="ピン留め">📌</button>
-        <button class="recBadge" title="録画を停止">⏺ REC</button>
+        <button class="pinb" title="ピン留め" aria-label="このタイルをピン留め">📌</button>
+        <button class="recBadge" title="録画を停止" aria-label="録画を停止">⏺ REC</button>
         <div class="lvl"></div>`;
       const togglePin=()=>{ S.pin=S.pin===p.id?null:p.id; renderTiles(); };
       el.querySelector('.pinb').onclick=e=>{ e.stopPropagation(); togglePin(); };
@@ -2126,19 +2455,145 @@ function renderJankenCard(entry){
   }
   return wrap;
 }
+/* ワードウルフのカード。「自分の単語」は共有データ(entry)には一切乗らず、ローカルだけのS.wwWordから
+   読むので、DOMを見比べても他人の単語がのぞける心配がない設計になっている */
+function renderWwCard(entry){
+  const wrap=document.createElement('div');
+  wrap.className='wwCard'; wrap.dataset.wwId=entry.id;
+  let body='';
+  if(entry.state==='talk'){
+    const myWord=(S.miniGame&&S.miniGame.type==='ww'&&S.miniGame.id===entry.id&&S.wwWord)?S.wwWord:null;
+    body=(myWord?`<div class="wwMyWord">🗝 あなたの単語：<b>${esc(myWord)}</b></div>`:'')+
+      `<p class="wwDesc">全員に単語が個別に届いています。1人だけ少し違う単語(ウルフ)です。通話やチャットで話し合い、誰がウルフか探りましょう！</p>`;
+  }else if(entry.state==='vote'){
+    const votes=entry.votes||{}; const myVote=votes[S.myId];
+    body=`<p class="wwDesc">ウルフだと思う人に投票してください（自分には投票できません）</p><div class="wwOpts"></div><div class="wwFoot">${Object.keys(votes).length}/${(entry.players||[]).length}人が投票済み</div>`;
+  }else if(entry.state==='result'){
+    const accused=S.roster.find(x=>x.id===entry.accusedId);
+    const wolf=S.roster.find(x=>x.id===entry.wolfId);
+    const resultLine=entry.cancelled?'⚠️ 参加者の退出によりこのラウンドは中断されました':(entry.correct?'🎉 村人チームの勝ち！':'🐺 ウルフの勝ち！');
+    body=`<div class="wwResult">${resultLine}</div>
+      <div class="wwReveal">${entry.accusedId?`投票で選ばれたのは<b>${esc(accused?accused.name:'退出済み')}</b>さん<br>`:''}
+      ウルフは<b style="color:var(--coral)">${esc(wolf?wolf.name:'？')}</b>さんでした<br>
+      村人の単語：「${esc(entry.majorityWord||'')}」／ウルフの単語：「${esc(entry.minorityWord||'')}」</div>`;
+  }
+  wrap.innerHTML=`<div class="mh"><b>🐺 ワードウルフ</b><time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div>${body}`;
+  if(entry.state==='talk'){
+    const btn=document.createElement('button'); btn.className='btn ghost'; btn.style.cssText='width:auto;padding:7px 14px;font-size:12px;margin-top:8px';
+    btn.textContent='話し合いを終えて投票へ';
+    btn.onclick=()=>send({t:'wwToVote',id:entry.id});
+    wrap.appendChild(btn);
+  }else if(entry.state==='vote'){
+    const optsEl=wrap.querySelector('.wwOpts');
+    const votes=entry.votes||{}; const myVote=votes[S.myId];
+    (entry.players||[]).forEach(pid=>{
+      if(pid===S.myId) return;
+      const person=S.roster.find(x=>x.id===pid);
+      const count=Object.values(votes).filter(v=>v===pid).length;
+      const b=document.createElement('button'); b.className='wwOpt'+(myVote===pid?' voted':'');
+      b.innerHTML=`<span>${esc(person?person.name:'退出済み')}</span><span class="wwN">${count}票</span>`;
+      b.onclick=()=>send({t:'wwVote',id:entry.id,target:pid});
+      optsEl.appendChild(b);
+    });
+  }else if(entry.state==='result'){
+    const again=document.createElement('button'); again.className='btn ghost'; again.style.cssText='width:auto;padding:6px 12px;font-size:12px;margin-top:10px';
+    again.textContent='もう一度あそぶ';
+    again.onclick=()=>send({t:'wwStart'});
+    wrap.appendChild(again);
+  }
+  return wrap;
+}
+/* 人狼ゲーム（簡易版）のカード。役職(村人/人狼/占い師)ごとに見える情報が違う部分は、
+   このカード自体(=全員が同じ内容を見る公開情報)には一切含めず、別出しの
+   #jinroActionBox（jinroRenderAction()）というローカル限定のUIでだけ本人に見せている */
+function renderJinroCard(entry){
+  const wrap=document.createElement('div');
+  wrap.className='jinroCard'; wrap.dataset.jinroId=entry.id;
+  const logHtml=(entry.log||[]).map(l=>`<div class="jinroLog">${esc(l)}</div>`).join('');
+  const aliveNames=(entry.alive||[]).map(pid=>{const pp=S.roster.find(x=>x.id===pid);return pp?esc(pp.name):'退出済み';}).join('、');
+  let body='';
+  if(entry.phase==='night'){
+    body=`<p class="wwDesc">🌙 第${entry.round||1}夜:人狼(と占い師がいれば占い師)が行動中です。他の人はしばらくお待ちください…</p>`;
+  }else if(entry.phase==='day'){
+    body=`<p class="wwDesc">生存者:${aliveNames}<br>話し合いましょう。準備ができたら投票に進めます。</p>`;
+  }else if(entry.phase==='vote'){
+    const votes=entry.votes||{};
+    body=`<p class="wwDesc">誰を追放するか投票してください（自分には投票できません）</p><div class="wwOpts"></div><div class="wwFoot">${Object.keys(votes).length}/${(entry.alive||[]).length}人が投票済み</div>`;
+  }else if(entry.phase==='end'){
+    const wolfNames=(entry.wolfNames||[]).join('、');
+    body=`<div class="wwResult">${entry.winner==='village'?'🎉 村人陣営の勝利！':'🐺 人狼陣営の勝利！'}</div>
+      <div class="wwReveal">人狼だったのは<b style="color:var(--coral)">${esc(wolfNames)}</b>さん${entry.seerName?`<br>占い師は<b>${esc(entry.seerName)}</b>さんでした`:''}</div>`;
+  }
+  wrap.innerHTML=`<div class="mh"><b>🐺🌙 人狼ゲーム</b><time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div>${body}<div class="jinroLogWrap">${logHtml}</div>`;
+  if(entry.phase==='day'){
+    const btn=document.createElement('button'); btn.className='btn ghost'; btn.style.cssText='width:auto;padding:7px 14px;font-size:12px;margin-top:8px';
+    btn.textContent='話し合いを終えて投票へ';
+    btn.onclick=()=>send({t:'jinroToVote',id:entry.id});
+    wrap.appendChild(btn);
+  }else if(entry.phase==='vote'){
+    const optsEl=wrap.querySelector('.wwOpts');
+    const votes=entry.votes||{}; const myVote=votes[S.myId];
+    (entry.alive||[]).forEach(pid=>{
+      if(pid===S.myId) return;
+      const person=S.roster.find(x=>x.id===pid);
+      const count=Object.values(votes).filter(v=>v===pid).length;
+      const b=document.createElement('button'); b.className='wwOpt'+(myVote===pid?' voted':'');
+      b.innerHTML=`<span>${esc(person?person.name:'退出済み')}</span><span class="wwN">${count}票</span>`;
+      b.onclick=()=>send({t:'jinroVote',id:entry.id,target:pid});
+      optsEl.appendChild(b);
+    });
+  }else if(entry.phase==='end'){
+    const again=document.createElement('button'); again.className='btn ghost'; again.style.cssText='width:auto;padding:6px 12px;font-size:12px;margin-top:10px';
+    again.textContent='もう一度あそぶ';
+    again.onclick=()=>send({t:'jinroStart'});
+    wrap.appendChild(again);
+  }
+  return wrap;
+}
+/* 人狼の「夜の行動」ローカル専用パネル。人狼・占い師で、かつ生存中で、かつ夜フェーズの間だけ表示する。
+   人狼には仲間の人狼(S.jinroWolfMateIds)は選択肢から除外し、誤って仲間を襲撃対象に選べないようにしている */
+function jinroRenderAction(){
+  const box=$('#jinroActionBox'); if(!box) return;
+  const mg=S.miniGame;
+  if(!mg||mg.type!=='jinro'){ box.classList.remove('on'); return; }
+  const entry=S.chat.find(c=>c.jinro&&c.id===mg.id);
+  if(!entry||entry.phase!=='night'||!(entry.alive||[]).includes(S.myId)||(S.jinroRole!=='wolf'&&S.jinroRole!=='seer')){
+    box.classList.remove('on'); return;
+  }
+  box.classList.add('on');
+  const title=$('#jaTitle'), opts=$('#jaOpts'), hint=$('#jaHint');
+  title.textContent=S.jinroRole==='wolf'?'🐺 誰を襲撃しますか？':'🔮 誰を占いますか？';
+  opts.innerHTML='';
+  (entry.alive||[]).forEach(pid=>{
+    if(pid===S.myId) return;
+    if(S.jinroRole==='wolf'&&(S.jinroWolfMateIds||[]).includes(pid)) return;
+    const person=S.roster.find(x=>x.id===pid);
+    const b=document.createElement('button');
+    b.textContent=person?person.name:'？';
+    b.onclick=()=>{
+      send({t:S.jinroRole==='wolf'?'jinroNightVote':'jinroSeerVote',id:entry.id,target:pid});
+      [...opts.children].forEach(x=>x.classList.remove('sel')); b.classList.add('sel');
+    };
+    opts.appendChild(b);
+  });
+  hint.textContent=S.jinroRole==='wolf'?'（生存する人狼全員が選び終わると夜が明けます）':'（占い結果はこの後すぐこっそり届きます）';
+}
 function addChatEl(m){
   const l=$('#chatLog'); const d=document.createElement('div');
   if(m.sys){ d.className='msg sys'; d.innerHTML=`<p>${esc(m.text)}</p>`; }
   else if(m.poll){ d.className='msg'; d.appendChild(renderPollCard(m)); }
   else if(m.loc){ d.className='msg'; d.appendChild(renderLocCard(m)); }
   else if(m.janken){ d.className='msg'; d.appendChild(renderJankenCard(m)); }
+  else if(m.ww){ d.className='msg'; d.appendChild(renderWwCard(m)); }
+  else if(m.jinro){ d.className='msg'; d.appendChild(renderJinroCard(m)); }
   else{
     d.className='msg'+(m.ai?' ai':'')+(m.cap?' cap':'');
     const body=m.text?linkify(m.text):'';
     const imgsHtml=(m.imgs&&m.imgs.length)?`<div class="chatImgs">${m.imgs.map(src=>`<img src="${src}" class="chatImg">`).join('')}</div>`:'';
+    const fileHtml=m.file?`<a href="${esc(m.file.data)}" download="${esc(m.file.name)}" class="chatFile"><span class="cf-ico">📎</span><span class="cf-body"><b>${esc(m.file.name)}</b><small>${humanSize(m.file.size)}</small></span></a>`:'';
     const inviteHtml=m.invite?renderInviteCard(m):'';
     const dispName=m.ai?'✨ AI':esc(m.name)+(m.cap?' <small style="font-weight:400;opacity:.6">🗣️字幕</small>':'');
-    d.innerHTML=`<div class="mh"><b style="color:${m.ai?'':m.color}">${dispName}</b><time>${new Date(m.ts).toTimeString().slice(0,5)}</time></div>${body?`<p>${body}</p>`:''}${imgsHtml}${inviteHtml}`;
+    d.innerHTML=`<div class="mh"><b style="color:${m.ai?'':m.color}">${dispName}</b><time>${new Date(m.ts).toTimeString().slice(0,5)}</time></div>${body?`<p>${body}</p>`:''}${imgsHtml}${fileHtml}${inviteHtml}`;
     if(imgsHtml) d.querySelectorAll('.chatImg').forEach(img=>img.onclick=()=>openImgViewer(img.src));
   }
   l.appendChild(d); l.scrollTop=l.scrollHeight;
@@ -2170,7 +2625,7 @@ function savePersistData(){
   try{
     const data={
       roomName:S.roomName,
-      chat:S.chat.filter(m=>!m.imgs||!m.imgs.length).slice(-100), // 画像はlocalStorage容量を圧迫するので保存対象から外す
+      chat:S.chat.filter(m=>(!m.imgs||!m.imgs.length)&&!m.file).slice(-100), // 画像はlocalStorage容量を圧迫するので保存対象から外す
       members:S.persistMembers||[],
       ts:Date.now()
     };
@@ -2210,7 +2665,7 @@ function savePersistMembership(code,roomName){
     const existing=loadPersistData(code);
     const data=existing||{roomName,chat:[],members:[],ts:Date.now()};
     data.roomName=roomName||data.roomName; data.ts=Date.now();
-    if(S.chat&&S.chat.length) data.chat=S.chat.filter(m=>!m.imgs||!m.imgs.length).slice(-100);
+    if(S.chat&&S.chat.length) data.chat=S.chat.filter(m=>(!m.imgs||!m.imgs.length)&&!m.file).slice(-100);
     localStorage.setItem(PERSIST_PREFIX+code, JSON.stringify(data));
     const list=persistList().filter(x=>x.code!==code);
     list.unshift({code,name:data.roomName,members:(data.members||[]).length,ts:Date.now()});
@@ -2222,14 +2677,32 @@ function schedulePersistSave(){
   if(!S.isHost||!S.persistent) return;
   clearTimeout(persistSaveT); persistSaveT=setTimeout(savePersistData,2000);
 }
+/* 持続的会議のバックアップ書き出し。localStorageだけに保存されているため、
+   ブラウザのデータを消す・端末を変えると失われてしまう問題への対策として、
+   会議名・チャット履歴・メンバー記録をJSONファイルとしてダウンロードできるようにした */
+function exportPersistData(code){
+  const data=loadPersistData(code);
+  if(!data){ toast('この持続的会議のデータが見つかりません'); return; }
+  const payload=Object.assign({kdmPersistExport:1,code},data);
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='kodama-'+code+'-backup.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('書き出しました（ダウンロードフォルダをご確認ください）');
+}
 function renderPersistList(){
   const box=$('#persistList'); const list=persistList();
   if(!list.length){ box.innerHTML='<div class="empty">このブラウザで開いたことのある持続的会議はまだありません</div>'; return; }
   box.innerHTML='';
   list.forEach(entry=>{
+    const row=document.createElement('div'); row.className='room-row';
     const b=document.createElement('button'); b.className='room';
     const d=new Date(entry.ts);
     b.innerHTML=`<div class="rn"><b>${esc(entry.name||'会議')}</b><span>${esc(entry.code)}・${d.getMonth()+1}/${d.getDate()} 更新</span></div><div class="pill">${entry.members||0}人</div>`;
+    const exp=document.createElement('button'); exp.className='roomExport'; exp.title='この会議のデータを書き出す'; exp.textContent='⬇';
+    exp.onclick=e=>{ e.stopPropagation(); exportPersistData(entry.code); };
     b.onclick=async()=>{
       const n=$('#pName').value.trim(); if(!n) return toast('表示名を入れてください');
       S.name=n; localStorage.setItem('kdm-name',n);
@@ -2251,9 +2724,41 @@ function renderPersistList(){
         }
       }catch(e){ console.error(e); toast(e.message||'入れませんでした'); b.disabled=false; }
     };
-    box.appendChild(b);
+    row.appendChild(b); row.appendChild(exp);
+    box.appendChild(row);
   });
 }
+/* バックアップJSONの読み込み。ファイル内の合言葉(code)をキーに、通常の保存と全く同じ
+   localStorageの場所へそのまま書き戻すことで、以後は既存の「一覧から再開」の仕組みに
+   自然に乗る（読み込み専用の特別な経路を別に作らない） */
+$('#btnPersistImport').onclick=()=>$('#persistImportFile').click();
+$('#persistImportFile').onchange=e=>{
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(String(reader.result));
+      const code=String(obj.code||'').toUpperCase().slice(0,4);
+      if(!/^[A-Z0-9]{4}$/.test(code)) throw new Error('bad code');
+      const data={
+        roomName:String(obj.roomName||'会議').slice(0,30),
+        chat:Array.isArray(obj.chat)?obj.chat.slice(-100):[],
+        members:Array.isArray(obj.members)?obj.members:[],
+        ts:Date.now()
+      };
+      localStorage.setItem(PERSIST_PREFIX+code, JSON.stringify(data));
+      const list=persistList().filter(x=>x.code!==code);
+      list.unshift({code,name:data.roomName,members:data.members.length,ts:Date.now()});
+      localStorage.setItem(PERSIST_LIST_KEY, JSON.stringify(list.slice(0,20)));
+      renderPersistList();
+      toast('「'+data.roomName+'」（'+code+'）を読み込みました。一覧から再開できます');
+    }catch(err){
+      toast('読み込みに失敗しました。書き出したバックアップファイルか確認してください');
+    }
+    e.target.value='';
+  };
+  reader.readAsText(file);
+};
 /* 入退室サウンド（音声ファイルは使わずWeb AudioのOscillatorNodeでその場で組み立てる） */
 function chime(notes,{dur=0.32,gap=0.075,type='sine',peak=0.16}={}){
   if(!S.roomSound) return;
@@ -2667,6 +3172,38 @@ $$('[data-close]').forEach(b=>b.onclick=()=>togglePanel(b.dataset.close));
 $$('[data-closemodal]').forEach(b=>b.onclick=()=>b.closest('.modal').classList.remove('on'));
 $$('.modal').forEach(m=>m.onclick=e=>{ if(e.target===m)m.classList.remove('on'); });
 
+/* ============================================================
+   アクセシビリティ:モーダル・オーバーレイ共通の対応
+   ・スクリーンリーダー向けに role="dialog"/aria-modal をまとめて付与
+   ・開いた瞬間、中の最初の操作可能要素へフォーカスを移す（個々の開閉処理を1つ1つ
+     書き換えるのではなく、既存の「class="on"の付け外し」自体をMutationObserverで
+     監視することで、今後モーダルが増えても自動的に同じ挙動になるようにした）
+   ・Escキーでいちばん手前に開いているモーダル／オーバーレイを閉じられるようにする
+   ============================================================ */
+(function initAccessibleOverlays(){
+  const OVERLAY_SEL='.modal, #wbOverlay, #ktOverlay';
+  const overlays=[...document.querySelectorAll(OVERLAY_SEL)];
+  overlays.forEach(el=>{ el.setAttribute('role','dialog'); el.setAttribute('aria-modal','true'); });
+  const mo=new MutationObserver(muts=>{
+    muts.forEach(mu=>{
+      const el=mu.target;
+      if(!(el instanceof HTMLElement) || !el.classList.contains('on')) return;
+      const focusable=el.querySelector('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      if(focusable) setTimeout(()=>{ try{focusable.focus();}catch(_){} },30);
+    });
+  });
+  overlays.forEach(el=>mo.observe(el,{attributes:true,attributeFilter:['class']}));
+})();
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  const openModal=[...document.querySelectorAll('.modal.on')].pop(); // 一番あとに開いた（＝最前面の）ものを閉じる
+  if(openModal){ openModal.classList.remove('on'); return; }
+  if($('#wbOverlay').classList.contains('on')){ closeWhiteboard(); return; }
+  if($('#ktOverlay').classList.contains('on')){ S.ktOpen=false; $('#ktOverlay').classList.remove('on'); return; }
+  if($('#quickFx').classList.contains('on')){ $('#quickFx').classList.remove('on'); return; }
+  if($('#imgView').classList.contains('on')){ $('#imgView').classList.remove('on'); return; }
+});
+
 // チャット送信（先頭が「@AI 」ならAIへの質問として扱い、通常送信のあとに返信を投げる）
 function sendChat(){
   const t=$('#chatIn').value.trim(); if(!t)return;
@@ -2734,6 +3271,8 @@ function openLocModal(){
 $('#plusLoc').onclick=()=>{ $('#mPlus').classList.remove('on'); openLocModal(); };
 $('#plusJanken').onclick=()=>{ $('#mPlus').classList.remove('on'); send({t:'janken'}); };
 $('#plusWb').onclick=()=>{ $('#mPlus').classList.remove('on'); openWhiteboard(); };
+$('#plusWW').onclick=()=>{ $('#mPlus').classList.remove('on'); send({t:'wwStart'}); };
+$('#plusJinro').onclick=()=>{ $('#mPlus').classList.remove('on'); send({t:'jinroStart'}); };
 
 /* ============================================================
    ホワイトボード（チャットから開ける全員共有のお絵かき。会議は裏で続く）
@@ -3249,6 +3788,34 @@ $('#photoFile').onchange=async e=>{
   if(!imgs.length) return toast('画像を読み込めませんでした');
   send({t:'chat',text:'',imgs});
 };
+/* 写真以外の一般的なファイル送信（PDF・テキスト・Office文書など）。
+   既存の写真送信と同じ「base64化してP2Pデータチャネルに乗せる」仕組みをそのまま応用しているが、
+   画像のような圧縮ができない（元のファイルのまま送る必要がある）ため、ファイルサイズには
+   現実的な上限を設け、大きめのファイルは送信前に一度確認を挟むようにした */
+const FILE_MAX_MB=20;
+function humanSize(n){
+  n=+n||0;
+  if(n<1024) return n+'B';
+  if(n<1024*1024) return (n/1024).toFixed(1)+'KB';
+  return (n/1024/1024).toFixed(1)+'MB';
+}
+$('#plusFile').onclick=()=>{ $('#mPlus').classList.remove('on'); $('#chatFile').click(); };
+$('#chatFile').onchange=async e=>{
+  const file=e.target.files&&e.target.files[0]; e.target.value='';
+  if(!file) return;
+  if(file.size>FILE_MAX_MB*1024*1024) return toast('ファイルが大きすぎます（'+FILE_MAX_MB+'MBまで）');
+  if(file.size>5*1024*1024 && !confirm(`「${file.name}」（${humanSize(file.size)}）を送信しますか？\nサイズが大きいファイルなので、参加者の回線状況によっては時間がかかることがあります。`)) return;
+  toast('ファイルを送信しています…');
+  try{
+    const data=await new Promise((resolve,reject)=>{
+      const reader=new FileReader();
+      reader.onload=()=>resolve(String(reader.result));
+      reader.onerror=()=>reject(new Error('読み込めません'));
+      reader.readAsDataURL(file);
+    });
+    send({t:'chat',text:'',file:{name:file.name.slice(0,120),size:file.size,type:file.type||'application/octet-stream',data}});
+  }catch(err){ toast('ファイルを読み込めませんでした'); }
+};
 
 // 検索（DuckDuckGoのInstant Answer APIを試し、ダメなら新しいタブで開く。実装本体は後方のbtnGSearchハンドラ）
 $('#cGoogle').onclick=()=>{ $('#gSearchIn').value=''; $('#gUrlIn').value=''; $('#gResults').innerHTML=''; $('#mGoogle').classList.add('on'); setTimeout(()=>$('#gSearchIn').focus(),50); };
@@ -3680,7 +4247,7 @@ function aiIconState(state){
 /* レート制限・残り利用回数は、公式ドキュメント上generateContentのレスポンスヘッダーとしては提供されておらず
    （AI Studioの管理画面でのみ確認できる）取得不可能と判断した。一方でレスポンス本文の`usageMetadata`には
    その1回分の消費トークン数が確実に含まれているため、取得できる「使用量」の目安としてこちらを表示に使う */
-async function callGemini(prompt){
+async function _callGeminiOnce(prompt){
   const key=geminiApiKey();
   if(!key) throw new Error('APIキーが設定されていません');
   const model=geminiModel();
@@ -3690,11 +4257,50 @@ async function callGemini(prompt){
     body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})
   });
   let d; try{ d=await r.json(); }catch(_){ d=null; }
-  if(!r.ok || (d&&d.error)) throw new Error((d&&d.error&&d.error.message)||('HTTP '+r.status));
+  if(!r.ok || (d&&d.error)){
+    const err=new Error((d&&d.error&&d.error.message)||('HTTP '+r.status));
+    err.status=r.status; err.retryAfter=parseGeminiRetryDelay(d);
+    throw err;
+  }
   const parts=(d&&d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts)||[];
   const text=parts.map(p=>p.text||'').join('').trim();
   if(!text) throw new Error('空の応答でした（安全フィルタ等でブロックされた可能性があります）');
   return {text,usage:(d&&d.usageMetadata)||null};
+}
+/* 429(quota exceeded)のレスポンスには「何秒後に再試行すべきか」の情報が
+   ・error.details内のRetryInfo（retryDelay:"18.15s"のような文字列）
+   ・error.messageの「Please retry in 18.15s」のような文言
+   のどちらかの形で含まれていることが多いので、両方のパターンを読み取る */
+function parseGeminiRetryDelay(d){
+  try{
+    const details=d&&d.error&&d.error.details;
+    if(Array.isArray(details)){
+      const ri=details.find(x=>x&&typeof x['@type']==='string'&&x['@type'].indexOf('RetryInfo')>=0);
+      if(ri&&ri.retryDelay){ const sec=parseFloat(String(ri.retryDelay).replace('s','')); if(isFinite(sec)) return sec; }
+    }
+    const msg=(d&&d.error&&d.error.message)||'';
+    const m=msg.match(/retry in\s+([\d.]+)\s*s/i);
+    if(m) return parseFloat(m[1]);
+  }catch(_){}
+  return null;
+}
+function aiWaitWithCountdown(sec){
+  aiIconState('loading');
+  toast('⏳ AIの利用が混み合っています（レート制限）。'+sec+'秒後に自動で再試行します…', Math.min(sec*1000,9000));
+  return new Promise(resolve=>setTimeout(resolve,sec*1000));
+}
+/* 429エラー(利用制限)の時だけ、レスポンスが教えてくれた待ち時間ぶんだけ待って1回だけ自動再試行する。
+   無限リトライはせず、1回失敗したらそこで諦めてエラー表示にする（無応答のまま延々粘らないようにするため） */
+async function callGemini(prompt){
+  try{
+    return await _callGeminiOnce(prompt);
+  }catch(e){
+    if(e.status===429 && e.retryAfter!=null && e.retryAfter>0 && e.retryAfter<=120){
+      await aiWaitWithCountdown(Math.ceil(e.retryAfter)+1);
+      return await _callGeminiOnce(prompt);
+    }
+    throw e;
+  }
 }
 function toastAiUsage(usage){
   if(usage&&usage.totalTokenCount) toast('🔢 今回の消費トークン数（目安）：'+usage.totalTokenCount,3200);
