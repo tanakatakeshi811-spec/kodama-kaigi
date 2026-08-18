@@ -106,6 +106,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border-radius:12px;font-weight:800;letter-spacing:.05em;transition:.16s}
 .btn.primary{background:linear-gradient(180deg,var(--mint),var(--mint-d));color:#04241d;box-shadow:0 10px 26px rgba(95,227,192,.22)}
 .btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost.act{background:rgba(95,227,192,.16);border-color:rgba(95,227,192,.42);color:var(--mint)}
 .btn.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt)}
 .btn.ghost:hover{border-color:#3b4a70}
 .btn:disabled{opacity:.5;cursor:not-allowed}
@@ -472,6 +473,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
 /* モーダル */
 .modal{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:40}
+/* バグ修正:自分のID・フレンド追加・フレンド設定は#friendOverlay(z-index:56)の「上」に開くモーダルなので、
+   通常の.modal(z-index:40)のままだと背面に隠れてしまっていた。専用に高いz-indexを与える */
+#mMyFriendId,#mAddFriend,#mFriendSettings{z-index:59}
 .modal.on{display:flex;animation:modalBgIn .18s ease}
 .modal.on .sheet{animation:modalIn .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes modalBgIn{from{opacity:0}to{opacity:1}}
@@ -486,6 +490,27 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .frow select,.frow input[type=text]{background:#0c1120;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12.5px;max-width:190px;flex:1 1 auto}
 .frow input[type=range]{max-width:150px;accent-color:var(--mint)}
 .kbd{font-family:var(--mono);background:#0c1120;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 7px;font-size:11px}
+
+/* 利用規約の本文ボックス（いつでも見られる版・初回同意版で共有） */
+.termsScrollBox{max-height:44vh;overflow:auto;background:#0c1120;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.7;color:var(--dim)}
+.termsScrollBox b{color:var(--txt)}
+.termsScrollBox ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+.termsScrollBox p{margin:10px 0 0}
+/* 初回同意モーダル：通常の.modalとは切り離した専用要素。背景クリック/Escでは閉じられない（必ず最後までスクロール→同意が必要なため） */
+#mConsent{position:fixed;inset:0;background:rgba(4,6,12,.86);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:80}
+#mConsent.on{display:flex;animation:modalBgIn .18s ease}
+#btnAgreeTerms:disabled{opacity:.35;cursor:not-allowed;filter:none}
+
+/* ホーム画面左下：バージョン・更新履歴（PCで余白になる左側を利用。スマホは幅が無いので非表示） */
+.homeVersion{position:fixed;left:14px;bottom:14px;z-index:15}
+.homeVersion button{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;font-size:11px;color:var(--dim);font-family:var(--mono);cursor:pointer;transition:.15s}
+.homeVersion button:hover{color:var(--txt);border-color:var(--mint-d)}
+@media(max-width:760px){ .homeVersion{display:none} }
+.clItem{padding:10px 0;border-bottom:1px solid rgba(38,48,74,.6)}
+.clItem:last-child{border:none}
+.clItem b{color:var(--mint);font-family:var(--mono);font-size:12px}
+.clItem .clDate{color:var(--dim);font-size:11px;margin-left:6px}
+.clItem ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:var(--dim);line-height:1.6}
 
 #toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;align-items:center;z-index:60;pointer-events:none}
 .tt{background:rgba(20,26,43,.96);border:1px solid var(--line);padding:10px 17px;border-radius:12px;font-size:13px;font-weight:600;animation:ttin .22s;box-shadow:0 10px 30px rgba(0,0,0,.5)}
@@ -549,6 +574,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <button id="btnFriendMobile" class="homeIconBtn homeIconBtn-wide mobileOnly" title="フレンド" aria-label="フレンドチャットを開く">💬 チャット</button>
     <button id="btnHomeSettings" class="homeIconBtn" title="設定" aria-label="設定を開く">⚙</button>
   </div>
+  <div class="homeVersion"><button id="btnShowChangelog" title="更新履歴を見る"><span id="hvVersionTxt"></span>・更新履歴</button></div>
   <div class="brand"><div class="mark"></div><h1>コダマ会議</h1></div>
   <div class="tag">サーバーを通さない <b>P2P</b> のウェブ会議・字幕・翻訳つき</div>
 
@@ -688,9 +714,18 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <p>右上（PCでは会議を開くカードの横）の「フレンド」から、持続的な個人ID同士でフレンド登録すると、会議に入っていなくても1対1でチャット・通話ができます。<b style="color:var(--txt)">サーバーを持たない仕組み上、お互いが同時にアプリを開いている時だけメッセージが届きます</b>（後から自動的に届く、ということはできません）。</p>
       </div>
     </details>
+    <details class="tutItem">
+      <summary><span class="tutIcoWrap">❓</span><span class="tutHeadTxt"><b>Q. サーバー無しでどうやって動いているのですか？</b><small>しくみ・安全性・メリットとデメリット</small></span><span class="tutChevron">⌄</span></summary>
+      <div class="tutBody">
+        <p><b style="color:var(--txt)">仕組み：</b>コダマ会議は「P2P（Peer to Peer）」という方式で動いています。ふつうのオンライン会議サービスは、参加者どうしの映像・音声・チャットが一度「会社のサーバー」を経由してから相手に届きますが、このアプリにはそのサーバーがありません。参加者の端末（パソコン・スマホ）どうしが、ブラウザ標準の技術「WebRTC」を使って<b style="color:var(--txt)">直接</b>つながり、映像・音声・チャットのデータをやり取りします。合言葉を頼りに最初に「誰と誰が繋がるか」の橋渡しだけをするごく小さな仕組み（シグナリングサーバー。PeerJSという無料の仕組みを利用しています）はありますが、実際の会話の中身はそこを一切通りません。</p>
+        <p><b style="color:var(--txt)">安全性：</b>WebRTCでの直接通信は、その仕組み自体に暗号化（DTLS/SRTPという規格）が組み込まれており、途中で盗み見られにくい形でやり取りされます。また、そもそも会話の中身を中継するサーバーが存在しないため、<b style="color:var(--txt)">開発者を含め誰も、参加者どうしの映像・音声・チャットの中身を見ることはできません</b>（持続的会議のチャット履歴やフレンドのチャット履歴なども、各自の端末のブラウザ内(localStorage)に保存されるだけで、どこか外部のサーバーに送られることはありません）。</p>
+        <p><b style="color:var(--txt)">メリット：</b>①サーバーの維持費が一切かからないため、このアプリはずっと無料で提供できます。②会話の中身を保存・閲覧できる立場の人（サーバー運営者）がそもそも存在しないため、プライバシーの面で安心です。③会議の人数が少なければ、サーバーを経由しない分、遅延が少なく感じられることもあります。</p>
+        <p><b style="color:var(--txt)">デメリット：</b>①フレンドチャットのように、<b style="color:var(--txt)">相手が同時にオンラインでないと繋がりません</b>（後から自動的に届く、ということができません）。②参加人数が多い会議では、全員分の映像・音声を自分の端末から他の全員に直接送る必要があるため（メッシュ型接続）、参加人数が増えるほど通信量・処理負荷が大きくなりやすく、多人数だと通信環境によっては映像が乱れることがあります。③相手や自分の通信環境（Wi-Fiの弱さ、ファイアウォールの制限など）に、通話品質が直接左右されやすい面があります。</p>
+      </div>
+    </details>
   </div>
 
-  <p class="foot">映像・音声・チャットは参加者どうしで直接やりとりします（PeerJS / WebRTC）。<br>字幕は Chrome・Edge の音声認識を使います。</p>
+  <p class="foot">映像・音声・チャットは参加者どうしで直接やりとりします（PeerJS / WebRTC）。<br>字幕は Chrome・Edge の音声認識を使います。<br><button id="btnShowTerms" style="background:none;border:none;color:var(--dim);text-decoration:underline;cursor:pointer;font-size:inherit;padding:0;margin-top:8px">利用規約・禁止事項を見る</button></p>
 </div>
 
 <!-- ===================== 会議 ===================== -->
@@ -767,8 +802,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         </div>
         <div id="pplList"></div>
       </div>
-      <div class="compose" id="hostTools" style="display:none">
+      <div class="compose" id="hostTools" style="display:none;flex-wrap:wrap">
         <button class="btn ghost" id="btnMuteAll" style="font-size:13px">全員にミュートを依頼</button>
+        <button class="btn ghost" id="btnTogglePublish" style="font-size:13px">🌐　一覧に公開する</button>
       </div>
     </aside>
 
@@ -850,6 +886,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="frow"><span>ノイズ抑制・エコー除去</span><div class="toggle on" id="swNs"></div></div>
       <div class="frow"><span>映像・音声がおかしい時</span><button class="btn ghost" id="btnReloadMedia" style="width:auto;padding:7px 14px;font-size:12px">🔄　カメラ・マイクを再読み込み</button></div>
       <p class="hint" style="margin-top:-4px">会議から抜けたりページを再読み込みしたりせずに、その場でカメラ・マイクを取得し直します。映像や音声が急に映らなくなった・固まった時にお試しください。</p>
+      <div class="frow"><span>カメラ・マイクを一度拒否してしまった時</span><button class="btn ghost" id="btnReaskPermission" style="width:auto;padding:7px 14px;font-size:12px">🔓　許可をもう一度求める</button></div>
+      <p class="hint" style="margin-top:-4px">ブラウザは一度拒否した許可を自動では聞き直してくれません。ここを押すと改めて許可ダイアログを出せます（それでも出ない場合は、アドレスバー付近のカメラ/鍵アイコンからブラウザ側の設定を直接変更してください）。</p>
     </div>
 
     <div class="sec"><h4>字幕</h4>
@@ -1210,6 +1248,36 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
+<!-- 利用規約（いつでも見られる版） -->
+<div class="modal" id="mTerms">
+  <div class="sheet" style="max-width:480px">
+    <h3>利用規約</h3>
+    <div class="sub">安心して使っていただくためのお約束です</div>
+    <div class="termsScrollBox" id="termsBodyView"></div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
+
+<!-- 初回訪問時のみ表示：利用規約への同意（最後までスクロールしないと同意できない） -->
+<div id="mConsent">
+  <div class="sheet" style="max-width:480px">
+    <h3>はじめに：利用規約への同意</h3>
+    <div class="sub">初めてのご利用ありがとうございます。最後までスクロールすると「同意する」ボタンが押せるようになります</div>
+    <div class="termsScrollBox" id="termsBodyConsent"></div>
+    <button class="btn primary" id="btnAgreeTerms" disabled style="margin-top:14px">同意する</button>
+  </div>
+</div>
+
+<!-- 更新履歴 -->
+<div class="modal" id="mChangelog">
+  <div class="sheet" style="max-width:420px">
+    <h3>更新履歴</h3>
+    <div class="sub">現在のバージョン：<span id="clCurrentVer"></span></div>
+    <div id="clList"></div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
+
 <!-- 山田くんスタンプ選択 -->
 <div id="yamadaPicker"><div id="yamadaPickerTitle">山田くんスタンプ</div><div id="yamadaPickerOpts"></div></div>
 
@@ -1280,7 +1348,8 @@ const S={
   recording:false,
   ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0,
   miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[],
-  debugOn:localStorage.getItem('kdm-debug')==='1', pingMs:null
+  debugOn:localStorage.getItem('kdm-debug')==='1', pingMs:null,
+  friendReqSent:new Set()
 };
 /* ホスト権威で管理する各ミニゲームの「秘密の」内部台帳。S本体（全員に配布されうる公開状態）とは
    別に持ち、ホスト以外のクライアントでは常にnullのまま（＝他人の役職・単語は原理的にJSレベルでも保持しない） */
@@ -1872,6 +1941,13 @@ async function reloadMedia(){
   else toast('カメラ・マイクを取得できませんでした。他のアプリで使用中でないかご確認ください');
 }
 $('#btnReloadMedia').onclick=reloadMedia;
+// 「一度拒否してしまった許可を出し直す」ボタン。実際にやることは再読み込みと同じ(getUserMediaの再呼び出し)だが、
+// 「拒否した後でも、まずはもう一度ブラウザに許可を求めてみる」という文脈を明確にするための別入口にした
+async function reaskMediaPermission(){
+  toast('カメラ・マイクの許可を確認しています…');
+  await reloadMedia();
+}
+$('#btnReaskPermission').onclick=reaskMediaPermission;
 
 /* ============================================================
    ホスト
@@ -2245,6 +2321,16 @@ function hostHandle(from,m){
       schedulePersistSave(); break;}
     case 'ping':
       hostSendTo(from,{t:'pong',ts:m.ts}); break;
+    /* 会議参加者からのフレンド申請。会議の仲間内メッセージ経由で相手のフレンドIDを教え合うだけで、
+       実際のフレンド追加・その後のチャット/通話は既存のFriendNet(会議とは無関係の常時接続)が担う */
+    case 'friendReq':{
+      const to=String(m.to||''); if(!to||!S.roster.some(x=>x.id===to)) break;
+      hostSendTo(to,{t:'friendReq',from,fromName:p.name,friendId:String(m.friendId||'').slice(0,40)});
+      break;}
+    case 'friendReqAccept':{
+      const to=String(m.to||''); if(!to||!S.roster.some(x=>x.id===to)) break;
+      hostSendTo(to,{t:'friendReqAccept',from,fromName:p.name,friendId:String(m.friendId||'').slice(0,40)});
+      break;}
     case 'mod':
       if(from!==S.myId) break;
       break;
@@ -2541,6 +2627,26 @@ function onMessage(m){
     case 'pong':
       if(!S.isHost){ S.pingMs=Date.now()-m.ts; updateDebugOverlay(); } // ホストは自分自身へのpingなので測定対象外
       break;
+    case 'friendReq':{
+      const fid=String(m.friendId||''); if(!fid||fid===myFriendId()) break;
+      if(findFriend(fid)){ toast(m.fromName+'さんは既にフレンドです'); break; }
+      if(confirm('🤝 '+m.fromName+' さんからフレンド申請が届きました。承認しますか？\n承認すると、会議を抜けた後もチャット・通話ができるようになります')){
+        upsertFriend({id:fid,name:m.fromName});
+        toast(m.fromName+'さんをフレンドに追加しました');
+        renderFriendList();
+        FriendNet.connectTo(fid).catch(()=>{});
+        send({t:'friendReqAccept',to:m.from,friendId:myFriendId()});
+      }
+      break;}
+    case 'friendReqAccept':{
+      const fid=String(m.friendId||''); if(!fid) break;
+      if(!findFriend(fid)){
+        upsertFriend({id:fid,name:m.fromName});
+        toast(m.fromName+'さんとフレンドになりました');
+        renderFriendList();
+        FriendNet.connectTo(fid).catch(()=>{});
+      }
+      break;}
   }
 }
 
@@ -2649,12 +2755,24 @@ function enterMeeting(){
   $('#btnLock').style.display=S.isHost?'':'none';
   $('#cLock').style.display=S.isHost?'':'none';
   $('#hostTools').style.display=S.isHost?'':'none';
+  if(S.isHost) updatePublishBtn();
   $('#cMic').classList.toggle('off',!S.audio);
   $('#cCam').classList.toggle('off',!S.video);
   S.t0=Date.now(); setInterval(tick,1000); setNet(true);
   meterLocal(); loop(); syncViewportHeight();
   applyDebugOverlay(); // 設定が既にONだった場合、入室と同時に自動で有効化する
 }
+function updatePublishBtn(){
+  const b=$('#btnTogglePublish'); if(!b) return;
+  b.textContent=S.published?'🔒　一覧から非公開にする':'🌐　一覧に公開する';
+  b.classList.toggle('act',S.published);
+}
+$('#btnTogglePublish').onclick=()=>{
+  if(!S.isHost) return;
+  if(S.published){ Dir.unpublish(); toast('会議を非公開にしました（「さがす」一覧から消えます）'); }
+  else{ Dir.publish(); toast('会議を「さがす」一覧に公開しました'); }
+  updatePublishBtn();
+};
 /* ============================================================
    デバッグ表示（FPS・ping）。デフォルトOFFの軽量な補助表示。
    FPS: 専用のrequestAnimationFrameループで1秒ごとに算出（他の合成用rAFループとは独立）
@@ -2845,6 +2963,16 @@ function renderPpl(){
       <div class="pn"><b>${esc(p.name)}${p.id===S.myId?' <span style="color:#8a94ad;font-weight:400">(あなた)</span>':''}</b>
       <small>${p.host?'ホスト':'参加者'}${p.hand?' ・ 挙手中':''}</small></div>
       <div class="pa">${p.audio?'🎙':'🔇'}${p.video?'📹':'📵'}</div>`;
+    if(p.id!==S.myId && !S.friendReqSent.has(p.id)){
+      const fb=document.createElement('button'); fb.textContent='🤝'; fb.title='フレンド申請を送る（承認されると会議を抜けた後もチャット・通話できます）';
+      fb.onclick=()=>{
+        send({t:'friendReq',to:p.id,friendId:myFriendId(),name:S.name});
+        S.friendReqSent.add(p.id);
+        toast(p.name+' さんにフレンド申請を送りました');
+        renderPpl();
+      };
+      d.querySelector('.pa').appendChild(fb);
+    }
     if(S.isHost&&p.id!==S.myId){
       if(S.persistent){
         const already=isPersistMember(p.name);
@@ -5194,6 +5322,14 @@ addEventListener('beforeunload',e=>{ if(S.persistent) savePersistData(); if($('#
    ============================================================ */
 const Dir={
   peer:null, role:null, rooms:new Map(), conn:null, hb:null, retry:null,
+  /* 会議中に公開/非公開をいつでも切り替えられるように。既存の{t:'del'}(ハブ側の削除処理)は
+     用意されていたのに送信側が無い"片手落ち"の状態だったため、ここで初めて実際に送るようにした */
+  unpublish(){
+    S.published=false;
+    clearInterval(this.hb); this.hb=null;
+    if(this.role==='hub'){ this.rooms.delete(S.code); }
+    else if(this.conn&&this.conn.open){ try{ this.conn.send({t:'del',code:S.code}); }catch(_){} }
+  },
   publish(){
     S.published=true; this.connect();
     this.hb=setInterval(()=>this.beat(),9000);
@@ -5330,6 +5466,7 @@ const FriendNet={
   calls:new Map(),      // friendId -> MediaConnection
   localAudio:null,      // フレンド通話専用のマイクストリーム（会議用S.micTrackとは独立）
   typingTimers:new Map(),
+  _inFlight:new Map(), // fid -> 進行中のconnectTo()のPromise（二重発信の防止）
   init(){
     if(this.peer) return;
     this.myId=myFriendId();
@@ -5350,8 +5487,36 @@ const FriendNet={
     if(!this.ready) return;
     friendList().forEach(f=>{ if(!this.conns.has(f.id)) this.connectTo(f.id).catch(()=>{}); });
   },
+  /* バグ修正(接続の不安定さ):
+     ①「今まさに接続処理中」の状態を全く追跡していなかったため、フレンド一覧を開く・20秒おきの
+        自動再試行・メッセージ送信時のqueueSendなど複数の経路からほぼ同時にconnectTo()が呼ばれると、
+        同じ相手に対して二重にpeer.connect()してしまうことがあった → 進行中のPromiseを
+        _inFlightに憶えておき、呼び出しが重なった場合は新しく発信せず同じPromiseを使い回す形にした
+     ②双方が「相手が接続を受け付けるタイミングとリクエストを送るタイミングのズレ」で同時にconnect()
+        し合うと、WebRTCの土台(RTCPeerConnection)のシグナリングが競合して片方または両方の接続が
+        不安定になる（いわゆる「シグナリングの相打ち」）。これを避けるため、既存の会議メッシュ通話の
+        「あとから参加した側が発信する」という決定的なルールと同じ考え方で、フレンドIDの文字列比較が
+        小さい方だけが発信し、大きい方は相手からの着信を待つだけ、という役割分担に固定した。
+        これにより両者が同時に発信することは原理的に起きなくなる */
   connectTo(fid){
-    if(this.conns.has(fid)){ const c=this.conns.get(fid); if(c.open) return Promise.resolve(c); }
+    const existing=this.conns.get(fid); if(existing&&existing.open) return Promise.resolve(existing);
+    if(this._inFlight.has(fid)) return this._inFlight.get(fid);
+    const p=(this.myId>fid ? this.waitForIncoming(fid,8000) : this.dialOut(fid))
+      .finally(()=>{ this._inFlight.delete(fid); });
+    this._inFlight.set(fid,p);
+    return p;
+  },
+  waitForIncoming(fid,ms){
+    return new Promise((resolve,reject)=>{
+      const start=Date.now();
+      const iv=setInterval(()=>{
+        const c=this.conns.get(fid);
+        if(c&&c.open){ clearInterval(iv); resolve(c); }
+        else if(Date.now()-start>ms){ clearInterval(iv); reject(new Error('timeout(waiting for incoming)')); }
+      },250);
+    });
+  },
+  dialOut(fid){
     return new Promise((resolve,reject)=>{
       if(!this.peer||!this.ready) return reject(new Error('not ready'));
       let settled=false;
@@ -5813,6 +5978,78 @@ $('#btnRemoveFriend').onclick=()=>{
 
 // ホーム画面にいる間も含めて、ページを開いたらすぐにフレンド用Peerを起動しておく
 FriendNet.init();
+
+/* ===================== 利用規約・バージョン表示・更新履歴 =====================
+   バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
+   CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
+const APP_VERSION='v2.6.0';
+const CHANGELOG=[
+  {ver:'v2.6.0',date:'2026-08-18',items:[
+    'フレンド機能の不具合を修正（追加画面が背面に隠れる／追加が不安定なことがある問題）',
+    '会議中の参加者パネルから、個別にフレンド申請を送れるように',
+    'ホストが会議中いつでも「一覧に公開／非公開」を切り替えられるように',
+    'カメラ・マイクを一度拒否してしまった時に、許可を求め直せるボタンを追加',
+    '利用規約ページ・初回訪問時の同意モーダルを追加',
+    'バージョン番号・更新履歴の表示を追加（ここです）',
+  ]},
+  {ver:'v2.5.0',date:'2026-08-14',items:[
+    '「使い方」チュートリアル（アコーディオン形式）を追加',
+    'フレンド機能を追加（持続的な個人IDどうしで、会議に入らなくても1対1でチャット・通話）',
+    'ホーム画面に追加してアプリのように使えるPWA対応',
+  ]},
+  {ver:'v2.4.0',date:'2026-08-10',items:[
+    '動画の再生速度調整、チャットの長押し削除に対応',
+    '検索窓・字幕の音声入力、Gemini検索連携を追加',
+  ]},
+  {ver:'v2.3.0',date:'2026-08-05',items:[
+    'ホワイトボード・カラオケ・じゃんけん・ワードウルフ・人狼などのミニゲームを追加',
+  ]},
+  {ver:'v2.2.0',date:'2026-07-28',items:[
+    '画面共有をカメラと別タイルで表示、YouTube・Vimeo・Twitchの同時視聴、持続的会議・ロック機能を追加',
+  ]},
+];
+const TERMS_TEXT_HTML=`
+  <h4 style="margin:0 0 8px;color:var(--txt);font-size:14px">コダマ会議 利用規約</h4>
+  <p style="margin:0">このアプリは個人が開発した無料のオンライン会議ツールです。安心して使えるように、以下のお約束をお願いします。</p>
+  <ol>
+    <li><b>法律を守って使うこと</b> — 犯罪行為や、法律に違反する目的での利用は禁止します。</li>
+    <li><b>人を傷つけないこと</b> — いじめ、誹謗中傷、脅迫、差別的な発言など、相手を傷つける行為は禁止します。</li>
+    <li><b>許可なく人を録音・録画・撮影・共有しないこと</b> — 会議の録画・スクリーンショット・チャット内容の外部への共有は、写っている人・話している人の同意を得てから行ってください。</li>
+    <li><b>著作権・肖像権を守ること</b> — 他人の作品や画像を無断で使ったり、なりすましたりしないでください。</li>
+    <li><b>不適切なコンテンツを共有しないこと</b> — アダルトコンテンツ、暴力的な内容、違法薬物などに関するコンテンツの共有は禁止します。</li>
+    <li><b>自己責任で使うこと</b> — このアプリはサーバーを持たない個人開発のツールです。通信の安定性や完全な安全性を保証するものではありません。AI機能（Gemini等）を使う場合は、それぞれのサービスの利用規約にも従ってください。</li>
+  </ol>
+  <p>このアプリを使うことで、上記に同意したものとみなします。違反が見つかった場合、開発者の判断で機能の一部を制限することがあります。</p>
+`;
+
+function renderVersionUi(){
+  $('#hvVersionTxt').textContent=APP_VERSION;
+  $('#clCurrentVer').textContent=APP_VERSION;
+  $('#clList').innerHTML=CHANGELOG.map(c=>`<div class="clItem"><b>${c.ver}</b><span class="clDate">${c.date}</span><ul>${c.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`).join('');
+}
+renderVersionUi();
+$('#btnShowChangelog').onclick=()=>$('#mChangelog').classList.add('on');
+$('#btnShowTerms').onclick=()=>{ $('#termsBodyView').innerHTML=TERMS_TEXT_HTML; $('#mTerms').classList.add('on'); };
+
+/* 初回訪問時のみ、利用規約への同意モーダルを強制表示。最後までスクロールしないと「同意する」が押せない。
+   #mConsentは通常の.modalと切り離してあるので、背景クリック・[data-closemodal]の一括処理の対象外（意図的） */
+const TERMS_AGREE_KEY='kdm-terms-agreed-'+APP_VERSION.split('.')[0]; // メジャーバージョンを変えたら文面の見直しとみなし、再度同意を求める
+function checkFirstVisitConsent(){
+  if(localStorage.getItem(TERMS_AGREE_KEY)==='1') return;
+  $('#termsBodyConsent').innerHTML=TERMS_TEXT_HTML;
+  $('#mConsent').classList.add('on');
+  const box=$('#termsBodyConsent'); // このdiv自体が.termsScrollBox（スクロールする箱）を兼ねている
+  const checkScroll=()=>{
+    if(box.scrollTop+box.clientHeight>=box.scrollHeight-8) $('#btnAgreeTerms').disabled=false;
+  };
+  box.addEventListener('scroll',checkScroll);
+  checkScroll(); // 画面が大きく、最初から全文が表示しきれている場合はそのまま押せるようにする
+}
+$('#btnAgreeTerms').onclick=()=>{
+  localStorage.setItem(TERMS_AGREE_KEY,'1');
+  $('#mConsent').classList.remove('on');
+};
+checkFirstVisitConsent();
 </script>
 </body>
 </html>
