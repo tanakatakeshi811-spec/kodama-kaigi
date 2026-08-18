@@ -421,7 +421,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .fmsg .fmsg-time{display:block;font-size:9.5px;color:var(--dim);margin-top:4px;text-align:right}
 .fmsg.sys{align-self:center;background:transparent;color:var(--dim);font-size:11px;padding:2px 0}
 .fmsg .chatImgs{margin-top:4px}
-.fmsg .yamadaStamp{width:64px;height:64px;display:block}
+.fmsg .yamadaStamp{width:108px;height:108px;display:block}
 @media(max-width:760px){
   .friendListPane{width:100%;border-right:none;position:absolute;inset:0;transition:transform .2s;background:var(--ink)}
   .friendChatPane{position:absolute;inset:0;transform:translateX(100%);transition:transform .2s;background:var(--ink)}
@@ -438,9 +438,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 #friendCallOverlay{position:fixed;inset:0;background:rgba(4,6,12,.92);display:none;align-items:center;justify-content:center;z-index:70}
 #friendCallOverlay.on{display:flex;animation:modalBgIn .18s ease}
 #friendCallCard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;width:380px;height:640px;max-width:94vw;max-height:90vh}
-#fcRemoteVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#050810;display:none}
+#fcRemoteVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#050810;display:none;cursor:pointer}
 #friendCallCard.fcVideoMode #fcRemoteVideo{display:block}
-#fcLocalVideo{position:absolute;right:12px;top:12px;width:88px;height:118px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.5);box-shadow:0 8px 20px rgba(0,0,0,.5);z-index:2}
+#fcLocalVideo{position:absolute;right:12px;top:12px;width:88px;height:118px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.5);box-shadow:0 8px 20px rgba(0,0,0,.5);z-index:2;cursor:pointer}
+/* タップで拡大表示を入れ替え(新機能3)。.fcSwappedが付くと、自分の映像が全面・相手の映像が小窓になる */
+#friendCallCard.fcSwapped #fcRemoteVideo{position:absolute;right:12px;top:12px;left:auto;bottom:auto;inset:auto;width:88px;height:118px;border-radius:12px;border:2px solid rgba(255,255,255,.5);box-shadow:0 8px 20px rgba(0,0,0,.5);z-index:2}
+#friendCallCard.fcSwapped #fcLocalVideo{position:absolute;inset:0;width:100%;height:100%;border-radius:0;border:none;box-shadow:none;z-index:0}
 #fcTopInfo{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:30px 20px;text-align:center}
 #friendCallCard.fcVideoMode #fcTopInfo{justify-content:flex-start;padding-top:20px}
 #friendCallCard.fcVideoMode #friendCallAvatar{width:52px;height:52px;font-size:24px;margin-bottom:2px}
@@ -487,10 +490,11 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   #friendCallOverlay.fcInMeeting{background:transparent;align-items:flex-start;justify-content:flex-start;padding:76px 0 16px 16px;pointer-events:none}
   #friendCallOverlay.fcInMeeting #friendCallCard{pointer-events:auto;width:250px;height:400px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
   #friendCallOverlay.fcInMeeting #fcLocalVideo{width:60px;height:80px;right:8px;top:8px}
+  #friendCallOverlay.fcInMeeting #friendCallCard.fcSwapped #fcRemoteVideo{width:60px;height:80px;right:8px;top:8px}
   #friendCallOverlay.fcInMeeting #friendCallAvatar{width:60px;height:60px;font-size:26px}
   #friendCallOverlay.fcInMeeting #friendCallName{font-size:14px}
 }
-#yamadaPicker{position:fixed;display:none;flex-direction:column;gap:8px;background:rgba(15,19,32,.97);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:60;max-width:260px}
+#yamadaPicker{position:fixed;display:none;flex-direction:column;gap:8px;background:rgba(15,19,32,.97);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:60;max-width:260px;max-height:72vh;overflow:auto}
 #yamadaPicker.on{display:flex}
 #yamadaPickerTitle{font-size:11px;color:var(--dim);letter-spacing:.08em;padding:0 4px}
 #yamadaPickerOpts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -531,7 +535,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .modal{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:40}
 /* バグ修正:自分のID・フレンド追加・フレンド設定は#friendOverlay(z-index:56)の「上」に開くモーダルなので、
    通常の.modal(z-index:40)のままだと背面に隠れてしまっていた。専用に高いz-indexを与える */
-#mMyFriendId,#mAddFriend,#mFriendSettings{z-index:59}
+#mMyFriendId,#mAddFriend,#mFriendSettings,#mPhraseStamp{z-index:59}
 .modal.on{display:flex;animation:modalBgIn .18s ease}
 .modal.on .sheet{animation:modalIn .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes modalBgIn{from{opacity:0}to{opacity:1}}
@@ -1110,6 +1114,16 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
+<!-- フレンド通話中の背景選択（新機能5。既存のbgGrid/bgPickをそのまま再利用） -->
+<div class="modal" id="mCallBg" style="z-index:75">
+  <div class="sheet" style="max-width:460px">
+    <h3>通話の背景を変更</h3>
+    <div class="sub">自分の映像から人物だけを残して、背景を置き換えます（ビデオ通話モード中のみ）</div>
+    <div class="bgGrid" id="callBgList"></div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
+
 <!-- 放課後の居残りに招待 -->
 <div class="modal" id="mInokori">
   <div class="sheet" style="max-width:360px">
@@ -1385,7 +1399,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <button class="fcActBtn" id="fcCamBtn" title="ビデオ通話モード">📷</button>
       <button class="fcActBtn" id="fcCapBtn" title="字幕">💬</button>
       <button class="fcActBtn" id="fcJankenBtn" title="じゃんけん">✊</button>
-      <button class="fcActBtn" id="fcPipBtn" title="ミニ表示（ピクチャーインピクチャー）">🗔</button>
+      <button class="fcActBtn" id="fcBgBtn" title="背景を変更（長押しで画面共有）">🫥</button>
       <button class="fcActBtn" id="friendCallAccept" style="display:none;background:var(--mint);color:#04241d" title="応答">📞</button>
       <button class="fcActBtn fcEndBtn" id="friendCallReject" title="通話を終了">📞</button>
     </div>
@@ -1786,13 +1800,9 @@ function getBgImage(key){
 const BG_WORK_W=320, BG_WORK_H=180;
 const bgFgTmp=document.createElement('canvas'); bgFgTmp.width=BG_WORK_W; bgFgTmp.height=BG_WORK_H;
 const bgFgCtx=bgFgTmp.getContext('2d');
-function drawVirtualBg(ctx,v,x,y,w,h,bgKey){
-  const bg=getBgImage(bgKey||BG_LIST[0][0]);
-  if(!v||!v.videoWidth){ return; }
-  if(!bg.loaded){ drawCover(ctx,v,x,y,w,h); return; } // 背景画像の読み込み待ちは普通の映像にフォールバック（真っ黒にしない）
-  const mask=BgSeg.segment(v,performance.now());
-  if(!mask){ drawCover(ctx,v,x,y,w,h); return; } // 検出結果がまだ無い間も普通の映像を出す（人が消えて見えるのを防ぐ）
-  drawCover(ctx,bg.img,x,y,w,h);
+/* 人物マスクを使って「くっきりした人物だけ」を合成する処理。drawVirtualBg(画像背景)と
+   drawVirtualBgBlur(ぼかし背景、フレンド通話用の新機能5で追加)の両方から共有する */
+function drawSegmentedPerson(ctx,v,x,y,w,h,mask){
   bgFgCtx.clearRect(0,0,BG_WORK_W,BG_WORK_H);
   drawCover(bgFgCtx,v,0,0,BG_WORK_W,BG_WORK_H);
   const imgData=bgFgCtx.getImageData(0,0,BG_WORK_W,BG_WORK_H);
@@ -1810,11 +1820,34 @@ function drawVirtualBg(ctx,v,x,y,w,h,bgKey){
   bgFgCtx.putImageData(imgData,0,0);
   drawCover(ctx,bgFgTmp,x,y,w,h);
 }
+function drawVirtualBg(ctx,v,x,y,w,h,bgKey){
+  const bg=getBgImage(bgKey||BG_LIST[0][0]);
+  if(!v||!v.videoWidth){ return; }
+  if(!bg.loaded){ drawCover(ctx,v,x,y,w,h); return; } // 背景画像の読み込み待ちは普通の映像にフォールバック（真っ黒にしない）
+  const mask=BgSeg.segment(v,performance.now());
+  if(!mask){ drawCover(ctx,v,x,y,w,h); return; } // 検出結果がまだ無い間も普通の映像を出す（人が消えて見えるのを防ぐ）
+  drawCover(ctx,bg.img,x,y,w,h);
+  drawSegmentedPerson(ctx,v,x,y,w,h,mask);
+}
+/* 背景ぼかし（新機能5）。画像に差し替える代わりに、映像そのものをぼかしたものを背景に敷き、
+   その上にくっきりした人物だけを重ねる。人物マスクの求め方はdrawVirtualBgと全く同じ(BgSeg)を使う */
+function drawVirtualBgBlur(ctx,v,x,y,w,h){
+  if(!v||!v.videoWidth) return;
+  const mask=BgSeg.segment(v,performance.now());
+  if(!mask){ drawCover(ctx,v,x,y,w,h); return; }
+  ctx.save();
+  ctx.filter='blur(16px)';
+  drawCover(ctx,v,x-8,y-8,w+16,h+16); // ぼかしで縁に元映像が透けて見えないよう、少し大きめに描いておく
+  ctx.filter='none';
+  ctx.restore();
+  drawSegmentedPerson(ctx,v,x,y,w,h,mask);
+}
 
 const fxTmp=document.createElement('canvas');
 function drawEffect(ctx,v,x,y,w,h,mode,fit){
   if(mode==='blackout'){ ctx.fillStyle='#0b0f1c'; ctx.fillRect(x,y,w,h); return; }
   if(mode==='softcream'){ drawSoftcream(ctx,v,x,y,w,h); return; }
+  if(mode==='bgblur'){ drawVirtualBgBlur(ctx,v,x,y,w,h); return; }
   if(mode&&mode.indexOf('bg:')===0){ drawVirtualBg(ctx,v,x,y,w,h,mode.slice(3)); return; }
   if(mode==='mosaic-eyes'||mode==='mosaic-face'){
     if(fit==='contain') drawContain(ctx,v,x,y,w,h); else drawCover(ctx,v,x,y,w,h);
@@ -1915,6 +1948,71 @@ function rebuildVideoPipeline(){
   }
   if(typeof updateSoftcreamPreview==='function') updateSoftcreamPreview();
 }
+
+/* ============================================================
+   フレンド通話専用の映像合成(CallComp)。会議用のCompとは完全に独立させている
+   （会議中に着信することもあり得るため、同じ合成器を共有すると状態が競合してしまう）。
+   役割は2つ：①カメラ映像に背景合成/ぼかし(新機能5)をかける ②画面共有中は画面を大きく、
+   カメラを左上に小さくワイプ表示する(新機能6)。1対1通話は映像トラックを1本しか送れないため、
+   会議のような「別チャネルの独立タイル」ではなく、1枚のcanvasに合成してから送り出す方式にした
+   ============================================================ */
+const CallComp={
+  canvas:null, ctx:null, camVideo:null, shareVideo:null, raf:null, timer:null, running:false, stream:null, track:null,
+  mode:'camera', // 'camera'（カメラ+任意で背景効果）| 'screen'（画面共有＋任意でカメラワイプ）
+  ensure(){
+    if(this.canvas) return;
+    this.canvas=document.createElement('canvas'); this.canvas.width=960; this.canvas.height=540;
+    this.ctx=this.canvas.getContext('2d',{alpha:false});
+    this.camVideo=document.createElement('video'); this.camVideo.muted=true; this.camVideo.playsInline=true;
+    this.shareVideo=document.createElement('video'); this.shareVideo.muted=true; this.shareVideo.playsInline=true;
+  },
+  setCamTrack(track){
+    this.ensure();
+    if(!track){ this.camVideo.srcObject=null; return; }
+    this.camVideo.srcObject=new MediaStream([track, FriendNet.getSilentTrack()]); // Compと同じ理由でダミー音声を添える
+    this.camVideo.play().catch(()=>{});
+  },
+  setShareTrack(track){
+    this.ensure();
+    if(!track){ this.shareVideo.srcObject=null; return; }
+    this.shareVideo.srcObject=new MediaStream([track, FriendNet.getSilentTrack()]);
+    this.shareVideo.play().catch(()=>{});
+  },
+  start(mode){
+    this.ensure();
+    if(mode) this.mode=mode;
+    this.running=true;
+    this.drive();
+  },
+  stop(){ this.running=false; if(this.raf){cancelAnimationFrame(this.raf);this.raf=null;} if(this.timer){clearInterval(this.timer);this.timer=null;} },
+  drive(){
+    if(!this.running) return;
+    if(this.raf){cancelAnimationFrame(this.raf);this.raf=null;}
+    if(this.timer){clearInterval(this.timer);this.timer=null;}
+    if(document.hidden){ this.timer=setInterval(()=>this.draw(),1000/12); } // Compと同じ、バックグラウンドタブ対策
+    else{ const tick=()=>{ if(!this.running) return; this.draw(); this.raf=requestAnimationFrame(tick); }; tick(); }
+  },
+  draw(){
+    if(this.camVideo.srcObject && this.camVideo.paused) this.camVideo.play().catch(()=>{});
+    if(this.shareVideo.srcObject && this.shareVideo.paused) this.shareVideo.play().catch(()=>{});
+    const c=this.ctx, w=this.canvas.width, h=this.canvas.height;
+    c.fillStyle='#0b0f1c'; c.fillRect(0,0,w,h);
+    if(this.mode==='screen'){
+      if(this.shareVideo.videoWidth) drawContain(c,this.shareVideo,0,0,w,h);
+      if(FriendNet.videoOn && this.camVideo.videoWidth){
+        const ww=w*0.26, wh=ww*0.75;
+        c.save(); roundRectPath(c,16,16,ww,wh,10); c.clip();
+        drawEffect(c,this.camVideo,16,16,ww,wh,FriendNet.callBg,'cover');
+        c.restore();
+        c.save(); c.strokeStyle='rgba(255,255,255,.55)'; c.lineWidth=2.5; roundRectPath(c,16,16,ww,wh,10); c.stroke(); c.restore();
+      }
+    }else if(this.camVideo.videoWidth){
+      drawEffect(c,this.camVideo,0,0,w,h,FriendNet.callBg,pickFit(this.camVideo.videoWidth,this.camVideo.videoHeight,w,h));
+    }
+    if(this.track && typeof this.track.requestFrame==='function'){ try{ this.track.requestFrame(); }catch(_){} }
+  }
+};
+document.addEventListener('visibilitychange',()=>{ if(CallComp.running) CallComp.drive(); });
 
 /* ============================================================
    ボイスチェンジャー（Web Audio APIのみで完結）
@@ -5573,6 +5671,7 @@ const FriendNet={
   callFid:null, callRole:null, // callRole: 'host'(発信した側)|'guest'(着信を受けた側)。1対1なので実際の処理はほぼ対称だが、記録だけはしておく
   callAudioTrack:null, callCamTrack:null, callOut:null, _blackTrack:null, _silentTrack:null,
   videoOn:false, remoteVideoOn:false,
+  callBg:'none', callSharing:false, callShareTrack:null, _bgIconFlashT:null, // 新機能5・6：背景(なし|'bgblur'|'bg:キー')・画面共有の状態
   callStart:null, _timerIv:null,
   jankenMine:null, jankenTheirs:null,
   _callNetIv:null, _callRttMine:null, _callRttTheirs:null,
@@ -5859,8 +5958,7 @@ const FriendNet={
       catch(_){ toast('カメラが使えません'); return; }
     }
     this.videoOn=true;
-    this.replaceCallTrack('video',this.callCamTrack);
-    $('#fcLocalVideo').srcObject=new MediaStream([this.callCamTrack]);
+    await this.applyCallVideoTrack();
     $('#fcLocalVideo').style.display='';
     this.send(this.callFid,{t:'callVideoMode',on:true});
     fcSoundCamOn();
@@ -5869,10 +5967,9 @@ const FriendNet={
   disableVideoMode(){
     if(!this.videoOn||!this.callFid) return;
     this.videoOn=false;
-    this.replaceCallTrack('video',this.getBlackTrack());
-    $('#fcLocalVideo').srcObject=null;
-    $('#fcLocalVideo').style.display='none';
-    this.send(this.callFid,{t:'callVideoMode',on:false}); // 双方に通知が届くように（相手側の画面も切り替わる）
+    this.applyCallVideoTrack();
+    // 画面共有中はまだ映像を送り続けているので、その場合は「映像なし」を相手に誤って伝えない
+    if(!this.callSharing) this.send(this.callFid,{t:'callVideoMode',on:false}); // 双方に通知が届くように（相手側の画面も切り替わる）
     fcSoundCamOff();
     updateCallVideoLayout();
   },
@@ -5885,6 +5982,73 @@ const FriendNet={
     }
     const call=this.calls.get(this.callFid); const pc=call&&call.peerConnection; if(!pc) return;
     pc.getSenders().forEach(sd=>{ if(sd.track&&sd.track.kind===kind) sd.replaceTrack(track).catch(()=>{}); });
+  },
+  /* --- ここから新機能5(背景合成/ぼかし)・新機能6(画面共有+カメラワイプ)。
+     どちらも「今何を送るべきか」を1箇所(applyCallVideoTrack)にまとめて判断させることで、
+     ビデオON/OFF・背景の有無・画面共有中かどうかの組み合わせが増えても迷わない設計にした --- */
+  async applyCallVideoTrack(){
+    if(this.callSharing){
+      CallComp.setShareTrack(this.callShareTrack);
+      CallComp.setCamTrack(this.videoOn?this.callCamTrack:null);
+      CallComp.start('screen');
+      if(!CallComp.stream){ CallComp.stream=CallComp.canvas.captureStream(20); CallComp.track=CallComp.stream.getVideoTracks()[0]; }
+      this.replaceCallTrack('video',CallComp.track);
+      $('#fcLocalVideo').srcObject=CallComp.stream; // 自分にも「相手に見えているのと同じ画面共有＋カメラワイプ」を見せる
+      return;
+    }
+    if(!this.videoOn){
+      CallComp.stop();
+      this.replaceCallTrack('video',this.getBlackTrack());
+      $('#fcLocalVideo').srcObject=null;
+      return;
+    }
+    if(this.callBg&&this.callBg!=='none'){
+      const ok=await BgSeg.ensure();
+      if(!ok) toast('背景合成の準備に失敗しました。通常のカメラ映像のままにします');
+      if(ok){
+        CallComp.setCamTrack(this.callCamTrack);
+        CallComp.start('camera');
+        if(!CallComp.stream){ CallComp.stream=CallComp.canvas.captureStream(20); CallComp.track=CallComp.stream.getVideoTracks()[0]; }
+        this.replaceCallTrack('video',CallComp.track);
+        $('#fcLocalVideo').srcObject=CallComp.stream;
+        return;
+      }
+    }
+    CallComp.stop();
+    this.replaceCallTrack('video',this.callCamTrack);
+    $('#fcLocalVideo').srcObject=new MediaStream([this.callCamTrack]);
+  },
+  async setCallBg(mode){
+    if(!this.videoOn){ toast('ビデオ通話モード中のみ使えます（📷でビデオをONにしてください）'); return; }
+    this.callBg=mode;
+    await this.applyCallVideoTrack();
+    updateCallBgBtn();
+    toast(mode==='none'?'背景を元に戻しました':(mode==='bgblur'?'背景をぼかしました':'背景を変更しました'));
+  },
+  async startCallShare(){
+    if(!this.callFid) return;
+    let st; try{ st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:15},audio:false}); }
+    catch(_){ return; } // キャンセルされただけの場合が多いので、あえてエラー表示はしない
+    this.callShareTrack=st.getVideoTracks()[0];
+    this.callSharing=true;
+    this.callShareTrack.onended=()=>this.stopCallShare();
+    await this.applyCallVideoTrack();
+    // カメラがOFFのまま画面共有だけ始めた場合でも、相手側のレイアウトがビデオ表示に切り替わるように
+    // （callVideoModeは元々カメラON/OFF用の信号だが、「今映像が来ているか」を表す信号として共用する）
+    if(!this.videoOn) this.send(this.callFid,{t:'callVideoMode',on:true});
+    updateCallVideoLayout();
+    flashCallBgIcon(); // 画面共有が始まった瞬間だけ👾を1秒表示する演出
+    toast('画面共有を開始しました');
+  },
+  stopCallShare(){
+    if(!this.callSharing) return;
+    if(this.callShareTrack){ try{this.callShareTrack.stop()}catch(_){} }
+    this.callShareTrack=null; this.callSharing=false;
+    CallComp.setShareTrack(null);
+    this.applyCallVideoTrack();
+    if(!this.videoOn) this.send(this.callFid,{t:'callVideoMode',on:false}); // カメラもOFFのままなら、相手のレイアウトも元に戻す
+    updateCallVideoLayout();
+    toast('画面共有を終了しました');
   },
   toggleMic(){
     if(!this.callAudioTrack) return;
@@ -5904,9 +6068,11 @@ function openFriendCallUi(name,incoming,fid){
   $('#friendCallReject').dataset.fid=fid;
   $('#friendCallAccept').dataset.fid=fid;
   FriendNet.videoOn=false; FriendNet.remoteVideoOn=false;
+  FriendNet.callBg='none'; FriendNet.callSharing=false; clearTimeout(FriendNet._bgIconFlashT); FriendNet._bgIconFlashT=null;
   FriendNet.jankenMine=null; FriendNet.jankenTheirs=null;
   $('#fcJankenBox').style.display='none';
   $('#fcMicBtn').classList.remove('muted'); $('#fcMicBtn').textContent='🎤';
+  $('#friendCallCard').classList.remove('fcSwapped'); // 新しい通話は毎回「相手を大きく」の初期状態に戻す
   callCapOn=false; $('#fcCapBtn').classList.remove('on'); $('#fcCaptions').style.display='none'; $('#fcCaptions').innerHTML=''; callCapEls.clear();
   updateCallVideoLayout();
   updateCallNetIndicators();
@@ -5925,7 +6091,10 @@ function closeFriendCallUi(){
   if(callCapOn){ SharedRec.unsubscribe(callCapListener); callCapOn=false; }
   if(FriendNet.callCamTrack){ try{FriendNet.callCamTrack.stop()}catch(_){} FriendNet.callCamTrack=null; }
   if(FriendNet.callAudioTrack){ try{FriendNet.callAudioTrack.stop()}catch(_){} FriendNet.callAudioTrack=null; }
+  if(FriendNet.callShareTrack){ try{FriendNet.callShareTrack.stop()}catch(_){} FriendNet.callShareTrack=null; }
+  CallComp.stop(); CallComp.setCamTrack(null); CallComp.setShareTrack(null);
   FriendNet.callOut=null; FriendNet.videoOn=false; FriendNet.remoteVideoOn=false; FriendNet.callFid=null; FriendNet.callRole=null;
+  FriendNet.callBg='none'; FriendNet.callSharing=false; clearTimeout(FriendNet._bgIconFlashT); FriendNet._bgIconFlashT=null;
   FriendNet._pendingIncomingCall=null;
   // バグ修正：以前は明示的にhangup()/rejectCall()した時しかcallsマップが消えなかったため、
   // 相手側から通話を切られた場合（close/errorイベント経由）にMapが残り続け、次の着信を弾いてしまうことがあった
@@ -5935,7 +6104,24 @@ $('#friendCallAccept').onclick=()=>FriendNet.acceptCall($('#friendCallAccept').d
 $('#friendCallReject').onclick=()=>{ const fid=$('#friendCallReject').dataset.fid; FriendNet.rejectCall(fid); FriendNet.hangup(fid); };
 $('#friendCallBtn').onclick=()=>{ if(currentFriendChatId) FriendNet.startCall(currentFriendChatId); };
 $('#fcMicBtn').onclick=()=>FriendNet.toggleMic();
+/* 新機能3：どちらの映像タイルをタップしても、そちらが拡大表示されるように入れ替えられる */
+$('#fcRemoteVideo').onclick=()=>{ if($('#friendCallCard').classList.contains('fcVideoMode')) $('#friendCallCard').classList.remove('fcSwapped'); };
+$('#fcLocalVideo').onclick=()=>{ if(FriendNet.videoOn||FriendNet.callSharing) $('#friendCallCard').classList.add('fcSwapped'); };
 $('#fcCamBtn').onclick=()=>FriendNet.toggleVideoMode();
+/* 新機能5・6・「謎のアイコン」対応：この1つのボタン(#fcBgBtn、旧PinPボタンを作り変えたもの)が
+   通常クリックで背景ON/OFF切替、長押しで画面共有、という2役を担う（会議の長押しクイックメニューと
+   同じattachLongPress()を再利用）。OFF(🫥)の時にクリックすると背景を選ぶピッカーを開き、
+   ON(😶‍🌫️)の時にクリックするとその場で即座にOFFに戻す、という一番シンプルな往復にした */
+let fcBgLongFired=false;
+$('#fcBgBtn').onclick=()=>{
+  if(fcBgLongFired){ fcBgLongFired=false; return; }
+  if(FriendNet.callBg&&FriendNet.callBg!=='none'){ FriendNet.setCallBg('none'); return; }
+  openCallBgPicker();
+};
+attachLongPress($('#fcBgBtn'),()=>{
+  fcBgLongFired=true;
+  if(FriendNet.callSharing) FriendNet.stopCallShare(); else FriendNet.startCallShare();
+});
 
 /* --- 通話タイマー(C-4) --- */
 function startCallTimer(){
@@ -5967,10 +6153,41 @@ function updateCallNetIndicators(){
 /* --- ビデオ通話モードのレイアウト切替(C-2)。自分・相手のどちらかがONにした時点で双方とも
    ビデオレイアウトに切り替わる(＝videoOnかremoteVideoOnのどちらかがtrueならON) --- */
 function updateCallVideoLayout(){
-  const active=FriendNet.videoOn||FriendNet.remoteVideoOn;
+  const active=FriendNet.videoOn||FriendNet.remoteVideoOn||FriendNet.callSharing;
   $('#friendCallCard').classList.toggle('fcVideoMode',active);
   $('#fcCamBtn').classList.toggle('on',FriendNet.videoOn);
-  $('#fcLocalVideo').style.display=FriendNet.videoOn?'':'none';
+  $('#fcLocalVideo').style.display=(FriendNet.videoOn||FriendNet.callSharing)?'':'none';
+  updateCallBgBtn();
+}
+/* 新機能5のアイコン：背景効果ON=😶‍🌫️／OFF=🫥（しゅんりさんの指定通り）。
+   通常クリックでこのON/OFFを切り替え、長押しで画面共有を開始する(fcCamBtnではなくfcBgBtn側の役目) */
+function updateCallBgBtn(){
+  if(FriendNet._bgIconFlashT) return; // 画面共有開始演出(👾)の表示中は上書きしない
+  $('#fcBgBtn').textContent=(FriendNet.callBg&&FriendNet.callBg!=='none')?'😶‍🌫️':'🫥';
+}
+/* 新機能6の演出：画面共有が始まった瞬間だけ👾を1秒表示し、その後は通常のON/OFF表示に戻す */
+function flashCallBgIcon(){
+  $('#fcBgBtn').textContent='👾';
+  clearTimeout(FriendNet._bgIconFlashT);
+  FriendNet._bgIconFlashT=setTimeout(()=>{ FriendNet._bgIconFlashT=null; updateCallBgBtn(); },1000);
+}
+/* 通話用の背景ピッカー(新機能5)。会議の背景選択(#mBgPicker/.bgGrid/.bgPick)と全く同じCSSクラスを
+   再利用し、先頭に「なし」「ぼかし」の2枚を追加した9+2枚構成にしている */
+function openCallBgPicker(){
+  if(!FriendNet.videoOn){ toast('ビデオ通話モード中のみ使えます（📷でビデオをONにしてください）'); return; }
+  const box=$('#callBgList'); box.innerHTML='';
+  const mkTile=(mode,label,imgSrc,icon)=>{
+    const b=document.createElement('button'); b.className='bgPick'+(FriendNet.callBg===mode?' sel':'');
+    b.innerHTML=imgSrc
+      ? `<img src="${imgSrc}" loading="lazy" alt=""><span>${esc(label)}</span>`
+      : `<div style="aspect-ratio:16/10;display:grid;place-items:center;background:#1a2032;border-radius:7px;font-size:22px">${icon}</div><span>${esc(label)}</span>`;
+    b.onclick=()=>{ $('#mCallBg').classList.remove('on'); FriendNet.setCallBg(mode); };
+    box.appendChild(b);
+  };
+  mkTile('none','なし',null,'🚫');
+  mkTile('bgblur','ぼかし',null,'💧');
+  BG_LIST.forEach(([key,label])=>mkTile('bg:'+key,label,'assets/'+key+'.jpg'));
+  $('#mCallBg').classList.add('on');
 }
 
 /* --- 通話中のじゃんけん(C-3)。会議のホスト権威じゃんけんとは違い、1対1なのでホストを介さず
@@ -6062,19 +6279,6 @@ function toggleCaptionTranslate(line){
   translate(orig,S.trTo||'en').then(tr=>{ if(tr){ txtEl.textContent=tr; line.dataset.translated='1'; } else toast('翻訳に失敗しました'); });
 }
 
-/* --- ミニ表示（PinP。D「できれば」対応。標準のPicture-in-Picture APIのみを使い、
-   対応していない環境ではボタンごと非表示にして、無理に独自実装はしない） --- */
-if(!('pictureInPictureEnabled' in document)) { /* ボタン非表示はDOM構築後に別途行う */ }
-$('#fcPipBtn').onclick=async()=>{
-  if(!document.pictureInPictureEnabled){ toast('この端末・ブラウザはミニ表示(PinP)に対応していません'); return; }
-  if(!FriendNet.videoOn){ toast('ビデオ通話モード中のみ使えます'); return; }
-  try{
-    if(document.pictureInPictureElement) await document.exitPictureInPicture();
-    else await $('#fcRemoteVideo').requestPictureInPicture();
-  }catch(_){ toast('ミニ表示を開始できませんでした'); }
-};
-if(!document.pictureInPictureEnabled) $('#fcPipBtn').style.display='none';
-
 /* --- 通話中の操作音(E)。既存の入退室サウンドと同じ、Web AudioのOscillatorNodeでその場で組み立てる方式
    （chime()をそのまま再利用）。既存の「入退室サウンドON/OFF」設定(S.roomSound)をそのまま流用する --- */
 function fcSoundMicOff(){ chime([740,520],{dur:0.08,gap:0.055,type:'sine',peak:0.15}); }      // ピココン
@@ -6100,7 +6304,12 @@ function scheduleFriendSelfDestruct(fid,msgId,sec){
 }
 
 /* --- 山田くんスタンプ（B-5）。簡単な表情違いのSVGを数種類、その場で生成する --- */
-function yamadaFaceSvg(mouth,brow,extra){
+/* labelを渡すと、スタンプ下部に文字入りの吹き出し風バナーを焼き込む（本物のスタンプらしく、
+   チャットに送った後もタップせず一目でどういう意味か分かるようにするため）。
+   バナー幅はラベルの文字数からおおまかに算出している（幅固定だと長い文言がはみ出るため） */
+function yamadaFaceSvg(mouth,brow,extra,label){
+  const bw=label?Math.min(178,Math.max(74,label.length*20+26)):0;
+  const labelSvg=label?`<g><rect x="${(100-bw/2).toFixed(1)}" y="169" width="${bw}" height="27" rx="13.5" fill="rgba(10,14,24,.74)"/><text x="100" y="188" font-size="16" font-weight="800" fill="#fff" text-anchor="middle" font-family="sans-serif">${esc(label)}</text></g>`:'';
   return `<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
     <circle cx="100" cy="100" r="98" fill="#D8E6E3"/>
     <path d="M40,200 L40,166 Q100,138 160,166 L160,200 Z" fill="#1C1F26"/>
@@ -6115,6 +6324,7 @@ function yamadaFaceSvg(mouth,brow,extra){
     <circle cx="84" cy="108" r="4" fill="#262B36"/><circle cx="116" cy="108" r="4" fill="#262B36"/>
     <circle cx="85.5" cy="106.5" r="1.2" fill="#F5F3EC"/><circle cx="117.5" cy="106.5" r="1.2" fill="#F5F3EC"/>
     ${brow}${mouth}${extra||''}
+    ${labelSvg}
   </svg>`;
 }
 const YAMADA_STAMPS=[
@@ -6144,9 +6354,45 @@ const YAMADA_STAMPS=[
   {key:'question',label:'はてな',
     brow:'<rect x="76" y="88" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="92" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-10 115 94)"/>',
     mouth:'<circle cx="100" cy="128" r="4" fill="#8a3b2b"/>',
-    extra:'<text x="150" y="80" font-size="34" font-weight="800" fill="#3aa7ff">？</text>'}
+    extra:'<text x="150" y="80" font-size="34" font-weight="800" fill="#3aa7ff">？</text>'},
+  /* ここから追加分（8種→18種）。新しく表情を描き起こす代わりに、上の8種の眉・口パーツを
+     brow/mouthそれぞれ独立に組み合わせ直すことで効率よくバリエーションを増やした
+     （実物のスタンプセットでも同じ表情に違う台詞、というのはよくあるデザイン）。extraは基本つけていない */
+  {key:'goodnight',label:'おやすみ',
+    brow:'<path d="M76,92 Q85,96 94,92" stroke="#262B36" stroke-width="3.2" fill="none"/><path d="M106,92 Q115,96 124,92" stroke="#262B36" stroke-width="3.2" fill="none"/>',
+    mouth:'<ellipse cx="100" cy="127" rx="6" ry="4" fill="#8a3b2b"/>'},
+  {key:'goodmorning',label:'おはよう',
+    brow:'<rect x="76" y="89" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="85" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-8 115 87.5)"/>',
+    mouth:'<path d="M83,125 Q100,136 119,121" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>'},
+  {key:'thanks',label:'ありがとう',
+    brow:'<rect x="76" y="89" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="89" width="18" height="5" rx="2.5" fill="#262B36"/>',
+    mouth:'<path d="M83,124 Q100,134 119,124" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>',
+    extra:'<path d="M100,58 C94,50 80,52 80,64 C80,76 100,88 100,88 C100,88 120,76 120,64 C120,52 106,50 100,58 Z" fill="#ff5f74"/>'},
+  {key:'sorry',label:'ごめんね',
+    brow:'<rect x="76" y="92" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(10 85 94)"/><rect x="106" y="92" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-10 115 94)"/>',
+    mouth:'<path d="M83,131 Q100,121 119,131" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>'},
+  {key:'roger',label:'りょうかい',
+    brow:'<rect x="76" y="89" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="89" width="18" height="5" rx="2.5" fill="#262B36"/>',
+    mouth:'<path d="M85,124 Q100,132 115,124" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>',
+    extra:'<g><rect x="152" y="120" width="26" height="30" rx="8" fill="#E0A72E"/><rect x="150" y="98" width="12" height="26" rx="6" fill="#E8B48C"/></g>'},
+  {key:'fight',label:'がんばれ',
+    brow:'<rect x="76" y="80" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="80" width="18" height="5" rx="2.5" fill="#262B36"/>',
+    mouth:'<path d="M80,121 Q100,146 120,121 Q100,131 80,121 Z" fill="#8a3b2b"/>'},
+  {key:'yatta',label:'やったー',
+    brow:'<rect x="76" y="86" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-4 85 88)"/><rect x="106" y="86" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(4 115 88)"/>',
+    mouth:'<path d="M80,121 Q100,146 120,121 Q100,131 80,121 Z" fill="#8a3b2b"/>'},
+  {key:'icalc',label:'なるほど',
+    brow:'<rect x="76" y="88" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="92" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-10 115 94)"/>',
+    mouth:'<path d="M83,125 Q100,136 119,121" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>'},
+  {key:'congrats',label:'おめでとう',
+    brow:'<rect x="76" y="89" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="89" width="18" height="5" rx="2.5" fill="#262B36"/>',
+    mouth:'<path d="M83,124 Q100,134 119,124" stroke="#262B36" stroke-width="3.6" fill="none" stroke-linecap="round"/>',
+    extra:'<g><rect x="152" y="120" width="26" height="30" rx="8" fill="#E0A72E"/><rect x="150" y="98" width="12" height="26" rx="6" fill="#E8B48C"/></g>'},
+  {key:'tadaima',label:'ただいま',
+    brow:'<rect x="76" y="89" width="18" height="5" rx="2.5" fill="#262B36"/><rect x="106" y="85" width="18" height="5" rx="2.5" fill="#262B36" transform="rotate(-8 115 87.5)"/>',
+    mouth:'<ellipse cx="100" cy="127" rx="6" ry="4" fill="#8a3b2b"/>'}
 ];
-function yamadaSvgByKey(key){ const s=YAMADA_STAMPS.find(x=>x.key===key); return s?yamadaFaceSvg(s.mouth,s.brow,s.extra):''; }
+function yamadaSvgByKey(key){ const s=YAMADA_STAMPS.find(x=>x.key===key); return s?yamadaFaceSvg(s.mouth,s.brow,s.extra,s.label):''; }
 
 /* --- フレーズスタンプ（G）。凝ったイラストではなく、フレーズそのものを吹き出し風に見せるテキストスタンプ約100種。
    カテゴリ分け＋検索＋並び替えができるよう、シンプルな配列+オブジェクトだけで管理している
@@ -6199,7 +6445,7 @@ function openYamadaPicker(anchorEl){
   opts.innerHTML='';
   YAMADA_STAMPS.forEach(s=>{
     const b=document.createElement('button'); b.title=s.label;
-    b.innerHTML=yamadaFaceSvg(s.mouth,s.brow,s.extra);
+    b.innerHTML=yamadaFaceSvg(s.mouth,s.brow,s.extra,s.label);
     b.onclick=()=>{ box.classList.remove('on'); sendFriendMessage({yamada:s.key}); };
     opts.appendChild(b);
   });
@@ -6468,8 +6714,15 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.0.0';
+const APP_VERSION='v3.1.0';
 const CHANGELOG=[
+  {ver:'v3.1.0',date:'2026-08-19',items:[
+    'フレーズスタンプの選択パネルが背面に隠れる不具合を修正',
+    '山田くんスタンプに文字を追加し、8種→18種に拡大',
+    'ビデオ通話でタップした映像を拡大表示できるように',
+    'ビデオ通話に背景変更（9種の画像＋ぼかし）を追加',
+    'ビデオ通話で画面共有に対応（長押しで開始、カメラ映像を小さく重ねて表示）',
+  ]},
   {ver:'v3.0.0',date:'2026-08-19',items:[
     'フレンド追加が片方の画面にしか反映されないことがある不具合を修正（承認応答つきの仕組みに変更）',
     'QRコードの読み取りに対応する端末・ブラウザを拡大',
