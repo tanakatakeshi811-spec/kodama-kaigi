@@ -349,8 +349,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 #btnChatMic,#btnPlus{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
 #btnChatMic:hover,#btnPlus:hover{background:#243050;color:var(--txt)}
 #btnChatMic.on{background:rgba(95,227,192,.16);color:var(--mint);border-color:rgba(95,227,192,.4)}
-#friendBtnPlus,#friendBtnMic,#friendBtnEmoji{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
-#friendBtnPlus:hover,#friendBtnMic:hover,#friendBtnEmoji:hover{background:#243050;color:var(--txt)}
+#friendBtnPlus,#friendBtnMic,#friendBtnEmoji,#btnFriendPhrase{background:var(--panel2);color:var(--dim);border:1px solid var(--line)}
+#friendBtnPlus:hover,#friendBtnMic:hover,#friendBtnEmoji:hover,#btnFriendPhrase:hover{background:#243050;color:var(--txt)}
 #friendBtnMic.on{background:rgba(95,227,192,.16);color:var(--mint);border-color:rgba(95,227,192,.4)}
 #btnSearchMic{width:44px;height:42px;border-radius:11px;background:var(--panel2);color:var(--dim);border:1px solid var(--line);display:grid;place-items:center;flex:0 0 auto;font-size:16px;transition:.15s}
 #btnSearchMic:hover{background:#243050;color:var(--txt)}
@@ -400,7 +400,9 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .friendBackBtn{display:none}
 .fcDot{width:9px;height:9px;border-radius:50%;background:#5b6478;flex:0 0 auto}
 .fcDot.online{background:var(--mint);box-shadow:0 0 0 3px rgba(95,227,192,.22)}
-.fcName{flex:1;font-weight:700;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcNameWrap{flex:1;min-width:0}
+.fcName{font-weight:700;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fcId{font-size:10px;color:var(--dim);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .friendTyping{padding:4px 14px;font-size:11px;color:var(--dim);font-style:italic;flex:0 0 auto}
 .friendRow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;transition:.15s;position:relative}
 .friendRow:hover,.friendRow.active{background:var(--panel2)}
@@ -410,6 +412,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .friendRow .fr-body{flex:1;min-width:0}
 .friendRow .fr-body b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .friendRow .fr-body small{color:var(--dim);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.friendRow .fr-body small.pending{color:var(--amber)}
 .friendRow .fr-badge{background:var(--coral);color:#fff;font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px;flex:0 0 auto}
 #friendChatLog{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
 .fmsg{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.55;position:relative}
@@ -426,14 +429,67 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   .friendListPane.hideList{transform:translateX(-100%)}
   .friendBackBtn{display:flex}
 }
+/* ============================================================
+   フレンド通話UI(C・D・E・F)。LINE等の通話画面の「レイアウトの雰囲気」だけを参考にした
+   （円形アバター・名前・タイマー・波形・下部アイコン列・中央下の大きな赤い終了ボタン）。
+   スマホはフルスクリーン、PCはホームからなら中央の縦長ウィンドウ、会議中の着信なら
+   会議の表示を邪魔しない左側の小さめウィンドウ、という3パターンをCSSだけで切り替えている。
+   ============================================================ */
 #friendCallOverlay{position:fixed;inset:0;background:rgba(4,6,12,.92);display:none;align-items:center;justify-content:center;z-index:70}
 #friendCallOverlay.on{display:flex;animation:modalBgIn .18s ease}
-#friendCallCard{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:34px 30px;text-align:center;min-width:260px}
-#friendCallAvatar{font-size:36px;width:78px;height:78px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;margin:0 auto 16px}
-#friendCallName{font-size:16px;font-weight:800;margin-bottom:6px}
-#friendCallStatus{color:var(--dim);font-size:12.5px;margin-bottom:20px}
-#friendCallActions{display:flex;gap:10px;justify-content:center}
-#friendCallActions .btn{width:auto;padding:9px 20px}
+#friendCallCard{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;width:380px;height:640px;max-width:94vw;max-height:90vh}
+#fcRemoteVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#050810;display:none}
+#friendCallCard.fcVideoMode #fcRemoteVideo{display:block}
+#fcLocalVideo{position:absolute;right:12px;top:12px;width:88px;height:118px;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.5);box-shadow:0 8px 20px rgba(0,0,0,.5);z-index:2}
+#fcTopInfo{position:relative;z-index:1;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:30px 20px;text-align:center}
+#friendCallCard.fcVideoMode #fcTopInfo{justify-content:flex-start;padding-top:20px}
+#friendCallCard.fcVideoMode #friendCallAvatar{width:52px;height:52px;font-size:24px;margin-bottom:2px}
+#friendCallAvatar{font-size:38px;width:84px;height:84px;border-radius:50%;background:var(--panel2);display:grid;place-items:center;margin-bottom:6px;border:1px solid var(--line)}
+#friendCallName{font-size:17px;font-weight:800;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+#friendCallTimer{font-family:var(--mono);font-size:13px;color:var(--mint);letter-spacing:.05em}
+#friendCallStatus{color:var(--dim);font-size:12px;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+#fcWave{display:flex;align-items:center;gap:3px;height:22px;margin:6px 0}
+#fcWave span{width:3px;border-radius:2px;background:var(--mint);opacity:.75;animation:fcWaveBar 1.1s ease-in-out infinite}
+#fcWave span:nth-child(1){height:8px;animation-delay:0s}
+#fcWave span:nth-child(2){height:16px;animation-delay:.12s}
+#fcWave span:nth-child(3){height:22px;animation-delay:.24s}
+#fcWave span:nth-child(4){height:14px;animation-delay:.36s}
+#fcWave span:nth-child(5){height:9px;animation-delay:.48s}
+@keyframes fcWaveBar{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+#fcNetRow{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim);margin-top:4px}
+.fcNetDot{width:9px;height:9px;border-radius:50%;background:#5b6478;transition:.2s}
+.fcNetDot.stable{background:#4da3ff;box-shadow:0 0 0 3px rgba(77,163,255,.25)}
+.fcNetDot.unstable{background:#ff5c5c;box-shadow:0 0 0 3px rgba(255,92,92,.25)}
+#fcCaptions{position:absolute;left:12px;right:12px;bottom:96px;z-index:2;display:flex;flex-direction:column;gap:5px;pointer-events:none}
+.fcCapLine{background:rgba(6,9,16,.72);border-radius:10px;padding:6px 10px;font-size:12.5px;line-height:1.4;pointer-events:auto;-webkit-user-select:none;user-select:none}
+.fcCapLine.interim{opacity:.65}
+.fcCapLine b{font-weight:800;margin-right:4px}
+#fcJankenBox{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;background:rgba(8,11,20,.85);margin:0 16px 10px;border-radius:16px}
+.fcJkQ{font-size:13px;font-weight:800}
+.fcJkOpts{display:flex;gap:10px}
+.fcJkOpts button{width:52px;height:52px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);font-size:24px;transition:.15s}
+.fcJkOpts button.voted{border-color:var(--mint);background:rgba(95,227,192,.18)}
+.fcJkStatus{font-size:11.5px;color:var(--dim)}
+.fcJkResult{font-size:15px;text-align:center;line-height:1.6}
+#friendCallActions{position:relative;z-index:2;display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 14px 22px;flex-wrap:wrap}
+.fcActBtn{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:19px;display:grid;place-items:center;transition:.15s}
+.fcActBtn:hover{background:rgba(255,255,255,.18)}
+.fcActBtn.on{background:var(--mint);color:#04241d;border-color:var(--mint)}
+.fcActBtn.muted{background:rgba(255,92,92,.25);border-color:rgba(255,92,92,.5)}
+.fcEndBtn{width:60px;height:60px;background:var(--coral);border-color:var(--coral);font-size:24px;transform:rotate(135deg)}
+.fcEndBtn:hover{background:#e8455a}
+/* スマホ：画面全体を使うフルスクリーン */
+@media(max-width:760px){
+  #friendCallCard{width:100%;height:100%;max-width:none;max-height:none;border-radius:0;border:none}
+}
+/* PC：ホームからの通話は中央の縦長ウィンドウ、会議中の着信は左側の小さめウィンドウ */
+@media(min-width:761px){
+  #friendCallOverlay.fcInMeeting{background:transparent;align-items:flex-start;justify-content:flex-start;padding:76px 0 16px 16px;pointer-events:none}
+  #friendCallOverlay.fcInMeeting #friendCallCard{pointer-events:auto;width:250px;height:400px;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  #friendCallOverlay.fcInMeeting #fcLocalVideo{width:60px;height:80px;right:8px;top:8px}
+  #friendCallOverlay.fcInMeeting #friendCallAvatar{width:60px;height:60px;font-size:26px}
+  #friendCallOverlay.fcInMeeting #friendCallName{font-size:14px}
+}
 #yamadaPicker{position:fixed;display:none;flex-direction:column;gap:8px;background:rgba(15,19,32,.97);border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);z-index:60;max-width:260px}
 #yamadaPicker.on{display:flex}
 #yamadaPickerTitle{font-size:11px;color:var(--dim);letter-spacing:.08em;padding:0 4px}
@@ -490,6 +546,16 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .frow select,.frow input[type=text]{background:#0c1120;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12.5px;max-width:190px;flex:1 1 auto}
 .frow input[type=range]{max-width:150px;accent-color:var(--mint)}
 .kbd{font-family:var(--mono);background:#0c1120;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:2px 7px;font-size:11px}
+
+/* フレーズスタンプ選択パネル */
+.psCatTabs{display:flex;gap:6px;overflow-x:auto;padding:10px 0 8px;margin-bottom:2px}
+.psCatTabs button{flex:0 0 auto;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:11.5px;color:var(--dim);white-space:nowrap;transition:.15s}
+.psCatTabs button.on{background:rgba(95,227,192,.16);border-color:var(--mint-d);color:var(--mint)}
+.psGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:42vh;overflow:auto;padding-right:2px}
+.psStamp{background:#0c1120;border:1px solid var(--line);border-radius:12px;padding:11px 8px;font-size:13px;font-weight:800;text-align:center;transition:.15s}
+.psStamp:hover{border-color:var(--mint-d);color:var(--mint)}
+/* チャット上でのフレーズスタンプの見た目（画像は使わず、テキストを吹き出し風に強調するだけ） */
+.psBubble{display:inline-block;background:linear-gradient(135deg,#1c2338,#161b2c);border:1px solid var(--mint-d);border-radius:16px;padding:10px 18px;font-weight:800;font-size:15px;color:var(--mint)}
 
 /* 利用規約の本文ボックス（いつでも見られる版・初回同意版で共有） */
 .termsScrollBox{max-height:44vh;overflow:auto;background:#0c1120;border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.7;color:var(--dim)}
@@ -1182,8 +1248,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <div class="friendChatHead">
           <button class="iconbtn friendBackBtn" id="friendBackBtn" title="一覧に戻る" aria-label="フレンド一覧に戻る">←</button>
           <div class="fcDot" id="fcDot"></div>
-          <div class="fcName" id="fcName"></div>
-          <button class="iconbtn" id="friendCallBtn" title="音声通話" aria-label="音声通話を発信">📞</button>
+          <div class="fcNameWrap"><div class="fcName" id="fcName"></div><div class="fcId" id="fcId"></div></div>
+          <button class="iconbtn" id="friendCallBtn" title="音声・ビデオ通話" aria-label="通話を発信">📞</button>
           <button class="iconbtn" id="friendSettingsBtn" title="このフレンドの設定" aria-label="このフレンドの設定">⚙</button>
         </div>
         <div class="scroll" id="friendChatLog"></div>
@@ -1192,6 +1258,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
           <button id="friendBtnPlus" title="添付" aria-label="写真・ファイルを添付">＋</button>
           <button id="friendBtnMic" title="音声入力" aria-label="音声入力の開始・停止">🎤</button>
           <button id="friendBtnEmoji" title="山田くんスタンプ" aria-label="山田くんスタンプ">🙂</button>
+          <button id="btnFriendPhrase" title="フレーズスタンプ" aria-label="フレーズスタンプ">💬</button>
           <textarea id="friendChatIn" placeholder="メッセージ"></textarea>
           <button id="friendBtnSend" aria-label="送信">➤</button>
         </div>
@@ -1248,6 +1315,20 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
+<!-- フレーズスタンプ選択（G。約100種、検索・カテゴリ・並び替え対応） -->
+<div class="modal" id="mPhraseStamp">
+  <div class="sheet" style="max-width:420px">
+    <h3>フレーズスタンプ</h3>
+    <div class="row"><input class="in" id="psSearch" placeholder="検索（例：ありがとう）"></div>
+    <div id="psCatTabs" class="psCatTabs"></div>
+    <div id="psGrid" class="psGrid"></div>
+    <div class="row" style="justify-content:space-between;margin-top:10px">
+      <button class="btn ghost" id="btnPsSort" style="width:auto;padding:7px 14px;font-size:11.5px">並び替え：カテゴリ順</button>
+      <button class="btn ghost" data-closemodal style="width:auto;padding:7px 14px">閉じる</button>
+    </div>
+  </div>
+</div>
+
 <!-- 利用規約（いつでも見られる版） -->
 <div class="modal" id="mTerms">
   <div class="sheet" style="max-width:480px">
@@ -1284,13 +1365,29 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 <!-- フレンドの音声通話（着信・通話中） -->
 <div id="friendCallOverlay">
   <div id="friendCallCard">
-    <div id="friendCallAvatar">📞</div>
-    <div id="friendCallName"></div>
-    <div id="friendCallStatus">呼び出し中…</div>
-    <audio id="friendCallAudio" autoplay></audio>
+    <video id="fcRemoteVideo" playsinline autoplay></video>
+    <video id="fcLocalVideo" playsinline autoplay muted style="display:none"></video>
+    <div id="fcCaptions" style="display:none"></div>
+    <div id="fcTopInfo">
+      <div id="friendCallAvatar">👤</div>
+      <div id="friendCallName"></div>
+      <div id="friendCallTimer">00:00</div>
+      <div id="friendCallStatus">呼び出し中…</div>
+      <div id="fcWave"><span></span><span></span><span></span><span></span><span></span></div>
+      <div id="fcNetRow">
+        <span class="fcNetLabel">自分</span><span class="fcNetDot" id="fcNetMine" title="自分の通信状態"></span>
+        <span class="fcNetLabel">相手</span><span class="fcNetDot" id="fcNetTheirs" title="相手の通信状態"></span>
+      </div>
+    </div>
+    <div id="fcJankenBox" style="display:none"></div>
     <div id="friendCallActions">
-      <button class="btn ghost" id="friendCallAccept" style="display:none;color:var(--mint)">応答</button>
-      <button class="btn ghost" id="friendCallReject" style="color:var(--coral)">終了</button>
+      <button class="fcActBtn" id="fcMicBtn" title="マイクのON/OFF">🎤</button>
+      <button class="fcActBtn" id="fcCamBtn" title="ビデオ通話モード">📷</button>
+      <button class="fcActBtn" id="fcCapBtn" title="字幕">💬</button>
+      <button class="fcActBtn" id="fcJankenBtn" title="じゃんけん">✊</button>
+      <button class="fcActBtn" id="fcPipBtn" title="ミニ表示（ピクチャーインピクチャー）">🗔</button>
+      <button class="fcActBtn" id="friendCallAccept" style="display:none;background:var(--mint);color:#04241d" title="応答">📞</button>
+      <button class="fcActBtn fcEndBtn" id="friendCallReject" title="通話を終了">📞</button>
     </div>
   </div>
 </div>
@@ -1308,6 +1405,12 @@ if(!window.Peer){var s=document.createElement('script');s.src='https://unpkg.com
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 if(!window.QRCode){var s2=document.createElement('script');s2.src='https://cdn.jsdelivr.net/npm/davidshimjs-qrcodejs/qrcode.min.js';document.head.appendChild(s2);}
+</script>
+<!-- QRコード読み取り：BarcodeDetector非対応環境（Firefox・Safari等）でも読み取れるよう、
+     軽量なjsQR（画像処理だけの純JS実装、カメラ取得は自前のgetUserMediaを使い続ける）を追加した -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+if(!window.jsQR){var s3=document.createElement('script');s3.src='https://unpkg.com/jsqr@1.4.0/dist/jsQR.js';document.head.appendChild(s3);}
 </script>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
@@ -5443,7 +5546,7 @@ function findFriend(fid){ return friendList().find(f=>f.id===fid)||null; }
 function upsertFriend(patch){
   const list=friendList();
   const i=list.findIndex(f=>f.id===patch.id);
-  if(i>=0) Object.assign(list[i],patch); else list.push(Object.assign({addedAt:Date.now(),autoDelete:false,autoDeleteSec:10},patch));
+  if(i>=0) Object.assign(list[i],patch); else list.push(Object.assign({addedAt:Date.now(),autoDelete:false,autoDeleteSec:10,status:'confirmed'},patch));
   saveFriendList(list);
   return list[i>=0?i:list.length-1];
 }
@@ -5464,9 +5567,16 @@ const FriendNet={
   conns:new Map(),      // friendId -> DataConnection
   queues:new Map(),     // friendId -> pending message array（このセッション内だけの再送キュー）
   calls:new Map(),      // friendId -> MediaConnection
-  localAudio:null,      // フレンド通話専用のマイクストリーム（会議用S.micTrackとは独立）
   typingTimers:new Map(),
   _inFlight:new Map(), // fid -> 進行中のconnectTo()のPromise（二重発信の防止）
+  // --- 通話まわり（C・D・E・F）。会議用のS.micTrack/S.camTrackとは完全に独立した専用トラック ---
+  callFid:null, callRole:null, // callRole: 'host'(発信した側)|'guest'(着信を受けた側)。1対1なので実際の処理はほぼ対称だが、記録だけはしておく
+  callAudioTrack:null, callCamTrack:null, callOut:null, _blackTrack:null, _silentTrack:null,
+  videoOn:false, remoteVideoOn:false,
+  callStart:null, _timerIv:null,
+  jankenMine:null, jankenTheirs:null,
+  _callNetIv:null, _callRttMine:null, _callRttTheirs:null,
+  _pendingIncomingCall:null,
   init(){
     if(this.peer) return;
     this.myId=myFriendId();
@@ -5485,7 +5595,10 @@ const FriendNet={
   },
   reconnectAll(){
     if(!this.ready) return;
-    friendList().forEach(f=>{ if(!this.conns.has(f.id)) this.connectTo(f.id).catch(()=>{}); });
+    friendList().forEach(f=>{
+      if(!this.conns.has(f.id)) this.connectTo(f.id).catch(()=>{});
+      else if(f.status==='pending') this.greet(f.id); // 繋がっているのにまだ相互確定していない場合、念のため申請を送り直す（保険の再送）
+    });
   },
   /* バグ修正(接続の不安定さ):
      ①「今まさに接続処理中」の状態を全く追跡していなかったため、フレンド一覧を開く・20秒おきの
@@ -5538,8 +5651,21 @@ const FriendNet={
     conn.on('data',m=>this.onData(fid,m));
     conn.on('close',()=>{ if(this.conns.get(fid)===conn){ this.conns.delete(fid); this.setOnline(fid,false); } });
     conn.on('error',()=>{});
-    try{ conn.send({t:'hello',name:S.name||'（名前未設定）'}); }catch(_){}
+    this.greet(fid);
     this.flushQueue(fid);
+  },
+  /* バグ修正(フレンド追加が片方の画面にしか反映されない件):
+     以前は接続できたら一律{t:'hello'}を送るだけで、相手がまだ自分をフレンドに追加していない場合、
+     相手側のonData()ではfindFriend(fid)がnullになりそのまま黙って無視されていた（＝一方通行のまま反映されない）。
+     ここを「pending(申請中)→confirmed(相互確定)」の2状態にし、相手からのACK(friendAck)が返るまでは
+     こちら側もpending＝「承認待ち」表示のままにする。接続が繋がる/繋がり直すたび・20秒毎の定期リトライのたびに
+     re-greet(申請の送り直し)するので、最初のメッセージが何らかの理由で届かなくても後から必ず揃う設計にした */
+  greet(fid){
+    const f=findFriend(fid);
+    if(f&&f.status==='pending') this.send(fid,{t:'friendReq',name:S.name||'（名前未設定）'});
+    else if(f) this.send(fid,{t:'hello',name:S.name||'（名前未設定）'});
+    // fが無い（＝相手だけが自分を追加していて、自分はまだ追加していない状態）の場合はここでは何も送らない。
+    // 相手からのfriendReqを受け取って初めて、こちら側でも自動的にフレンド関係が成立する
   },
   setOnline(fid,on){
     renderFriendList();
@@ -5564,12 +5690,33 @@ const FriendNet={
     q.forEach(m=>this.send(fid,m));
   },
   onData(fid,m){
+    if(m.t==='friendReq'){
+      const existing=findFriend(fid);
+      upsertFriend({id:fid,name:m.name||'（フレンド）',status:'confirmed'});
+      if(!existing||existing.status==='pending') toast('🤝 '+(m.name||'フレンド')+'さんとフレンドになりました');
+      renderFriendList();
+      if(currentFriendChatId===fid){ $('#fcName').textContent=m.name||'名前未設定'; if($('#fcId')) $('#fcId').textContent=fid; }
+      this.send(fid,{t:'friendAck',name:S.name||'（名前未設定）'});
+      return;
+    }
+    if(m.t==='friendAck'){
+      const existing=findFriend(fid);
+      if(existing&&existing.status==='pending'){
+        upsertFriend({id:fid,name:m.name||existing.name,status:'confirmed'});
+        toast('🤝 '+(m.name||existing.name||'フレンド')+'さんとフレンドになりました');
+        renderFriendList();
+      }else if(existing&&m.name&&existing.name!==m.name){
+        upsertFriend({id:fid,name:m.name}); renderFriendList();
+      }
+      if(currentFriendChatId===fid){ const f2=findFriend(fid); if(f2) $('#fcName').textContent=f2.name||'名前未設定'; }
+      return;
+    }
     if(m.t==='hello'){
       const f=findFriend(fid); if(f&&f.name!==m.name){ upsertFriend({id:fid,name:m.name}); renderFriendList(); if(currentFriendChatId===fid) $('#fcName').textContent=m.name; }
       return;
     }
     if(m.t==='chat'){
-      friendChatAppend(fid,{id:m.id,dir:'in',text:m.text||'',imgs:m.imgs||null,file:m.file||null,yamada:m.yamada||null,ts:m.ts||Date.now(),selfDestruct:m.selfDestruct||null,deleted:false});
+      friendChatAppend(fid,{id:m.id,dir:'in',text:m.text||'',imgs:m.imgs||null,file:m.file||null,yamada:m.yamada||null,phrase:m.phrase||null,ts:m.ts||Date.now(),selfDestruct:m.selfDestruct||null,deleted:false});
       const f=findFriend(fid);
       if(currentFriendChatId===fid && $('#friendOverlay').classList.contains('on')){
         renderFriendChat(fid);
@@ -5600,8 +5747,57 @@ const FriendNet={
       }
       return;
     }
+    /* --- ここから通話中の信号(C・D・E・F)。すべて通話専用のMediaConnectionではなく、
+       既存の常時接続DataConnectionに乗せている(すでに繋がっている確実な経路をそのまま再利用) --- */
+    if(m.t==='callVideoMode'){
+      if(fid!==this.callFid) return;
+      this.remoteVideoOn=!!m.on;
+      updateCallVideoLayout();
+      return;
+    }
+    if(m.t==='callJanken'){
+      if(fid!==this.callFid) return;
+      this.jankenTheirs=m.choice;
+      renderCallJankenUi();
+      return;
+    }
+    if(m.t==='callJankenReset'){
+      if(fid!==this.callFid) return;
+      this.jankenMine=null; this.jankenTheirs=null;
+      renderCallJankenUi();
+      return;
+    }
+    if(m.t==='callPing'){
+      this.send(fid,{t:'callPong',ts:m.ts,rtt:this._callRttMine});
+      return;
+    }
+    if(m.t==='callPong'){
+      if(fid!==this.callFid) return;
+      this._callRttMine=Date.now()-m.ts;
+      if(m.rtt!=null) this._callRttTheirs=m.rtt;
+      updateCallNetIndicators();
+      return;
+    }
+    if(m.t==='callCap'){
+      if(fid!==this.callFid) return;
+      showCallCaption(false,fid,m.text,m.final);
+      return;
+    }
   },
-  /* --- 音声通話（フレンド用。会議のS.micTrackとは独立に自前でgetUserMediaする） --- */
+  /* --- 音声・ビデオ通話（フレンド用。会議のS.micTrack/S.camTrackとは独立に自前でgetUserMediaする） ---
+     「発信した側がホスト役」という要望を踏まえ、startCall()側は callRole='host'、
+     着信を受けたacceptCall()側は callRole='guest' として記録する。ただし1対1の通話は本質的に対称な
+     やり取り(マイク/ビデオの送受信・じゃんけん・字幕は双方が独立に行う)なので、実処理はほぼ対等に扱っている */
+  getBlackTrack(){ if(!this._blackTrack) this._blackTrack=blackVideo(); return this._blackTrack; },
+  getSilentTrack(){ if(!this._silentTrack) this._silentTrack=silentAudio(); return this._silentTrack; },
+  async ensureCallMedia(){
+    if(!this.callAudioTrack){
+      try{ const st=await navigator.mediaDevices.getUserMedia({audio:true}); this.callAudioTrack=st.getAudioTracks()[0]; }
+      catch(_){ this.callAudioTrack=null; }
+    }
+    if(!this.callOut) this.callOut=new MediaStream([this.callAudioTrack||this.getSilentTrack(),this.getBlackTrack()]);
+    return this.callOut;
+  },
   handleIncomingCall(call){
     const fid=call.peer;
     if(this.calls.size || document.getElementById('friendCallOverlay').classList.contains('on')){
@@ -5609,73 +5805,297 @@ const FriendNet={
       return;
     }
     this.calls.set(fid,call);
+    this.callFid=fid; this.callRole='guest';
     const f=findFriend(fid);
     openFriendCallUi(f?f.name:'不明なフレンド',true,fid);
-    call.on('close',()=>closeFriendCallUi(fid));
-    call.on('error',()=>closeFriendCallUi(fid));
+    fcStartRing();
+    call.on('close',()=>closeFriendCallUi());
+    call.on('error',()=>closeFriendCallUi());
     this._pendingIncomingCall=call;
   },
   async acceptCall(fid){
     const call=this._pendingIncomingCall; if(!call) return;
-    try{
-      this.localAudio=this.localAudio||await navigator.mediaDevices.getUserMedia({audio:true});
-    }catch(_){ toast('マイクが使えません'); this.rejectCall(fid); return; }
-    call.answer(this.localAudio);
-    call.on('stream',st=>{ $('#friendCallAudio').srcObject=st; });
-    $('#friendCallStatus').textContent='通話中…';
+    fcStopRing();
+    let out; try{ out=await this.ensureCallMedia(); }catch(_){}
+    if(!out||!this.callAudioTrack){ toast('マイクが使えません'); this.rejectCall(fid); return; }
+    call.answer(out);
+    call.on('stream',st=>{ $('#fcRemoteVideo').srcObject=st; startCallTimer(); startCallNetLoop(fid); $('#friendCallStatus').textContent='通話中…'; });
     $('#friendCallAccept').style.display='none';
   },
   rejectCall(fid){
+    fcStopRing();
     const call=this.calls.get(fid)||this._pendingIncomingCall;
     if(call){ try{call.close()}catch(_){} }
     this.calls.delete(fid); this._pendingIncomingCall=null;
-    closeFriendCallUi(fid);
+    closeFriendCallUi();
   },
   async startCall(fid){
     if(this.calls.size){ toast('既に別の通話中です'); return; }
     if(!this.isOnline(fid)){ toast('相手がオフラインのため発信できません'); return; }
-    try{
-      this.localAudio=this.localAudio||await navigator.mediaDevices.getUserMedia({audio:true});
-    }catch(_){ toast('マイクが使えません'); return; }
+    let out; try{ out=await this.ensureCallMedia(); }catch(_){}
+    if(!out||!this.callAudioTrack){ toast('マイクが使えません'); return; }
+    this.callFid=fid; this.callRole='host';
     const f=findFriend(fid);
     openFriendCallUi(f?f.name:'フレンド',false,fid);
-    const call=this.peer.call(fid,this.localAudio);
+    fcStartRing();
+    const call=this.peer.call(fid,out);
     this.calls.set(fid,call);
-    call.on('stream',st=>{ $('#friendCallAudio').srcObject=st; $('#friendCallStatus').textContent='通話中…'; });
-    call.on('close',()=>closeFriendCallUi(fid));
-    call.on('error',()=>closeFriendCallUi(fid));
+    call.on('stream',st=>{ fcStopRing(); $('#fcRemoteVideo').srcObject=st; startCallTimer(); startCallNetLoop(fid); $('#friendCallStatus').textContent='通話中…'; });
+    call.on('close',()=>closeFriendCallUi());
+    call.on('error',()=>closeFriendCallUi());
   },
   hangup(fid){
     const call=this.calls.get(fid); if(call){ try{call.close()}catch(_){} }
     this.calls.delete(fid);
-    closeFriendCallUi(fid);
+    closeFriendCallUi();
+  },
+  /* --- ビデオ通話モード（新機能2）。会議の映像合成と同じ考え方で、常にダミー(黒)映像トラックを
+     送り続けておき、ONにした瞬間に本物のカメラトラックへreplaceTrack()するだけにしている。
+     こうすることでRTCPeerConnectionの再ネゴシエーションが一切不要になり、より確実に動く */
+  async enableVideoMode(){
+    if(this.videoOn||!this.callFid) return;
+    if(!this.callCamTrack){
+      try{ const st=await navigator.mediaDevices.getUserMedia({video:{width:{ideal:960},height:{ideal:540}}}); this.callCamTrack=st.getVideoTracks()[0]; }
+      catch(_){ toast('カメラが使えません'); return; }
+    }
+    this.videoOn=true;
+    this.replaceCallTrack('video',this.callCamTrack);
+    $('#fcLocalVideo').srcObject=new MediaStream([this.callCamTrack]);
+    $('#fcLocalVideo').style.display='';
+    this.send(this.callFid,{t:'callVideoMode',on:true});
+    fcSoundCamOn();
+    updateCallVideoLayout();
+  },
+  disableVideoMode(){
+    if(!this.videoOn||!this.callFid) return;
+    this.videoOn=false;
+    this.replaceCallTrack('video',this.getBlackTrack());
+    $('#fcLocalVideo').srcObject=null;
+    $('#fcLocalVideo').style.display='none';
+    this.send(this.callFid,{t:'callVideoMode',on:false}); // 双方に通知が届くように（相手側の画面も切り替わる）
+    fcSoundCamOff();
+    updateCallVideoLayout();
+  },
+  toggleVideoMode(){ if(this.videoOn) this.disableVideoMode(); else this.enableVideoMode(); },
+  replaceCallTrack(kind,track){
+    if(this.callOut){
+      const old=kind==='video'?this.callOut.getVideoTracks()[0]:this.callOut.getAudioTracks()[0];
+      if(old) this.callOut.removeTrack(old);
+      this.callOut.addTrack(track);
+    }
+    const call=this.calls.get(this.callFid); const pc=call&&call.peerConnection; if(!pc) return;
+    pc.getSenders().forEach(sd=>{ if(sd.track&&sd.track.kind===kind) sd.replaceTrack(track).catch(()=>{}); });
+  },
+  toggleMic(){
+    if(!this.callAudioTrack) return;
+    this.callAudioTrack.enabled=!this.callAudioTrack.enabled;
+    if(this.callAudioTrack.enabled) fcSoundMicOn(); else fcSoundMicOff();
+    $('#fcMicBtn').classList.toggle('muted',!this.callAudioTrack.enabled);
+    $('#fcMicBtn').textContent=this.callAudioTrack.enabled?'🎤':'🔇';
   }
 };
 
-/* --- 通話UI --- */
+/* --- 通話UI（C・D・E・F） --- */
 function openFriendCallUi(name,incoming,fid){
   $('#friendCallName').textContent=name;
   $('#friendCallStatus').textContent=incoming?'着信中…':'呼び出し中…';
+  $('#friendCallTimer').textContent='00:00';
   $('#friendCallAccept').style.display=incoming?'':'none';
   $('#friendCallReject').dataset.fid=fid;
   $('#friendCallAccept').dataset.fid=fid;
+  FriendNet.videoOn=false; FriendNet.remoteVideoOn=false;
+  FriendNet.jankenMine=null; FriendNet.jankenTheirs=null;
+  $('#fcJankenBox').style.display='none';
+  $('#fcMicBtn').classList.remove('muted'); $('#fcMicBtn').textContent='🎤';
+  callCapOn=false; $('#fcCapBtn').classList.remove('on'); $('#fcCaptions').style.display='none'; $('#fcCaptions').innerHTML=''; callCapEls.clear();
+  updateCallVideoLayout();
+  updateCallNetIndicators();
+  // 会議中の着信・発信なら、会議の表示を邪魔しない左側の小さいウィンドウにする（D）
+  $('#friendCallOverlay').classList.toggle('fcInMeeting',$('#meet').classList.contains('on'));
   $('#friendCallOverlay').classList.add('on');
 }
 function closeFriendCallUi(){
   $('#friendCallOverlay').classList.remove('on');
-  $('#friendCallAudio').srcObject=null;
+  $('#fcRemoteVideo').srcObject=null;
+  $('#fcLocalVideo').srcObject=null;
+  fcStopRing();
+  fcSoundEnd();
+  stopCallTimer();
+  stopCallNetLoop();
+  if(callCapOn){ SharedRec.unsubscribe(callCapListener); callCapOn=false; }
+  if(FriendNet.callCamTrack){ try{FriendNet.callCamTrack.stop()}catch(_){} FriendNet.callCamTrack=null; }
+  if(FriendNet.callAudioTrack){ try{FriendNet.callAudioTrack.stop()}catch(_){} FriendNet.callAudioTrack=null; }
+  FriendNet.callOut=null; FriendNet.videoOn=false; FriendNet.remoteVideoOn=false; FriendNet.callFid=null; FriendNet.callRole=null;
   FriendNet._pendingIncomingCall=null;
+  // バグ修正：以前は明示的にhangup()/rejectCall()した時しかcallsマップが消えなかったため、
+  // 相手側から通話を切られた場合（close/errorイベント経由）にMapが残り続け、次の着信を弾いてしまうことがあった
+  FriendNet.calls.clear();
 }
 $('#friendCallAccept').onclick=()=>FriendNet.acceptCall($('#friendCallAccept').dataset.fid);
 $('#friendCallReject').onclick=()=>{ const fid=$('#friendCallReject').dataset.fid; FriendNet.rejectCall(fid); FriendNet.hangup(fid); };
 $('#friendCallBtn').onclick=()=>{ if(currentFriendChatId) FriendNet.startCall(currentFriendChatId); };
+$('#fcMicBtn').onclick=()=>FriendNet.toggleMic();
+$('#fcCamBtn').onclick=()=>FriendNet.toggleVideoMode();
+
+/* --- 通話タイマー(C-4) --- */
+function startCallTimer(){
+  if(FriendNet.callStart) return; // stream イベントは複数回発火しうるため、既に計測中なら二重に開始しない
+  FriendNet.callStart=Date.now();
+  FriendNet._timerIv=setInterval(updateCallTimerDisplay,1000);
+}
+function stopCallTimer(){ clearInterval(FriendNet._timerIv); FriendNet._timerIv=null; FriendNet.callStart=null; }
+function updateCallTimerDisplay(){
+  if(!FriendNet.callStart) return;
+  const s=Math.floor((Date.now()-FriendNet.callStart)/1000);
+  $('#friendCallTimer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+}
+
+/* --- 通信の安定度インジケーター(C-5) --- */
+function startCallNetLoop(fid){
+  stopCallNetLoop();
+  const tick=()=>{ const c=FriendNet.conns.get(fid); if(c&&c.open) FriendNet.send(fid,{t:'callPing',ts:Date.now()}); };
+  tick(); FriendNet._callNetIv=setInterval(tick,2500);
+}
+function stopCallNetLoop(){ if(FriendNet._callNetIv){ clearInterval(FriendNet._callNetIv); FriendNet._callNetIv=null; } FriendNet._callRttMine=null; FriendNet._callRttTheirs=null; }
+function updateCallNetIndicators(){
+  const cls=v=>v==null?'':(v<300?'stable':'unstable');
+  const mine=FriendNet._callRttMine, theirs=FriendNet._callRttTheirs;
+  $('#fcNetMine').className='fcNetDot '+cls(mine); $('#fcNetMine').title='自分の通信：'+(mine==null?'計測中…':mine+'ms');
+  $('#fcNetTheirs').className='fcNetDot '+cls(theirs); $('#fcNetTheirs').title='相手の通信：'+(theirs==null?'計測中…':theirs+'ms');
+}
+
+/* --- ビデオ通話モードのレイアウト切替(C-2)。自分・相手のどちらかがONにした時点で双方とも
+   ビデオレイアウトに切り替わる(＝videoOnかremoteVideoOnのどちらかがtrueならON) --- */
+function updateCallVideoLayout(){
+  const active=FriendNet.videoOn||FriendNet.remoteVideoOn;
+  $('#friendCallCard').classList.toggle('fcVideoMode',active);
+  $('#fcCamBtn').classList.toggle('on',FriendNet.videoOn);
+  $('#fcLocalVideo').style.display=FriendNet.videoOn?'':'none';
+}
+
+/* --- 通話中のじゃんけん(C-3)。会議のホスト権威じゃんけんとは違い、1対1なのでホストを介さず
+   双方が自分の手をそのまま送り合うだけのシンプルな対称プロトコルにした。判定ロジック(jankenBeats)は
+   既存の会議じゃんけんのものをそのまま再利用している --- */
+function currentCallFid(){ return FriendNet.callFid; }
+function openCallJanken(){
+  const fid=currentCallFid(); if(!fid) return;
+  FriendNet.jankenMine=null; FriendNet.jankenTheirs=null;
+  FriendNet.send(fid,{t:'callJankenReset'});
+  $('#fcJankenBox').style.display='flex';
+  renderCallJankenUi();
+}
+function renderCallJankenUi(){
+  const box=$('#fcJankenBox'); if(box.style.display==='none') return;
+  if(FriendNet.jankenMine&&FriendNet.jankenTheirs){
+    const draw=FriendNet.jankenMine===FriendNet.jankenTheirs;
+    const win=!draw&&jankenBeats(FriendNet.jankenMine,FriendNet.jankenTheirs);
+    const resultTxt=draw?'あいこ！':(win?'あなたの勝ち！🎉':'あなたの負け…');
+    box.innerHTML=`<div class="fcJkResult">${JANKEN_EMOJI[FriendNet.jankenMine]}　vs　${JANKEN_EMOJI[FriendNet.jankenTheirs]}<br><b>${resultTxt}</b></div>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="fcJkRetry" style="width:auto;padding:7px 16px;font-size:12px">もう一度</button><button class="btn ghost" id="fcJkClose" style="width:auto;padding:7px 16px;font-size:12px">閉じる</button></div>`;
+    $('#fcJkRetry').onclick=openCallJanken;
+    $('#fcJkClose').onclick=()=>{ box.style.display='none'; };
+  }else{
+    box.innerHTML=`<div class="fcJkQ">✊✋✌️ じゃんけん</div><div class="fcJkOpts">
+      ${['rock','paper','scissors'].map(c=>`<button data-c="${c}" class="${FriendNet.jankenMine===c?'voted':''}">${JANKEN_EMOJI[c]}</button>`).join('')}
+      </div><div class="fcJkStatus">${FriendNet.jankenMine?'相手を待っています…':'選んでください'}</div>`;
+    box.querySelectorAll('button[data-c]').forEach(b=>b.onclick=()=>{
+      const fid=currentCallFid(); if(!fid||FriendNet.jankenMine) return;
+      FriendNet.jankenMine=b.dataset.c;
+      FriendNet.send(fid,{t:'callJanken',choice:b.dataset.c});
+      renderCallJankenUi();
+    });
+  }
+}
+$('#fcJankenBtn').onclick=()=>{ if($('#fcJankenBox').style.display==='none') openCallJanken(); else $('#fcJankenBox').style.display='none'; };
+
+/* --- 通話中の字幕・翻訳(F)。既存の共有音声認識(SharedRec)・翻訳(translate())をそのまま再利用。
+   信号はDataConnection経由でcallCapとして送る。長押しで原文⇔翻訳を切り替える --- */
+let callCapOn=false;
+const CAP_COLORS=['#ff5c5c','#4da3ff','#ffd23f','#4cd97b','#b47cff']; // 赤・青・黄・緑・紫
+function capColorFor(key){ let h=0; for(let i=0;i<key.length;i++) h=(h*31+key.charCodeAt(i))>>>0; return CAP_COLORS[h%CAP_COLORS.length]; }
+function callCapListener(fin,interim){
+  const fid=FriendNet.callFid; if(!fid) return;
+  if(fin){ showCallCaption(true,FriendNet.myId,fin,true); FriendNet.send(fid,{t:'callCap',text:fin,final:true}); }
+  else if(interim){ showCallCaption(true,FriendNet.myId,interim,false); FriendNet.send(fid,{t:'callCap',text:interim,final:false}); }
+}
+function toggleCallCaptions(){
+  callCapOn=!callCapOn;
+  $('#fcCapBtn').classList.toggle('on',callCapOn);
+  $('#fcCaptions').style.display=callCapOn?'flex':'none';
+  if(callCapOn){ if(!SharedRec.subscribe(callCapListener)) callCapOn=false; } else SharedRec.unsubscribe(callCapListener);
+  $('#fcCapBtn').classList.toggle('on',callCapOn);
+}
+$('#fcCapBtn').onclick=toggleCallCaptions;
+const callCapEls=new Map(); // 'me'|fid -> 表示中のcap行要素（自分・相手の最大2人分だけ表示し続ける）
+function showCallCaption(mine,speakerId,text,final){
+  const box=$('#fcCaptions');
+  const key=mine?'me':speakerId;
+  let el=callCapEls.get(key);
+  if(!el||el.dataset.done==='1'){
+    el=document.createElement('div'); el.className='fcCapLine';
+    el.innerHTML='<b></b><span class="fcCapTxt"></span>';
+    box.appendChild(el); callCapEls.set(key,el);
+    while(box.children.length>2) box.firstChild.remove(); // 2人分まで。それより古いものは流れて消える
+  }
+  const color=capColorFor(mine?('me:'+FriendNet.myId):('p:'+speakerId));
+  el.querySelector('b').textContent=(mine?'あなた':($('#friendCallName').textContent||'相手'))+'：';
+  el.querySelector('b').style.color=color;
+  const txtEl=el.querySelector('.fcCapTxt'); txtEl.textContent=text; txtEl.dataset.orig=text; el.dataset.translated='0';
+  el.classList.toggle('interim',!final);
+  if(final){
+    el.dataset.done='1';
+    clearTimeout(el._t);
+    el._t=setTimeout(()=>{ el.remove(); if(callCapEls.get(key)===el) callCapEls.delete(key); },8000);
+  }
+}
+$('#fcCaptions').addEventListener('pointerdown',e=>{
+  const line=e.target.closest('.fcCapLine'); if(!line) return;
+  line._pressT=setTimeout(()=>toggleCaptionTranslate(line),500);
+});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>$('#fcCaptions').addEventListener(ev,e=>{
+  const line=e.target.closest('.fcCapLine'); if(line) clearTimeout(line._pressT);
+}));
+function toggleCaptionTranslate(line){
+  const txtEl=line.querySelector('.fcCapTxt');
+  if(line.dataset.translated==='1'){ txtEl.textContent=txtEl.dataset.orig; line.dataset.translated='0'; return; }
+  const orig=txtEl.dataset.orig;
+  translate(orig,S.trTo||'en').then(tr=>{ if(tr){ txtEl.textContent=tr; line.dataset.translated='1'; } else toast('翻訳に失敗しました'); });
+}
+
+/* --- ミニ表示（PinP。D「できれば」対応。標準のPicture-in-Picture APIのみを使い、
+   対応していない環境ではボタンごと非表示にして、無理に独自実装はしない） --- */
+if(!('pictureInPictureEnabled' in document)) { /* ボタン非表示はDOM構築後に別途行う */ }
+$('#fcPipBtn').onclick=async()=>{
+  if(!document.pictureInPictureEnabled){ toast('この端末・ブラウザはミニ表示(PinP)に対応していません'); return; }
+  if(!FriendNet.videoOn){ toast('ビデオ通話モード中のみ使えます'); return; }
+  try{
+    if(document.pictureInPictureElement) await document.exitPictureInPicture();
+    else await $('#fcRemoteVideo').requestPictureInPicture();
+  }catch(_){ toast('ミニ表示を開始できませんでした'); }
+};
+if(!document.pictureInPictureEnabled) $('#fcPipBtn').style.display='none';
+
+/* --- 通話中の操作音(E)。既存の入退室サウンドと同じ、Web AudioのOscillatorNodeでその場で組み立てる方式
+   （chime()をそのまま再利用）。既存の「入退室サウンドON/OFF」設定(S.roomSound)をそのまま流用する --- */
+function fcSoundMicOff(){ chime([740,520],{dur:0.08,gap:0.055,type:'sine',peak:0.15}); }      // ピココン
+function fcSoundMicOn(){ chime([560,760,980],{dur:0.06,gap:0.045,type:'sine',peak:0.15}); }   // ピロロン
+function fcSoundCamOn(){ chime([440,660],{dur:0.13,gap:0.08,type:'sine',peak:0.12}); }        // とこん
+function fcSoundCamOff(){ chime([420,330,250],{dur:0.19,gap:0.09,type:'sine',peak:0.11}); }   // とここん（少し余韻）
+function fcSoundEnd(){ chime([700,560,420],{dur:0.1,gap:0.065,type:'triangle',peak:0.16}); }  // ピロロ
+let fcRingTimer=null;
+function fcStartRing(){
+  if(fcRingTimer) return;
+  const tick=()=>chime([980,720],{dur:0.07,gap:0.05,type:'sine',peak:0.13}); // ピココ
+  tick(); fcRingTimer=setInterval(tick,900); // ピココ・ピココ・ピココ…と繰り返す呼び出し音
+}
+function fcStopRing(){ if(fcRingTimer){ clearInterval(fcRingTimer); fcRingTimer=null; } }
 
 /* --- 既読後の自動消滅（B-4） --- */
 function scheduleFriendSelfDestruct(fid,msgId,sec){
   setTimeout(()=>{
     const log=friendChatLog(fid);
     const entry=log.find(e=>e.id===msgId);
-    if(entry&&!entry.deleted){ entry.deleted=true; entry.text=''; entry.imgs=null; entry.file=null; entry.yamada=null; saveFriendChatLog(fid,log); if(currentFriendChatId===fid) renderFriendChat(fid); }
+    if(entry&&!entry.deleted){ entry.deleted=true; entry.text=''; entry.imgs=null; entry.file=null; entry.yamada=null; entry.phrase=null; saveFriendChatLog(fid,log); if(currentFriendChatId===fid) renderFriendChat(fid); }
   },Math.max(1,sec)*1000);
 }
 
@@ -5727,6 +6147,53 @@ const YAMADA_STAMPS=[
     extra:'<text x="150" y="80" font-size="34" font-weight="800" fill="#3aa7ff">？</text>'}
 ];
 function yamadaSvgByKey(key){ const s=YAMADA_STAMPS.find(x=>x.key===key); return s?yamadaFaceSvg(s.mouth,s.brow,s.extra):''; }
+
+/* --- フレーズスタンプ（G）。凝ったイラストではなく、フレーズそのものを吹き出し風に見せるテキストスタンプ約100種。
+   カテゴリ分け＋検索＋並び替えができるよう、シンプルな配列+オブジェクトだけで管理している
+   （画像ファイルは1枚も追加せず、山田くんスタンプと同じ「その場で生成する」方針を踏襲） --- */
+const PHRASE_CATS={
+  greet:['ありがとう','おつかれさま','よろしく','おやすみ','おはよう','またね','バイバイ','いってきます','いってらっしゃい','ただいま','おかえり','おーい','お疲れ様','すみません','ペコリ','失礼します'],
+  reply:['了解!','OK!','はーい','いいよ!','ダメ!','NG','なるほど','了解です','承知!','任せて','無理','断固拒否','行けたら行く','行く!','任せろ','任せた','完了!','確認中','了解道中膝栗毛'],
+  thanks:['ごめんね','すまない','感謝!','助かる','神対応'],
+  react:['神!','天才!','最高!','やばい','草','それな','分かる','確かに','マジ?','ほんと?','うそでしょ','さすが!','えらい!','すごーい','ドヤ'],
+  cheer:['がんばれ','ファイト!','無理しないで','ゆっくり休んで','おめでとー!','祝','拍手'],
+  meetup:['何時?','どこ?','今どこ?','着いた!','遅れます','あと5分','今向かってる','電話できる?','買ってきた','買い物中','また連絡する'],
+  daily:['暇?','何してる?','ご飯行こう','お腹すいた','喉乾いた','ねむい','疲れた','生き返った'],
+  emo:['尊い','泣いた','ぴえん','悲しい','怒った','許さん','すき','大好き','愛してる','きゅん','照れる'],
+  neta:['チラッ','じーっ','ガン見','正座待機','まだ?','呼んだ?','召喚','生存確認'],
+};
+const PHRASE_CAT_LABELS={greet:'あいさつ',reply:'返事',thanks:'感謝・謝罪',react:'リアクション',cheer:'応援・祝福',meetup:'待ち合わせ',daily:'日常',emo:'感情',neta:'ネタ'};
+const PHRASE_STAMPS=Object.entries(PHRASE_CATS).flatMap(([cat,arr])=>arr.map(text=>({text,cat})));
+let psCurCat='all', psSortMode='cat'; // psSortMode: 'cat'=カテゴリ順、'kana'=あいうえお順(実際は文字コード順の簡易ソート)
+function renderPhraseCatTabs(){
+  const box=$('#psCatTabs'); box.innerHTML='';
+  const mk=(key,label)=>{ const b=document.createElement('button'); b.textContent=label; b.className=psCurCat===key?'on':''; b.onclick=()=>{ psCurCat=key; renderPhraseGrid(); renderPhraseCatTabs(); }; box.appendChild(b); };
+  mk('all','すべて');
+  Object.entries(PHRASE_CAT_LABELS).forEach(([k,l])=>mk(k,l));
+}
+function renderPhraseGrid(){
+  const grid=$('#psGrid'); grid.innerHTML='';
+  const q=($('#psSearch').value||'').trim();
+  let items=PHRASE_STAMPS.filter(s=>(psCurCat==='all'||s.cat===psCurCat)&&(!q||s.text.includes(q)));
+  if(psSortMode==='kana') items=items.slice().sort((a,b)=>a.text.localeCompare(b.text,'ja'));
+  if(!items.length){ grid.innerHTML='<div class="empty" style="grid-column:1/-1">見つかりませんでした</div>'; return; }
+  items.forEach(s=>{
+    const b=document.createElement('button'); b.className='psStamp'; b.textContent=s.text;
+    b.onclick=()=>{ $('#mPhraseStamp').classList.remove('on'); sendFriendMessage({phrase:s.text}); };
+    grid.appendChild(b);
+  });
+}
+$('#btnFriendPhrase').onclick=()=>{
+  psCurCat='all'; $('#psSearch').value='';
+  renderPhraseCatTabs(); renderPhraseGrid();
+  $('#mPhraseStamp').classList.add('on');
+};
+$('#psSearch').addEventListener('input',renderPhraseGrid);
+$('#btnPsSort').onclick=()=>{
+  psSortMode=psSortMode==='cat'?'kana':'cat';
+  $('#btnPsSort').textContent=psSortMode==='cat'?'並び替え：カテゴリ順':'並び替え：あいうえお順';
+  renderPhraseGrid();
+};
 function openYamadaPicker(anchorEl){
   const box=$('#yamadaPicker'); const opts=$('#yamadaPickerOpts');
   opts.innerHTML='';
@@ -5756,10 +6223,11 @@ function renderFriendList(){
   box.innerHTML='';
   list.slice().sort((a,b)=>(b._lastTs||b.addedAt)-(a._lastTs||a.addedAt)).forEach(f=>{
     const online=FriendNet.isOnline(f.id);
+    const pending=f.status==='pending';
     const unread=friendUnread.get(f.id)||0;
     const row=document.createElement('div'); row.className='friendRow'+(currentFriendChatId===f.id?' active':'');
     row.innerHTML=`<div class="fr-pi">${esc(initial(f.name||'?'))}<span class="fr-dot${online?' online':''}"></span></div>
-      <div class="fr-body"><b>${esc(f.name||'名前未設定')}</b><small>${online?'オンライン':'オフライン'}</small></div>
+      <div class="fr-body"><b>${esc(f.name||'名前未設定')}</b><small${pending?' class="pending"':''}>${pending?'承認待ち…':(online?'オンライン':'オフライン')}</small></div>
       ${unread?`<span class="fr-badge">${unread}</span>`:''}`;
     row.onclick=()=>openFriendChat(f.id);
     box.appendChild(row);
@@ -5772,6 +6240,7 @@ function openFriendChat(fid){
   $('#friendChatEmpty').style.display='none';
   $('#friendChatInner').style.display='flex';
   $('#fcName').textContent=f.name||'名前未設定';
+  $('#fcId').textContent=fid;
   updateFriendChatHeadOnline(FriendNet.isOnline(fid));
   renderFriendChat(fid);
   renderFriendList();
@@ -5796,6 +6265,7 @@ function renderFriendChat(fid){
     d.className='fmsg '+(e.dir==='out'?'mine':'theirs');
     let body='';
     if(e.yamada) body+=yamadaSvgByKey(e.yamada).replace('<svg ','<svg class="yamadaStamp" ');
+    if(e.phrase) body+=`<div class="psBubble">${esc(e.phrase)}</div>`;
     if(e.text) body+=`<div>${linkify(e.text)}</div>`;
     if(e.imgs&&e.imgs.length) body+=`<div class="chatImgs">${e.imgs.map(src=>`<img src="${src}" class="chatImg">`).join('')}</div>`;
     if(e.file) body+=`<a href="${esc(e.file.data)}" download="${esc(e.file.name)}" class="chatFile"><span class="cf-ico">📎</span><span class="cf-body"><b>${esc(e.file.name)}</b><small>${humanSize(e.file.size)}</small></span></a>`;
@@ -5812,7 +6282,7 @@ function sendFriendMessage(payload){
   const id='m'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
   const selfDestruct=f.autoDelete?(+f.autoDeleteSec||10):null;
   const msg=Object.assign({t:'chat',id,ts:Date.now(),selfDestruct},payload);
-  friendChatAppend(fid,{id,dir:'out',text:payload.text||'',imgs:payload.imgs||null,file:payload.file||null,yamada:payload.yamada||null,ts:msg.ts,selfDestruct,deleted:false,readByPeer:false});
+  friendChatAppend(fid,{id,dir:'out',text:payload.text||'',imgs:payload.imgs||null,file:payload.file||null,yamada:payload.yamada||null,phrase:payload.phrase||null,ts:msg.ts,selfDestruct,deleted:false,readByPeer:false});
   const online=FriendNet.queueSend(fid,msg);
   renderFriendChat(fid);
   renderFriendList();
@@ -5908,30 +6378,46 @@ function addFriendById(fid){
   if(!fid){ toast('IDを入力してください'); return; }
   if(fid===myFriendId()){ toast('自分自身は追加できません'); return; }
   if(findFriend(fid)){ toast('すでにフレンドです'); return; }
-  upsertFriend({id:fid,name:'（接続待ち）'});
-  toast('フレンドに追加しました。相手がオンラインになると名前が分かります');
+  upsertFriend({id:fid,name:'（承認待ち）',status:'pending'});
+  toast('追加中…相手が今オンラインなら数秒でフレンドになります');
   $('#mAddFriend').classList.remove('on');
   renderFriendList();
-  FriendNet.connectTo(fid).catch(()=>toast('相手が今オフラインの可能性があります。後で自動的につながります'));
+  FriendNet.connectTo(fid).then(()=>FriendNet.greet(fid)).catch(()=>toast('相手が今オフラインの可能性があります。オンラインになり次第、自動的にフレンドになります'));
 }
 $('#btnAddFriendGo').onclick=()=>addFriendById($('#addFriendIdIn').value);
 $('#addFriendIdIn').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#btnAddFriendGo').click(); } };
 
-// QRコード読み取り（BarcodeDetector対応環境のみ。非対応環境ではID手入力に誘導する）
-let qrScanStream=null, qrScanRaf=null;
+// QRコード読み取り：まずブラウザ標準のBarcodeDetector（対応環境では高速・高精度）を試し、
+// 非対応環境（Firefox・Safari等）ではjsQR（canvasに1フレームずつ描画して解析する純JS実装）にフォールバックする
+let qrScanStream=null, qrScanRaf=null, qrScanCanvas=null, qrScanCtx=null;
 async function startQrScan(){
-  if(!('BarcodeDetector' in window)){ toast('この端末・ブラウザはQRコードの読み取りに対応していません。IDを直接入力してください'); return; }
+  const hasBD='BarcodeDetector' in window;
+  if(!hasBD && !window.jsQR){ toast('QRコードの読み取り機能を読み込めませんでした。IDを直接入力してください'); return; }
   try{
     qrScanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
   }catch(_){ toast('カメラが使えません'); return; }
   const v=$('#qrScanVideo'); v.srcObject=qrScanStream; v.style.display=''; $('#qrScanHint').style.display='block';
   await v.play().catch(()=>{});
-  let detector; try{ detector=new window.BarcodeDetector({formats:['qr_code']}); }catch(_){ toast('QRコードの読み取りを初期化できませんでした'); stopQrScan(); return; }
+  let detector=null;
+  if(hasBD){ try{ detector=new window.BarcodeDetector({formats:['qr_code']}); }catch(_){ detector=null; } }
+  if(!detector){
+    if(!window.jsQR){ toast('QRコードの読み取りを初期化できませんでした'); stopQrScan(); return; }
+    qrScanCanvas=qrScanCanvas||document.createElement('canvas');
+    qrScanCtx=qrScanCanvas.getContext('2d',{willReadFrequently:true});
+  }
   const tick=async()=>{
     if(!qrScanStream) return;
     try{
-      const codes=await detector.detect(v);
-      if(codes&&codes[0]&&codes[0].rawValue){ stopQrScan(); addFriendById(codes[0].rawValue); return; }
+      if(detector){
+        const codes=await detector.detect(v);
+        if(codes&&codes[0]&&codes[0].rawValue){ stopQrScan(); addFriendById(codes[0].rawValue); return; }
+      }else if(v.videoWidth){
+        qrScanCanvas.width=v.videoWidth; qrScanCanvas.height=v.videoHeight;
+        qrScanCtx.drawImage(v,0,0,qrScanCanvas.width,qrScanCanvas.height);
+        const img=qrScanCtx.getImageData(0,0,qrScanCanvas.width,qrScanCanvas.height);
+        const code=window.jsQR(img.data,img.width,img.height);
+        if(code&&code.data){ stopQrScan(); addFriendById(code.data); return; }
+      }
     }catch(_){}
     qrScanRaf=requestAnimationFrame(tick);
   };
@@ -5982,8 +6468,15 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v2.6.0';
+const APP_VERSION='v3.0.0';
 const CHANGELOG=[
+  {ver:'v3.0.0',date:'2026-08-19',items:[
+    'フレンド追加が片方の画面にしか反映されないことがある不具合を修正（承認応答つきの仕組みに変更）',
+    'QRコードの読み取りに対応する端末・ブラウザを拡大',
+    'フレンド通話をLINE風の画面に全面リニューアル（ビデオ通話モード・じゃんけん・通話時間・通信安定度表示・字幕翻訳・操作音）',
+    'フレンドチャットで相手の名前とIDを2段表示',
+    'フレーズスタンプを約100種追加（検索・カテゴリ・並び替え対応）',
+  ]},
   {ver:'v2.6.0',date:'2026-08-18',items:[
     'フレンド機能の不具合を修正（追加画面が背面に隠れる／追加が不安定なことがある問題）',
     '会議中の参加者パネルから、個別にフレンド申請を送れるように',
@@ -6033,7 +6526,11 @@ $('#btnShowTerms').onclick=()=>{ $('#termsBodyView').innerHTML=TERMS_TEXT_HTML; 
 
 /* 初回訪問時のみ、利用規約への同意モーダルを強制表示。最後までスクロールしないと「同意する」が押せない。
    #mConsentは通常の.modalと切り離してあるので、背景クリック・[data-closemodal]の一括処理の対象外（意図的） */
-const TERMS_AGREE_KEY='kdm-terms-agreed-'+APP_VERSION.split('.')[0]; // メジャーバージョンを変えたら文面の見直しとみなし、再度同意を求める
+/* 同意バージョンはAPP_VERSIONから独立させた専用の番号にする（機能追加でAPP_VERSIONのメジャーを
+   上げても、規約の文面自体が変わっていなければ再同意を求める必要は無いため。文面を実際に変えた時だけ
+   この数字を上げること） */
+const TERMS_TEXT_VERSION=1;
+const TERMS_AGREE_KEY='kdm-terms-agreed-v'+TERMS_TEXT_VERSION;
 function checkFirstVisitConsent(){
   if(localStorage.getItem(TERMS_AGREE_KEY)==='1') return;
   $('#termsBodyConsent').innerHTML=TERMS_TEXT_HTML;
