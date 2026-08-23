@@ -853,7 +853,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 
     <!-- チャット -->
     <aside class="side" id="sideChat">
-      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnFriendInMeeting" title="フレンド" aria-label="フレンドチャットを開く">👥</button><button class="iconbtn" id="btnAiSum" title="AIで要約" aria-label="AIで要約">✨</button><button class="iconbtn" data-close="sideChat" title="閉じる" aria-label="チャットを閉じる">✕</button></div>
+      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnFriendInMeeting" title="フレンド" aria-label="フレンドチャットを開く">👥</button><button class="iconbtn" id="btnAiSum" title="AIで要約" aria-label="AIで要約">✨</button><button class="iconbtn" id="btnMinutes" title="議事録" aria-label="議事録を作成・書き出し">📝</button><button class="iconbtn" data-close="sideChat" title="閉じる" aria-label="チャットを閉じる">✕</button></div>
       <div class="scroll" id="chatLog"></div>
       <div class="compose">
         <button id="btnPlus" title="添付・機能" aria-label="添付・機能を追加">＋</button>
@@ -1370,6 +1370,24 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <h3>更新履歴</h3>
     <div class="sub">現在のバージョン：<span id="clCurrentVer"></span></div>
     <div id="clList"></div>
+    <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
+  </div>
+</div>
+
+<!-- 議事録 -->
+<div class="modal" id="mMinutes">
+  <div class="sheet" style="max-width:520px">
+    <h3>議事録</h3>
+    <div class="sub">チャットのやり取りから話し合った内容・決定事項・ToDoを整理します（字幕をチャットに記録している場合はそれも含めます）</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      <button class="btn primary" id="btnMakeMinutes" style="flex:1 1 200px">📝 AIで議事録を作成</button>
+      <button class="btn ghost" id="btnRawExport" style="flex:1 1 200px">📄 生ログを書き出す（AI不要）</button>
+    </div>
+    <textarea class="in" id="minutesOut" readonly rows="12" style="margin-top:12px;font-family:var(--mono);font-size:13px;line-height:1.6;resize:vertical;display:none"></textarea>
+    <div id="minutesActions" style="display:none;gap:8px;margin-top:10px">
+      <button class="btn ghost" id="btnMinutesDownload" style="flex:1">⬇ ダウンロード(.txt)</button>
+      <button class="btn ghost" id="btnMinutesShare" style="flex:1">💬 チャットに共有</button>
+    </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
 </div>
@@ -5489,6 +5507,74 @@ $('#btnAiSum').onclick=async()=>{
   }
 };
 
+/* 議事録：既存の「AIで要約」(会話の雰囲気をゆるく要約してチャットに流す)とは別物として、
+   話題・決定事項・ToDoを構造化し、ダウンロード可能な形にする専用機能。AI不要の生ログ書き出しも併設。 */
+function meetingChatTranscript(limit){
+  const recent=S.chat.filter(m=>!m.sys&&!m.poll).slice(-(limit||300));
+  return recent.map(m=>{
+    const time=new Date(m.ts).toTimeString().slice(0,5);
+    const who=m.ai?'AI':(m.name||'？');
+    const body=m.text||(m.imgs&&m.imgs.length?'[画像]':(m.file?`[ファイル:${m.file.name||''}]`:''));
+    return body?`[${time}] ${who}: ${body}`:null;
+  }).filter(Boolean).join('\n');
+}
+function minutesHeader(){
+  const dur=Math.floor((Date.now()-S.t0)/1000);
+  const durTxt=String(Math.floor(dur/60)).padStart(2,'0')+':'+String(dur%60).padStart(2,'0');
+  const members=S.roster.map(p=>p.name).join('、');
+  return `会議名：${S.roomName||'（無題）'}\n日時：${new Date().toLocaleString('ja-JP')}\n経過時間：${durTxt}\n参加者：${members}\n`;
+}
+function showMinutesOut(text){
+  $('#minutesOut').value=text; $('#minutesOut').style.display='block';
+  $('#minutesActions').style.display='flex';
+}
+$('#btnMinutes').onclick=()=>{ $('#mMinutes').classList.add('on'); };
+$('#btnRawExport').onclick=()=>{
+  const transcript=meetingChatTranscript(1000);
+  if(!transcript) return toast('まだ書き出せるチャットがありません');
+  showMinutesOut(minutesHeader()+'\n'+transcript);
+  toast('生ログを表示しました。そのままダウンロードできます');
+};
+$('#btnMakeMinutes').onclick=async()=>{
+  if(!geminiApiKey()) return toast('議事録の自動整理にはGemini APIキーが必要です（設定画面で登録できます）。AI不要の「生ログを書き出す」も使えます');
+  if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
+  const transcript=meetingChatTranscript(300);
+  if(!transcript) return toast('まだ議事録にできるチャットがありません');
+  const btn=$('#btnMakeMinutes'); const orig=btn.textContent;
+  aiBusy=true; btn.disabled=true; btn.textContent='🌀 作成中…';
+  toast('議事録を作成しています…');
+  try{
+    const {text:reply,usage}=await callGemini(
+      'あなたはビデオ会議の書記です。次のチャットログ（字幕由来の発言も含みます）から議事録を日本語で作成してください。'
+      +'見出しは「■話し合った内容」「■決定事項」「■ToDo（分かれば担当者も）」「■次回への持ち越し・保留」の4つを必ずこの順で使い、'
+      +'該当する内容が無い見出しは「特になし」とだけ書いてください。箇条書き中心で簡潔にまとめてください。\n\n'+transcript
+    );
+    aiBusy=false; btn.disabled=false; btn.textContent=orig;
+    showMinutesOut(minutesHeader()+'\n'+reply);
+    toastAiUsage(usage);
+  }catch(e){
+    console.warn(e);
+    aiBusy=false; btn.disabled=false; btn.textContent=orig;
+    toast('議事録の作成に失敗しました：'+(e.message||'不明なエラー'));
+  }
+};
+$('#btnMinutesDownload').onclick=()=>{
+  const text=$('#minutesOut').value; if(!text) return;
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='kodama-gijiroku-'+(S.code||'meeting')+'-'+Date.now()+'.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  toast('ダウンロードしました');
+};
+$('#btnMinutesShare').onclick=()=>{
+  const text=$('#minutesOut').value; if(!text) return;
+  send({t:'chat',text:'📝 議事録\n\n'+text});
+  toast('チャットに共有しました');
+  $('#mMinutes').classList.remove('on');
+};
+
 /* Google検索（うまく行けばDuckDuckGoのInstant Answer APIでアプリ内に回答を出す。
    キー不要でCORS対応している唯一の汎用検索APIだが「インスタント回答」止まりで、
    Googleと同じ検索結果一覧が出せるわけではない点は割り切り。ダメなら正直に新しいタブへ） */
@@ -6756,8 +6842,11 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.1.0';
+const APP_VERSION='v3.2.0';
 const CHANGELOG=[
+  {ver:'v3.2.0',date:'2026-08-23',items:[
+    'チャットパネルに「議事録」機能を追加（AIで話し合った内容・決定事項・ToDoを整理してダウンロード、AI不要の生ログ書き出しも可）',
+  ]},
   {ver:'v3.1.0',date:'2026-08-19',items:[
     'フレーズスタンプの選択パネルが背面に隠れる不具合を修正',
     '山田くんスタンプに文字を追加し、8種→18種に拡大',
