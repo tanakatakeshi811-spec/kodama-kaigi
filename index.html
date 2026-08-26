@@ -985,6 +985,17 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="frow"><span>持続的な個人ID（会議に入っていなくてもフレンドとチャット・通話できます）</span><button class="btn ghost" id="btnSetFriendId" style="width:auto;padding:7px 14px;font-size:12px">自分のIDを見る</button></div>
     </div>
 
+    <div class="sec"><h4>管理者</h4>
+      <div id="admOffBox">
+        <p class="hint" style="margin-top:0">運営者(しゅんりさん)が不正利用防止のために使う機能です。パスワードを知っている場合のみ設定してください。管理者モードの端末は、公開中の会議に入って様子を確認できます（非公開の会議には入れません）。</p>
+        <button class="btn ghost" id="btnAdminModeOn" style="width:auto;padding:7px 14px;font-size:12px">🛡　管理者モードにする</button>
+      </div>
+      <div id="admOnBox" style="display:none">
+        <div class="frow"><span>管理者モード</span><span style="color:var(--mint);font-weight:600">✔ 有効</span></div>
+        <button class="btn ghost" id="btnAdminOpenPanel" style="width:auto;padding:7px 14px;font-size:12px">管理者パネルを開く</button>
+      </div>
+    </div>
+
     <div class="sec"><h4>エフェクト</h4>
       <div class="frow"><span>映像エフェクト</span><select id="selFxVideo">
         <option value="none">なし</option>
@@ -1344,6 +1355,38 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
+<!-- 管理者モードにする（パスワード入力） -->
+<div class="modal" id="mAdminLogin">
+  <div class="sheet" style="max-width:360px">
+    <h3>管理者モードにする</h3>
+    <div class="sub">運営者(しゅんりさん)専用の機能です。パスワードを知っている人だけ設定してください</div>
+    <div class="row"><label class="f">このデバイスの呼び名</label><input class="in" id="inAdminDeviceName" placeholder="例：しゅんりさんのスマホ" maxlength="24"></div>
+    <div class="row" style="margin-top:10px"><label class="f">管理者パスワード</label><input class="in" id="inAdminPass" type="password" placeholder="パスワード"></div>
+    <button class="btn primary" id="btnAdminLoginGo" style="margin-top:14px">管理者モードにする</button>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">キャンセル</button>
+  </div>
+</div>
+
+<!-- 管理者パネル -->
+<div class="modal" id="mAdminPanel">
+  <div class="sheet" style="max-width:440px">
+    <h3>管理者パネル</h3>
+    <div class="sub">この端末：<b id="apMyName"></b></div>
+    <div class="sec">
+      <h4>オンラインの管理者</h4>
+      <p class="hint" style="margin-top:-4px">今このアプリを開いていて、かつ管理者モードになっている端末の一覧です（サーバーを持たないため、同時にオンラインの端末しか分かりません）。</p>
+      <div id="apAdminList" style="display:flex;flex-direction:column;gap:8px;margin-top:6px"></div>
+    </div>
+    <div class="sec">
+      <h4>公開中の会議に入る</h4>
+      <p class="hint" style="margin-top:-4px">ホーム画面の「さがす」タブから、公開されている会議を選んで入れます。管理者モードの端末は、鍵(合言葉ロック)がかかっている公開中の会議にもそのまま入れます。<b>非公開の会議には入れません・一覧にも出てきません。</b>入室すると、他の参加者と同じ見た目・同じ名前で表示されます（こっそり入る機能ではありません）。</p>
+      <p class="hint" style="margin-top:6px">会議に入っている間、参加者一覧の「🚫」ボタンで迷惑な参加者を退出させられます（技術的に取得できる範囲でIPアドレスを記録し、同じIPの人が来た時に気づけるようにします。IPの一覧は常に表示されるわけではありません）。</p>
+    </div>
+    <button class="btn ghost" id="btnAdminSelfRevoke" style="color:var(--coral)">この端末の管理者権限を解除する</button>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
+  </div>
+</div>
+
 <!-- 利用規約（いつでも見られる版） -->
 <div class="modal" id="mTerms">
   <div class="sheet" style="max-width:480px">
@@ -1457,6 +1500,8 @@ if('serviceWorker' in navigator){
 /* ---------- 定数 ---------- */
 const PREFIX='kdm-';                 // ルームのPeer ID接頭辞
 const DIR_ID='kdm-directory-v3';     // 公開一覧を束ねるピアのID
+const ADMIN_HUB_ID='kdm-admin-hub-v1'; // 管理者どうしがオンライン状況を確認しあうためのハブピアのID
+const ADMIN_PW='tama0809';           // 管理者モードのパスワード
 const CODE_CHARS='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 const PALETTE=['#5fe3c0','#ffc44d','#ff8fa3','#7cc4ff','#c2a3ff','#9ee37d','#ff9f5a','#6fe0ff','#ffd6f0','#a3ffd6','#ffb3b3','#b8c6ff'];
 const LANGS=[['ja-JP','日本語'],['en-US','English'],['ko-KR','한국어'],['zh-CN','中文（简体）'],['zh-TW','中文（繁體）'],['es-ES','Español'],['fr-FR','Français'],['de-DE','Deutsch'],['pt-BR','Português'],['ru-RU','Русский'],['hi-IN','हिन्दी'],['th-TH','ไทย'],['vi-VN','Tiếng Việt'],['id-ID','Indonesia'],['it-IT','Italiano']];
@@ -1499,6 +1544,66 @@ function receiveChunk(m){
   try{ return JSON.parse(buf.parts.join('')); }catch(_){ return null; }
 }
 
+/* ============================================================
+   管理者の「証明」まわり(サーバーが無いための限界を最初に明記)
+   このアプリはサーバーを持たないため、「本当に運営者本人か」を厳密に検証する方法は無い。
+   ここでの仕組みは「パスワードを知っている(＝ソースを読んで自分でlocalStorageのフラグを
+   書き換えられる人も含む)人だけが、通常の操作フローの上で管理者機能に触れる」という
+   最低限の“合言葉”に過ぎず、本気で改造したクライアントからの完全な防御にはならない。
+   （放課後の居残りの隠し管理者モードと同じ限界を、正直にそのまま踏襲している）
+   パスワードそのものをP2Pで平文送信することは避け、固定ソルト付きSHA-256ハッシュを
+   「相手も同じパスワードを知っている証拠」として送受信する。ハッシュの算出方法自体は
+   このJSファイルを読めば誰でも分かるので、これも気休め程度の対策である点は変わらない。 */
+const ADMIN_SALT='kdm-admin-proof-v1';
+let _adminProofHash=null;
+async function adminProofHash(){
+  if(_adminProofHash) return _adminProofHash;
+  try{
+    const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ADMIN_SALT+':'+ADMIN_PW));
+    _adminProofHash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(_){ _adminProofHash=''; }
+  return _adminProofHash;
+}
+async function isAdminProofValid(token){ if(!token) return false; return token===(await adminProofHash()); }
+function isAdminActive(){ return localStorage.getItem('kdm-admin-unlocked-v1')==='1'; }
+
+/* ============================================================
+   WebRTCのICE candidateから「技術的に取得できる範囲」で相手のIPアドレスを調べる
+   （バン機能のIP記録に使う。取得できないこともある前提で、失敗時はnullを返すだけにしている）
+   着手前にWebSearchで裏取り済みの仕様:
+   - Chrome/Edge等は2019年以降、ICEのhost candidate(同一LAN内で使うローカルIP)を
+     ランダムなmDNSホスト名（xxxxxxxx-....local）に置き換えて隠すため、ここから
+     ローカルIPそのものを読み取ることはできない。
+   - 一方、STUN経由で分かる「相手のインターネット上の公開IP」(srflx候補)や、
+     TURN中継を使わず直接つながった場合の実際の接続先IPは、mDNS化の対象外で
+     RTCPeerConnection.getStats()から読み取れる。つまり「完全なIP特定」はできないが
+     「相手のだいたいの公開IP」は多くの場合、技術的に取得できる。
+   - 双方ともTURNサーバー経由(symmetric NAT等)でしか繋がらないケースでは、
+     TURNサーバーのIPしか見えず、相手の本当のIPは分からないこともある。 */
+async function extractRemoteIP(conn){
+  try{
+    const pc=conn&&conn.peerConnection; if(!pc||!pc.getStats) return null;
+    const stats=await pc.getStats();
+    let selectedPairId=null;
+    stats.forEach(r=>{ if(r.type==='transport'&&r.selectedCandidatePairId) selectedPairId=r.selectedCandidatePairId; });
+    const pickIp=r=>r&&(r.address||r.ip||null);
+    if(selectedPairId){
+      const pair=stats.get(selectedPairId);
+      if(pair){ const remote=stats.get(pair.remoteCandidateId); const ip=pickIp(remote); if(ip) return ip; }
+    }
+    // 上のtransport経由で取れない環境向けの保険:成立しているcandidate-pairから拾う
+    let fromPair=null;
+    stats.forEach(r=>{ if(!fromPair&&r.type==='candidate-pair'&&r.state==='succeeded'){ const remote=stats.get(r.remoteCandidateId); if(pickIp(remote)) fromPair=remote; } });
+    if(fromPair) return pickIp(fromPair);
+    // さらに保険:remote-candidateの中からsrflx(STUNで分かる公開IP)を優先して拾う
+    let srflx=null, any=null;
+    stats.forEach(r=>{
+      if(r.type==='remote-candidate'&&pickIp(r)){ any=any||r; if(r.candidateType==='srflx') srflx=srflx||r; }
+    });
+    return pickIp(srflx||any);
+  }catch(_){ return null; }
+}
+
 /* ---------- 状態 ---------- */
 const S={
   name:'', code:'', roomName:'', isHost:false, published:false, locked:false,
@@ -1521,7 +1626,18 @@ const S={
   ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0,
   miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[],
   debugOn:localStorage.getItem('kdm-debug')==='1', pingMs:null,
-  friendReqSent:new Set()
+  friendReqSent:new Set(),
+  /* 管理者機能（不正利用防止のための運営者専用モード）用。すべてホストのブラウザだけが持つ
+     「このルームを開いている間だけ」のメモリ上の状態で、部屋が終われば消える(次のセッションには引き継がれない)。
+     adminPeers: このルームに、有効な管理者証明つきで接続してきたpeerIdの集合(ホストが信頼してよい相手)
+     peerIPs: 接続してきた各peerIdについて、WebRTCのICE candidateから技術的に分かる範囲で調べた
+              公開IPアドレス（分からなければnull。ホスト<->各参加者の接続そのものがWebRTCなので、
+              管理者が別途この部屋に居なくても、ホストは自分の接続からこれを調べられる）
+     bannedIPs: この部屋でこれまでにバンされた人のIP -> {name,ts} のMap（このIP一覧を常時UIに出すことはしない。
+                後から同じIPの人が来た時に、管理者だけへ「一致しました」と知らせる用途に限定して使う）
+     bannedIds: バンされたpeerId（同一セッション内の再入室だけを弾く簡易ガード。peerIdは再接続のたび
+                ランダムに変わるため、実質的な再入室ブロックは上のbannedIPsの役目） */
+  bannedIds:new Set(), bannedIPs:new Map(), peerIPs:new Map(), adminPeers:new Set(), ipMatchFlags:new Set()
 };
 /* ホスト権威で管理する各ミニゲームの「秘密の」内部台帳。S本体（全員に配布されうる公開状態）とは
    別に持ち、ホスト以外のクライアントでは常にnullのまま（＝他人の役職・単語は原理的にJSレベルでも保持しない） */
@@ -2251,10 +2367,15 @@ async function hostStart(opts){
   sysBroadcast(opts.resumeCode?'持続的会議を再開しました。合言葉は '+S.code+' です':'会議を開きました。合言葉は '+S.code+' です');
 }
 function hostAccept(conn){
-  conn.on('open',()=>{
+  conn.on('open',async()=>{
     if(S.roster.length>=12){ conn.send({t:'denied',why:'満員です'}); setTimeout(()=>conn.close(),400); return; }
-    if(S.locked){ conn.send({t:'locked'}); return; } // ここでは弾かない。reqJoinが来るのを待つ（下のconn.on('data')）
-    admitGuest(conn);
+    if(S.bannedIds.has(conn.peer)){ conn.send({t:'denied',why:'入室が制限されています'}); setTimeout(()=>conn.close(),400); return; }
+    // 管理者モードの端末からの接続かどうかを確認する。公開中(S.published)の会議に対してだけ、
+    // 鍵(合言葉ロック)を無視して入れるようにする（非公開の会議・鍵の意味自体は変えない）
+    const adminOk=await isAdminProofValid(conn.metadata&&conn.metadata.adminProof);
+    const bypassLock=adminOk&&S.published;
+    if(S.locked&&!bypassLock){ conn.send({t:'locked'}); return; } // ここでは弾かない。reqJoinが来るのを待つ（下のconn.on('data')）
+    admitGuest(conn,adminOk);
   });
   conn.on('data',raw=>{
     const d=receiveChunk(raw); if(d===null) return; // チャンクの続きを待っている途中
@@ -2266,7 +2387,7 @@ function hostAccept(conn){
 }
 /* ロック中でも即座に拒否せず「入室リクエスト」を送れるようにする。承認されるまでは
    S.roster / S.conns に一切追加しない（承認前のconnからのメッセージはhostHandleに回さずここで止める） */
-function admitGuest(conn){
+function admitGuest(conn,isAdminEntry){
   const nm=((conn.metadata&&conn.metadata.name)||'ゲスト').slice(0,18);
   S.conns.set(conn.peer,conn);
   const newP={id:conn.peer,name:nm,host:false,audio:true,video:true,hand:false,share:false};
@@ -2280,6 +2401,9 @@ function admitGuest(conn){
   broadcast({t:'roster',roster:S.roster});
   sysBroadcast(nm+' が参加しました','join',conn.peer);
   // 入っただけでは自動でメンバー扱いにしない。ホストが参加者パネルから明示的に追加した時だけ記録する
+  // 管理者機能:管理者として入ってきた/既に管理者がこの部屋にいる場合だけ、IPを調べて過去バンとの一致を確認する
+  if(isAdminEntry) noteAdminPeer(conn.peer);
+  else if(S.adminPeers.size) checkGuestIpAgainstBans(conn.peer,conn);
 }
 function handleJoinRequest(conn,d){
   if(S.roster.some(x=>x.id===conn.peer)) return; // 既に入室済みなら無視
@@ -2322,9 +2446,48 @@ function renderJoinRequests(){
     box.appendChild(d);
   });
 }
+/* ============================================================
+   管理者機能(ホスト側):公開中の会議への鍵スキップ・バン(IP記録つき)・
+   IP一致フラグ(管理者にだけ知らせる、常時全員分のIP一覧は作らない)
+   ============================================================ */
+function noteAdminPeer(peerId){
+  S.adminPeers.add(peerId);
+  refreshPeerIpsForBanCheck(); // 既にいる参加者たちも、後から入ってきた管理者のために調べ直す
+}
+async function refreshPeerIpsForBanCheck(){
+  if(!S.adminPeers.size) return;
+  for(const [id,c] of S.conns){
+    if(S.peerIPs.has(id)) continue; // 取得済み・取得試行済みならスキップ
+    await checkGuestIpAgainstBans(id,c);
+  }
+}
+async function checkGuestIpAgainstBans(id,conn){
+  const ip=await extractRemoteIP(conn);
+  S.peerIPs.set(id,ip);
+  if(ip && S.bannedIPs.has(ip)) notifyIpMatch(id,ip);
+}
+function notifyIpMatch(targetId,ip){
+  const info=S.bannedIPs.get(ip);
+  S.ipMatchFlags.add(targetId);
+  // 全員には送らず、この部屋にいる管理者(自分含む)にだけ知らせる。IPそのものは載せない
+  S.adminPeers.forEach(aid=>hostSendTo(aid,{t:'ipMatchFlag',targetId,prevName:info&&info.name}));
+  renderPpl(); // ホスト自身の画面もその場で更新（hostSendToはホスト自身宛だとonMessage経由になるためここでも呼んでおく）
+}
+/* 実際にバンを実行する（会議から強制退出＋分かればIPを記録）。
+   from(=送信者)が呼び出す側は、host自身(from===S.myId)かS.adminPeersに登録済みの相手だけに限定して呼ぶこと */
+function hostBanTarget(targetId){
+  const target=S.roster.find(x=>x.id===targetId); if(!target) return;
+  const ip=S.peerIPs.get(targetId)||null;
+  if(ip) S.bannedIPs.set(ip,{name:target.name,ts:Date.now()});
+  S.bannedIds.add(targetId);
+  const c=S.conns.get(targetId);
+  if(c){ try{c.send({t:'kick'});}catch(_){} setTimeout(()=>{try{c.close()}catch(_){}},300); }
+  toast(target.name+' さんをバンしました'+(ip?'（このIPからの再入室があれば気づけるようにしました）':'（IPは取得できませんでした）'));
+}
 function dropPeer(id){
   const p=S.roster.find(x=>x.id===id);
   S.conns.delete(id); S.roster=S.roster.filter(x=>x.id!==id);
+  S.adminPeers.delete(id); S.peerIPs.delete(id); S.ipMatchFlags.delete(id);
   killCall(id);
   if(p) sysBroadcast(p.name+' が退出しました','leave',id);
   if(p&&S.persistent) touchPersistMember(p.name,p.color); // 既にメンバー登録済みの人だけ最終確認時刻を更新（新規追加はしない）
@@ -2594,6 +2757,12 @@ function hostHandle(from,m){
     case 'mod':
       if(from!==S.myId) break;
       break;
+    /* 管理者機能:バンの実行依頼。host自身からの自己送信か、この部屋に管理者証明つきで
+       接続してきたことが確認済みの相手(S.adminPeers)からの依頼だけを信用する */
+    case 'adminBan':{
+      if(from!==S.myId && !S.adminPeers.has(from)) break;
+      hostBanTarget(String(m.targetId||''));
+      break;}
   }
 }
 function deliver(m){ broadcast(m); onMessage(m); }
@@ -2713,7 +2882,11 @@ async function guestJoin(code){
   let settled=false; // denied/locked拒否など、閉じる理由が既にはっきりしている場合は close時の二重案内を出さない
   peer.on('call',handleIncomingCall);
   peer.on('error',e=>{ if(e.type==='peer-unavailable'&&!S.joined){ toast('その合言葉の会議は見つかりません'); bail(); } });
-  const conn=peer.connect(PREFIX+code,{metadata:{name:S.name},reliable:true,serialization:'json'});
+  // 管理者モードの端末は、接続時に(パスワードのハッシュによる)簡易な証明を一緒に送る。
+  // これにより、公開中の会議であれば鍵(ロック)があっても入れる（非公開の会議の扱いは変わらない）
+  const meta={name:S.name};
+  if(isAdminActive()) meta.adminProof=await adminProofHash();
+  const conn=peer.connect(PREFIX+code,{metadata:meta,reliable:true,serialization:'json'});
   S.hostConn=conn;
   await new Promise((res,rej)=>{
     const to=setTimeout(()=>rej(new Error('会議が見つかりません（合言葉を確認してください）')),12000);
@@ -2796,6 +2969,9 @@ function onMessage(m){
     case 'room': S.roomName=m.name; S.locked=m.locked; $('#mTitle').textContent=S.roomName; $$('.lockBtn').forEach(b=>b.classList.toggle('on',S.locked)); break;
     case 'muteask': if(S.audio){ setMic(false); toast('ホストからミュートの依頼がありました'); } break;
     case 'kick': toast('ホストにより退出しました'); bail(); break;
+    /* 管理者機能:自分が管理者としてこの部屋にいる場合だけホストから届く。
+       「過去にバンされたIPと一致した参加者がいる」というフラグ(IPそのものは載っていない) */
+    case 'ipMatchFlag': S.ipMatchFlags.add(m.targetId); renderPpl(); break;
     case 'yt': applyYtMessage(m); break;
     case 'persistAdded':
       savePersistMembership(String(m.code||'').toUpperCase().slice(0,4), String(m.roomName||'').slice(0,30));
@@ -3219,10 +3395,11 @@ function renderTiles(soft){
 function renderPpl(){
   const l=$('#pplList'); l.innerHTML='';
   S.roster.forEach(p=>{
+    const flagged=S.ipMatchFlags.has(p.id);
     const d=document.createElement('div'); d.className='prow';
     d.innerHTML=`<div class="pi" style="background:${p.color}">${esc(initial(p.name))}</div>
       <div class="pn"><b>${esc(p.name)}${p.id===S.myId?' <span style="color:#8a94ad;font-weight:400">(あなた)</span>':''}</b>
-      <small>${p.host?'ホスト':'参加者'}${p.hand?' ・ 挙手中':''}</small></div>
+      <small>${p.host?'ホスト':'参加者'}${p.hand?' ・ 挙手中':''}${flagged?' ・ <span style="color:var(--coral)">⚠ 過去にバンされたIPと一致</span>':''}</small></div>
       <div class="pa">${p.audio?'🎙':'🔇'}${p.video?'📹':'📵'}</div>`;
     if(p.id!==S.myId && !S.friendReqSent.has(p.id)){
       const fb=document.createElement('button'); fb.textContent='🤝'; fb.title='フレンド申請を送る（承認されると会議を抜けた後もチャット・通話できます）';
@@ -3233,6 +3410,17 @@ function renderPpl(){
         renderPpl();
       };
       d.querySelector('.pa').appendChild(fb);
+    }
+    if(isAdminActive() && p.id!==S.myId){
+      const bb=document.createElement('button'); bb.textContent=S.ipMatchFlags.has(p.id)?'🚫⚠':'🚫';
+      bb.style.color='var(--coral)';
+      bb.title='管理者:このユーザーをバンする（退出させ、分かればIPを記録して次回同じIPの人が来た時に気づけるようにします）';
+      bb.onclick=()=>{
+        if(!confirm(p.name+' さんをバンしますか？（退出させ、可能ならIPを記録します）')) return;
+        send({t:'adminBan',targetId:p.id});
+        toast(p.name+' さんのバンを実行しました');
+      };
+      d.querySelector('.pa').appendChild(bb);
     }
     if(S.isHost&&p.id!==S.myId){
       if(S.persistent){
@@ -5743,6 +5931,198 @@ const Dir={
 };
 
 /* ============================================================
+   管理者機能(管理者ロビー):不正利用防止のため、運営者(しゅんりさん)専用のモード。
+   ・パスワード(ADMIN_PW)を知っている端末だけがlocalStorageのフラグ(kdm-admin-unlocked-v1)を
+     永続的に立てられる（放課後の居残りの隠し管理者モードと同じ考え方）。複数端末で同時に
+     管理者になることを許可している(しゅんりさんがスマホ・PC両方で使いたいため、一人ロックは無し)。
+   ・「今オンラインになっている他の管理者端末」を確認できるように、Dirと同じ「固定Peer ID(ADMIN_HUB_ID)を
+     早い者勝ちで持ったブラウザがハブ役になる」パターンをそのまま踏襲した別のロビーを用意した。
+   ・管理者権限の取り消し(revoke)はこのロビー経由でP2P通知する。対象が今オンラインなら即座に
+     localStorageのフラグを消せるが、オフラインの場合はサーバーが無いためリアルタイムには届かない。
+     ハブ役の端末がrevokedIdsをlocalStorageに保存しておき、次にその端末が(ハブとして／クライアントとして)
+     ロビーに接続しに来た時に気づけるようにする、という「完全リアルタイムではないベストエフォート」の
+     実装であることをここに明記しておく。
+   ============================================================ */
+function myAdminDeviceId(){
+  let id=localStorage.getItem('kdm-admin-device-id');
+  if(!id){ id='ad'+Array.from({length:16},()=>Math.floor(Math.random()*36).toString(36)).join(''); localStorage.setItem('kdm-admin-device-id',id); }
+  return id;
+}
+function adminDeviceName(){ return localStorage.getItem('kdm-admin-device-name')||'名称未設定の端末'; }
+const AdminLobby={
+  peer:null, role:null, conn:null, hb:null, retry:null, active:false,
+  clients:new Map(), // hub役の時だけ使う: id -> {id,name,ts,conn}
+  revoked:new Set(), // hub役の時だけ使う: 取り消し済みのadmin device id
+  admins:[], // client役の時に使う: 直近に受け取ったオンライン管理者一覧
+  info(){ return {id:myAdminDeviceId(),name:adminDeviceName(),ts:Date.now()}; },
+  start(){
+    if(this.active) return; this.active=true;
+    try{ this.revoked=new Set(JSON.parse(localStorage.getItem('kdm-admin-revoked')||'[]')); }catch(_){ this.revoked=new Set(); }
+    this.connect();
+  },
+  stop(){
+    this.active=false;
+    clearInterval(this.hb); clearTimeout(this.retry);
+    if(this.peer){ try{this.peer.destroy()}catch(_){ } this.peer=null; }
+    this.role=null; this.conn=null; this.clients=new Map(); this.admins=[];
+  },
+  connect(){
+    if(!this.active) return;
+    if(this.peer){ try{this.peer.destroy()}catch(_){ } this.peer=null; }
+    const p=new Peer(ADMIN_HUB_ID);
+    this.peer=p;
+    p.on('open',()=>{
+      this.role='hub';
+      this.clients.set(this.info().id,Object.assign(this.info(),{conn:null}));
+      this.serve(p);
+      this.hb=setInterval(()=>{
+        this.clients.set(this.info().id,Object.assign(this.info(),{conn:null}));
+        this.pruneStale();
+        this.broadcastList();
+      },9000);
+      renderAdminList();
+    });
+    p.on('error',err=>{
+      if(err.type==='unavailable-id'){ this.role='client'; this.asClient(); }
+      else this.later();
+    });
+  },
+  serve(p){
+    p.on('connection',c=>{
+      c.on('data',m=>{
+        if(m.t==='reg'){
+          c._id=m.info&&m.info.id;
+          if(c._id && this.revoked.has(c._id)){ try{c.send({t:'revoked'})}catch(_){ } }
+          if(c._id) this.clients.set(c._id,Object.assign({},m.info,{conn:c,ts:Date.now()}));
+          this.broadcastList();
+        }
+        if(m.t==='revoke'){
+          const targetId=String(m.targetId||''); if(!targetId) return;
+          this.doRevoke(targetId);
+        }
+      });
+      c.on('close',()=>{
+        for(const [id,info] of this.clients){ if(info.conn===c){ this.clients.delete(id); break; } }
+        this.broadcastList();
+      });
+    });
+    p.on('disconnected',()=>{ try{p.reconnect()}catch(_){ } });
+  },
+  pruneStale(){
+    const cut=Date.now()-40000;
+    for(const [id,info] of this.clients){ if(id!==myAdminDeviceId() && info.ts<cut){ this.clients.delete(id); } }
+  },
+  doRevoke(targetId){
+    this.revoked.add(targetId);
+    try{ localStorage.setItem('kdm-admin-revoked',JSON.stringify([...this.revoked])); }catch(_){ }
+    const target=this.clients.get(targetId);
+    if(target&&target.conn&&target.conn.open){ try{target.conn.send({t:'revoked'})}catch(_){ } }
+    this.clients.delete(targetId);
+    this.broadcastList();
+  },
+  broadcastList(){
+    const list=[...this.clients.values()].map(x=>({id:x.id,name:x.name,ts:x.ts}));
+    this.admins=list;
+    this.clients.forEach(x=>{ if(x.conn&&x.conn.open){ try{x.conn.send({t:'admins',admins:list})}catch(_){ } } });
+    renderAdminList();
+  },
+  asClient(){
+    if(this.peer){ try{this.peer.destroy()}catch(_){ } }
+    this.peer=new Peer();
+    this.peer.on('open',()=>{
+      const c=this.peer.connect(ADMIN_HUB_ID,{reliable:true,serialization:'json'});
+      this.conn=c;
+      c.on('open',()=>{
+        c.send({t:'reg',info:this.info()});
+        this.hb=setInterval(()=>{ if(c.open) c.send({t:'reg',info:this.info()}); },9000);
+      });
+      c.on('data',m=>{
+        if(m.t==='admins'){ this.admins=m.admins||[]; renderAdminList(); }
+        if(m.t==='revoked'){ this.handleRevoked(); }
+      });
+      c.on('close',()=>this.later());
+      c.on('error',()=>this.later());
+    });
+    this.peer.on('error',()=>this.later());
+  },
+  later(){
+    if(!this.active) return;
+    clearTimeout(this.retry);
+    this.retry=setTimeout(()=>{ if(this.active) this.connect(); },1200+Math.random()*2500);
+  },
+  revokeDevice(id){
+    if(id===myAdminDeviceId()){ this.selfRevoke(); return; }
+    if(this.role==='hub'){ this.doRevoke(id); }
+    else if(this.conn&&this.conn.open){
+      try{ this.conn.send({t:'revoke',targetId:id}); }catch(_){ }
+      this.admins=this.admins.filter(a=>a.id!==id); renderAdminList(); // 体感の即時性のため、この端末側の表示だけ先に消しておく
+    }
+  },
+  selfRevoke(){
+    localStorage.removeItem('kdm-admin-unlocked-v1');
+    this.stop();
+    applyAdminUiState();
+    $('#mAdminPanel').classList.remove('on');
+    toast('管理者権限を解除しました');
+  },
+  handleRevoked(){
+    localStorage.removeItem('kdm-admin-unlocked-v1');
+    this.stop();
+    applyAdminUiState();
+    $('#mAdminPanel').classList.remove('on');
+    toast('この端末の管理者権限は取り消されました');
+  }
+};
+function renderAdminList(){
+  const box=$('#apAdminList'); if(!box) return;
+  const list=AdminLobby.role==='hub'?[...AdminLobby.clients.values()].map(x=>({id:x.id,name:x.name,ts:x.ts})):AdminLobby.admins;
+  $('#apMyName').textContent=adminDeviceName();
+  if(!list.length){ box.innerHTML='<div class="empty" style="padding:8px 4px;font-size:12.5px">他にオンラインの管理者端末は見つかりません</div>'; return; }
+  box.innerHTML='';
+  list.slice().sort((a,b)=>b.ts-a.ts).forEach(a=>{
+    const isMe=a.id===myAdminDeviceId();
+    const row=document.createElement('div'); row.className='prow';
+    row.innerHTML=`<div class="pi" style="background:var(--mint)">${esc(initial(a.name))}</div>
+      <div class="pn"><b>${esc(a.name)}${isMe?' <span style="color:#8a94ad;font-weight:400">(この端末)</span>':''}</b><small>オンライン</small></div>`;
+    if(!isMe){
+      const rb=document.createElement('button'); rb.textContent='取り消す'; rb.style.color='var(--coral)'; rb.style.width='auto'; rb.style.padding='6px 10px'; rb.style.fontSize='11.5px';
+      rb.onclick=()=>{ if(confirm(a.name+' の管理者権限を取り消しますか？')) AdminLobby.revokeDevice(a.id); };
+      row.appendChild(rb);
+    }
+    box.appendChild(row);
+  });
+}
+function applyAdminUiState(){
+  const on=isAdminActive();
+  const offBox=$('#admOffBox'), onBox=$('#admOnBox');
+  if(offBox) offBox.style.display=on?'none':'';
+  if(onBox) onBox.style.display=on?'':'none';
+}
+$('#btnAdminModeOn').onclick=()=>{
+  $('#inAdminDeviceName').value=adminDeviceName()==='名称未設定の端末'?'':adminDeviceName();
+  $('#inAdminPass').value='';
+  $('#mAdminLogin').classList.add('on');
+};
+$('#btnAdminLoginGo').onclick=()=>{
+  const pw=$('#inAdminPass').value;
+  if(pw!==ADMIN_PW){ toast('パスワードが違います'); return; }
+  const nm=$('#inAdminDeviceName').value.trim().slice(0,24)||'名称未設定の端末';
+  localStorage.setItem('kdm-admin-device-name',nm);
+  localStorage.setItem('kdm-admin-unlocked-v1','1');
+  $('#mAdminLogin').classList.remove('on');
+  applyAdminUiState();
+  AdminLobby.start();
+  toast('管理者モードにしました');
+};
+$('#btnAdminOpenPanel').onclick=()=>{ renderAdminList(); $('#mAdminPanel').classList.add('on'); };
+$('#btnAdminSelfRevoke').onclick=()=>{
+  if(!confirm('この端末の管理者権限を解除しますか？')) return;
+  AdminLobby.selfRevoke();
+};
+applyAdminUiState();
+if(isAdminActive()) AdminLobby.start();
+
+/* ============================================================
    フレンド機能
    「その場限りの部屋(4桁コード)」とは完全に別軸の、持続的な個人ID(myFriendId())を主語にした
    1対1のP2P接続。会議に入っている・いないに関わらず、ホーム画面にいる間も含めて常時、
@@ -6842,8 +7222,14 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.2.0';
+const APP_VERSION='v3.3.0';
 const CHANGELOG=[
+  {ver:'v3.3.0',date:'2026-08-26',items:[
+    '不正利用防止のための管理者モードを追加（設定画面からパスワードで設定、複数端末で同時に管理者になれます）',
+    '管理者どうしで、今オンラインの端末を確認・権限の取り消しができるように',
+    '管理者は公開中の会議に、鍵(ロック)があってもそのまま入れるように（非公開の会議には入れません・普通の参加者と同じ見た目で入ります）',
+    '管理者による、迷惑な参加者のバン機能を追加（技術的に分かる範囲でIPを記録し、再入室に気づけるように）',
+  ]},
   {ver:'v3.2.0',date:'2026-08-23',items:[
     'チャットパネルに「議事録」機能を追加（AIで話し合った内容・決定事項・ToDoを整理してダウンロード、AI不要の生ログ書き出しも可）',
   ]},
@@ -6896,6 +7282,7 @@ const TERMS_TEXT_HTML=`
     <li><b>不適切なコンテンツを共有しないこと</b> — アダルトコンテンツ、暴力的な内容、違法薬物などに関するコンテンツの共有は禁止します。</li>
     <li><b>自己責任で使うこと</b> — このアプリはサーバーを持たない個人開発のツールです。通信の安定性や完全な安全性を保証するものではありません。AI機能（Gemini等）を使う場合は、それぞれのサービスの利用規約にも従ってください。</li>
   </ol>
+  <p><b>不正利用防止について</b>：運営者が不正利用防止のため、「一覧に公開」設定にした会議を確認することがあります（非公開の会議には入りません・入れません）。確認は通常の参加者と同じ形で行われ、こっそり見る機能ではありません。</p>
   <p>このアプリを使うことで、上記に同意したものとみなします。違反が見つかった場合、開発者の判断で機能の一部を制限することがあります。</p>
 `;
 
@@ -6914,7 +7301,7 @@ $('#btnShowTerms').onclick=()=>{ $('#termsBodyView').innerHTML=TERMS_TEXT_HTML; 
 /* 同意バージョンはAPP_VERSIONから独立させた専用の番号にする（機能追加でAPP_VERSIONのメジャーを
    上げても、規約の文面自体が変わっていなければ再同意を求める必要は無いため。文面を実際に変えた時だけ
    この数字を上げること） */
-const TERMS_TEXT_VERSION=1;
+const TERMS_TEXT_VERSION=2; // 管理者による公開会議の確認について1文追加したため+1
 const TERMS_AGREE_KEY='kdm-terms-agreed-v'+TERMS_TEXT_VERSION;
 function checkFirstVisitConsent(){
   if(localStorage.getItem(TERMS_AGREE_KEY)==='1') return;
