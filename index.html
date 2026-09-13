@@ -1143,6 +1143,20 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
   </div>
 </div>
 
+<!-- BGM共有（新機能4） -->
+<div class="modal" id="mBgm">
+  <div class="sheet" style="max-width:380px">
+    <h3>BGMをかける</h3>
+    <div class="sub" id="bgmStatus">今は何も流れていません</div>
+    <div id="bgmList" style="display:flex;flex-direction:column;gap:8px;margin:12px 0"></div>
+    <button class="btn ghost" id="btnBgmStop" style="color:var(--coral);display:none">⏹　止める</button>
+    <div class="row" style="margin-top:12px"><label class="f">自分の端末での音量（他の人には影響しません）</label>
+      <input type="range" id="rgBgmVol" min="0" max="0.6" step="0.02"></div>
+    <p class="hint" style="margin-top:-4px">会議中ずっと薄く流せる著作権フリーの環境音・作業用BGMです。誰でも曲の変更・停止ができます。</p>
+    <button class="btn ghost" data-closemodal style="margin-top:6px">閉じる</button>
+  </div>
+</div>
+
 <!-- お題トーク開始（新機能3） -->
 <div class="modal" id="mTopic">
   <div class="sheet" style="max-width:360px">
@@ -3072,6 +3086,17 @@ function hostHandle(from,m){
       else{ entry.idx=nextIdx; entry.startTs=Date.now(); }
       deliver({t:'topicPhase',id:entry.id,idx:entry.idx,state:entry.state,startTs:entry.startTs,order:entry.order});
       schedulePersistSave(); break;}
+    /* ---------------- BGM共有(新機能4) ----------------
+       カラオケと同じ「全員が自分のブラウザでローカルmp3を再生し、開始時刻(ts)からの経過秒数で
+       シークして合わせる」方式。カラオケと違って順番待ちが無く、誰でも曲の変更・停止ができる
+       （会議の空気を作る環境音という位置づけのため、じゃんけん・ytと同様に権限を絞らなかった） */
+    case 'bgmStart':{
+      const key=String(m.key||''); if(!BGM_TRACKS.some(t=>t.key===key)) break;
+      S.bgmState={key,startTs:Date.now(),by:p.name};
+      deliver({t:'bgmState',state:S.bgmState}); break;}
+    case 'bgmStop':
+      S.bgmState=null;
+      deliver({t:'bgmState',state:null}); break;
     case 'ping':
       hostSendTo(from,{t:'pong',ts:m.ts}); break;
     /* 会議参加者からのフレンド申請。会議の仲間内メッセージ経由で相手のフレンドIDを教え合うだけで、
@@ -3339,6 +3364,10 @@ function onMessage(m){
       if(m.from!==S.myId){ S.ktLastScoreOther=m.score; if(S.ktOpen) ktRenderPanel(); }
       break;
     case 'mgError': toast(m.msg||'ミニゲームを開始できませんでした'); break;
+    case 'bgmState':{
+      S.bgmState=m.state; applyBgm();
+      if(S.bgmOpen) bgmRenderPanel();
+      break;}
     /* ---------------- お題トーク ---------------- */
     case 'topicEntry':
       S.miniGame={type:'topic',id:m.entry.id};
@@ -5351,6 +5380,41 @@ $('#ktClose').onclick=()=>{ S.ktOpen=false; $('#ktOverlay').classList.remove('on
 $('#ktJoinBtn').onclick=()=>{ send({t:'ktJoin'}); toast('キューに並びました'); };
 $('#ktLeaveBtn').onclick=()=>{ send({t:'ktLeave'}); };
 $('#ktNextBtn').onclick=()=>{ send({t:'ktNext'}); };
+
+/* ============================================================
+   BGM共有（新機能4）。カラオケと同じ「経過秒数(ts)から各自ローカルのmp3をシークして揃える」方式。
+   カラオケと違い順番待ちが無いので、常時ループ再生させ続けるだけのシンプルな実装にした
+   ============================================================ */
+const BGM_TRACKS=[
+  {key:'morning-coffee',title:'Morning Coffee',artist:'HoliznaCC0',file:'assets/bgm/morning-coffee.mp3',dur:191},
+  {key:'clouds',title:'Clouds',artist:'HoliznaCC0',file:'assets/bgm/clouds.mp3',dur:229},
+];
+const bgmAudioEl=new Audio(); bgmAudioEl.preload='none'; bgmAudioEl.loop=true; bgmAudioEl.volume=S.bgmVol;
+function applyBgm(){
+  if(!S.bgmState){ if(!bgmAudioEl.paused) bgmAudioEl.pause(); return; }
+  const track=BGM_TRACKS.find(t=>t.key===S.bgmState.key); if(!track) return;
+  if(!bgmAudioEl.src||bgmAudioEl.src.indexOf(track.file)===-1) bgmAudioEl.src=track.file;
+  const elapsed=Math.max(0,(Date.now()-S.bgmState.startTs)/1000)%track.dur;
+  try{ bgmAudioEl.currentTime=elapsed; }catch(_){}
+  bgmAudioEl.play().catch(()=>{});
+}
+function bgmRenderPanel(){
+  $('#bgmStatus').textContent=S.bgmState?('🎵 '+(BGM_TRACKS.find(t=>t.key===S.bgmState.key)||{}).title+' を再生中（'+esc(S.bgmState.by||'誰か')+'さんが開始）'):'今は何も流れていません';
+  $('#btnBgmStop').style.display=S.bgmState?'':'none';
+  const list=$('#bgmList'); list.innerHTML='';
+  BGM_TRACKS.forEach(t=>{
+    const b=document.createElement('button'); b.className='btn ghost'+(S.bgmState&&S.bgmState.key===t.key?' act':'');
+    b.textContent=`🎵 ${t.title}（${Math.floor(t.dur/60)}:${String(t.dur%60).padStart(2,'0')}）`;
+    b.onclick=()=>send({t:'bgmStart',key:t.key});
+    list.appendChild(b);
+  });
+}
+$('#plusBgm').onclick=()=>{ $('#mPlus').classList.remove('on'); S.bgmOpen=true; bgmRenderPanel(); $('#mBgm').classList.add('on'); };
+$('#mBgm').querySelector('[data-closemodal]').addEventListener('click',()=>{ S.bgmOpen=false; });
+$('#btnBgmStop').onclick=()=>send({t:'bgmStop'});
+$('#rgBgmVol').value=S.bgmVol;
+$('#rgBgmVol').oninput=e=>{ S.bgmVol=+e.target.value; bgmAudioEl.volume=S.bgmVol; localStorage.setItem('kdm-bgmvol',S.bgmVol); };
+
 $('#locOnce').onclick=()=>{ $('#mLoc').classList.remove('on'); shareLocationOnce(); };
 $('#locLive').onclick=()=>{ $('#mLoc').classList.remove('on'); startLiveLocationShare(); };
 $('#locStop').onclick=()=>{ $('#mLoc').classList.remove('on'); stopLocationShare(); };
