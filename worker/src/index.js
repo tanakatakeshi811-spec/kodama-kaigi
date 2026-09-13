@@ -32,7 +32,7 @@ export class RoomRegistry {
   constructor(state, env) {
     this.state = state;
     this.env = env;
-    /** @type {Map<string, {peerId:string, ts:number, ws:WebSocket}>} */
+    /** @type {Map<string, {peerId:string, ts:number, ws:WebSocket, expiresAt:number|null, maxUses:number|null, uses:number}>} */
     this.rooms = new Map();
   }
 
@@ -70,7 +70,7 @@ export class RoomRegistry {
         if (this.rooms.has(code)) { this.send(ws, { t: 'code_taken', code }); return; }
         if (ownedCode) this.rooms.delete(ownedCode);
         ownedCode = code;
-        this.rooms.set(code, { peerId, ts: Date.now(), ws });
+        this.rooms.set(code, { peerId, ts: Date.now(), ws, expiresAt: null, maxUses: null, uses: 0 });
         this.send(ws, { t: 'host_registered', code });
 
       } else if (msg.t === 'host_heartbeat') {
@@ -85,11 +85,25 @@ export class RoomRegistry {
           ownedCode = null;
         }
 
+      // 招待リンクの有効期限/回数制限(新機能6)。自分が今まさに登録している部屋(ownedCode)にしか
+      // 設定できない(他人の部屋の制限を勝手にいじれないよう、wsの所有権で縛っている)
+      } else if (msg.t === 'set_invite_limits') {
+        if (!ownedCode) return;
+        const r = this.rooms.get(ownedCode);
+        if (!r || r.ws !== ws) return;
+        const expiresAt = (typeof msg.expiresAt === 'number' && msg.expiresAt > 0) ? msg.expiresAt : null;
+        const maxUses = (typeof msg.maxUses === 'number' && msg.maxUses > 0) ? Math.min(999, Math.floor(msg.maxUses)) : null;
+        r.expiresAt = expiresAt; r.maxUses = maxUses; r.uses = 0;
+        this.send(ws, { t: 'invite_limits_set', code: ownedCode, expiresAt, maxUses });
+
       } else if (msg.t === 'join_lookup') {
         const code = String(msg.code || '').toUpperCase().slice(0, 4);
         const r = this.rooms.get(code);
-        if (r) this.send(ws, { t: 'join_result', found: true, code, peerId: r.peerId });
-        else this.send(ws, { t: 'join_result', found: false, code });
+        if (!r) { this.send(ws, { t: 'join_result', found: false, code }); return; }
+        if (r.expiresAt && Date.now() > r.expiresAt) { this.send(ws, { t: 'join_result', found: false, code, reason: 'expired' }); return; }
+        if (r.maxUses != null && r.uses >= r.maxUses) { this.send(ws, { t: 'join_result', found: false, code, reason: 'used_up' }); return; }
+        r.uses += 1;
+        this.send(ws, { t: 'join_result', found: true, code, peerId: r.peerId, limits: { expiresAt: r.expiresAt, maxUses: r.maxUses, uses: r.uses } });
 
       } else if (msg.t === 'ping') {
         this.send(ws, { t: 'pong' });

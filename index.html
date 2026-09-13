@@ -1184,6 +1184,23 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
       <button class="btn ghost" id="btnCopyUrl" style="font-size:13px">URLをコピー</button>
       <button class="btn ghost" id="btnCopyInvite" style="font-size:13px">招待文をコピー</button>
     </div>
+    <!-- 招待リンクの有効期限/回数制限(新機能6)。ホストの画面にだけ出す -->
+    <div id="inviteLimitsBox" style="display:none;text-align:left;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">
+      <div class="f" style="margin-bottom:8px">この招待の有効期限・回数制限</div>
+      <div class="row"><label class="f">有効期限</label><select id="selInviteExpiry">
+        <option value="0">無制限（既定）</option>
+        <option value="600000">10分</option>
+        <option value="3600000">1時間</option>
+        <option value="86400000">24時間</option>
+      </select></div>
+      <div class="row"><label class="f">利用回数</label><select id="selInviteUses">
+        <option value="0">無制限（既定）</option>
+        <option value="1">1回だけ</option>
+        <option value="5">5回まで</option>
+      </select></div>
+      <button class="btn ghost" id="btnInviteLimitsApply" style="font-size:12.5px">この設定を適用</button>
+      <p class="hint" id="inviteLimitsStatus" style="margin-top:6px"></p>
+    </div>
     <button class="btn primary" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
 </div>
@@ -2547,7 +2564,8 @@ const RoomReg={
     if(this.isHost&&this.ws&&this.ws.readyState===1&&this.code){ try{this.ws.send(JSON.stringify({t:'host_unregister'}))}catch(_){} }
     this.isHost=false; this.code=null;
   },
-  /* 参加者側：合言葉から実際のpeer IDを問い合わせる。見つからなければnull、
+  /* 参加者側：合言葉から実際のpeer IDを問い合わせる。見つからなければpeerId:null（reasonに
+     'expired'/'used_up'があれば招待リンクの有効期限/回数制限(新機能6)に引っかかったことが分かる）、
      リレー自体に繋がらない場合は例外を投げる(呼び出し側でフォールバックする) */
   async lookup(code){
     const ws=await this.connect();
@@ -2557,11 +2575,30 @@ const RoomReg={
       const onmsg=evt=>{
         let m; try{m=JSON.parse(evt.data)}catch(_){return;}
         if(m.t!=='join_result'||m.code!==code) return;
-        settled=true; cleanup(); resolve(m.found?m.peerId:null);
+        settled=true; cleanup(); resolve({peerId:m.found?m.peerId:null,reason:m.reason||null});
       };
       const cleanup=()=>{ clearTimeout(to); ws.removeEventListener('message',onmsg); };
       ws.addEventListener('message',onmsg);
       ws.send(JSON.stringify({t:'join_lookup',code}));
+    });
+  },
+  /* 招待リンクの有効期限/回数制限(新機能6)。自分が今ホストとして登録している部屋にだけ設定できる。
+     expiresInMs=null/maxUses=nullでそれぞれ「無制限」に戻せる */
+  async setInviteLimits(expiresInMs,maxUses){
+    if(!this.isHost||!this.code) throw new Error('会議を開いている時だけ設定できます');
+    const ws=await this.connect();
+    const expiresAt=expiresInMs?Date.now()+expiresInMs:null;
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const to=setTimeout(()=>{ if(!settled){settled=true; cleanup(); reject(new Error('relay timeout'));} },7000);
+      const onmsg=evt=>{
+        let m; try{m=JSON.parse(evt.data)}catch(_){return;}
+        if(m.t!=='invite_limits_set'||m.code!==this.code) return;
+        settled=true; cleanup(); resolve(m);
+      };
+      const cleanup=()=>{ clearTimeout(to); ws.removeEventListener('message',onmsg); };
+      ws.addEventListener('message',onmsg);
+      ws.send(JSON.stringify({t:'set_invite_limits',expiresAt,maxUses:maxUses||null}));
     });
   }
 };
@@ -3242,10 +3279,17 @@ async function guestJoin(code){
   let targetId=PREFIX+code;
   try{
     const found=await RoomReg.lookup(code);
-    if(found===null){ try{peer.destroy()}catch(_){} throw new Error('会議が見つかりません（合言葉を確認してください）'); }
-    targetId=found;
+    if(found.peerId===null){
+      try{peer.destroy()}catch(_){}
+      // 招待リンクの有効期限/回数制限(新機能6)に引っかかった場合は理由を分けて案内する
+      const msg=found.reason==='expired'?'この招待の有効期限が切れています':
+                found.reason==='used_up'?'この招待は利用できる回数の上限に達しています':
+                '会議が見つかりません（合言葉を確認してください）';
+      throw new Error(msg);
+    }
+    targetId=found.peerId;
   }catch(e){
-    if(e.message&&e.message.indexOf('会議が見つかりません')===0) throw e;
+    if(e.message&&/会議が見つかりません|有効期限が切れています|利用できる回数の上限/.test(e.message)) throw e;
   }
   // 管理者モードの端末は、接続時に(パスワードのハッシュによる)簡易な証明を一緒に送る。
   // これにより、公開中の会議であれば鍵(ロック)があっても入れる（非公開の会議の扱いは変わらない）
@@ -5692,6 +5736,10 @@ function openInviteModal(){
   const box=$('#qrBox'); box.innerHTML='';
   if(window.QRCode){ new QRCode(box,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}); }
   else box.innerHTML='<div style="color:#333;font-size:12px;padding:40px 10px">QRコードを読み込めませんでした</div>';
+  // 招待リンクの有効期限/回数制限(新機能6)はホストの画面にだけ出す。Cloudflareリレーに
+  // 繋がっていない(旧来の合言葉直結モードにフォールバック中)場合は制限のかけようがないため隠す
+  $('#inviteLimitsBox').style.display=(S.isHost&&S.usingRelay)?'':'none';
+  $('#inviteLimitsStatus').textContent='';
   $('#mInvite').classList.add('on');
 }
 $('#btnCopy').onclick=copyInviteText;
@@ -5702,6 +5750,21 @@ $('#btnCopyUrl').onclick=async()=>{
   catch(_){ prompt('コピーしてください',$('#inviteUrl').value); }
 };
 $('#btnCopyInvite').onclick=copyInviteText;
+$('#btnInviteLimitsApply').onclick=async()=>{
+  const expiresInMs=+$('#selInviteExpiry').value||0;
+  const maxUses=+$('#selInviteUses').value||0;
+  $('#inviteLimitsStatus').textContent='設定を反映しています…';
+  try{
+    await RoomReg.setInviteLimits(expiresInMs||null,maxUses||null);
+    const parts=[];
+    if(expiresInMs) parts.push(($('#selInviteExpiry').selectedOptions[0]||{}).text||'期限あり');
+    if(maxUses) parts.push(($('#selInviteUses').selectedOptions[0]||{}).text||'回数制限あり');
+    $('#inviteLimitsStatus').textContent=parts.length?('✔ 設定しました：'+parts.join('・')):'✔ 制限なし（誰でも何回でも使えます）に戻しました';
+    toast('招待リンクの設定を更新しました');
+  }catch(e){
+    $('#inviteLimitsStatus').textContent='設定できませんでした（リレーに接続できていない可能性があります）';
+  }
+};
 function toggleLock(){
   if(!S.isHost) return;
   S.locked=!S.locked; $$('.lockBtn').forEach(b=>b.classList.toggle('on',S.locked));
@@ -7849,8 +7912,17 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.4.0';
+const APP_VERSION='v3.5.0';
 const CHANGELOG=[
+  {ver:'v3.5.0',date:'2026-09-13',items:[
+    '発言中の人のタイルに🔊アイコンが出る「色覚サポートモード」など、色だけに頼らない表示への切り替えを設定に追加',
+    '配色テーマ（ミント/落ち着いた色/夜間モード）を設定から選べるように',
+    'アジェンダ/進行タイマーを追加（議題ごとの目安時間をホストが登録、時間になるとチャイムでお知らせ）',
+    'お題トーク（アイスブレイクミニゲーム）を追加。ランダムなお題を1人ずつ制限時間内に話せます',
+    '会議中に流せるBGM共有機能を追加（著作権フリーの環境音・作業用BGM、誰でも変更・停止可）',
+    '招待リンクに有効期限（10分/1時間/24時間）・利用回数制限（1回/5回まで）を設定できるように',
+    '録画中に会議から退出すると自動でローカル録画を停止するように（うっかり録画しっぱなしの防止）',
+  ]},
   {ver:'v3.4.0',date:'2026-09-13',items:[
     '部屋の合言葉の信頼性を向上（Cloudflare Workerで合言葉→接続先を管理、衝突しにくくなりました。使い方は変わりません）',
     'チャットの写真送信をCloudflare R2に保存する方式に変更（軽量化、持続的会議の履歴にも写真付きメッセージを残せるように）',
