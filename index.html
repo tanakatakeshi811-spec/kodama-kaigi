@@ -24,19 +24,37 @@
   --mint-d:#2bbb9a;
   --coral:#ff5f74;
   --amber:#ffc44d;
+  --glow1:#16203a;
+  --glow2:#122c2a;
   --r:14px;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --ja:"Hiragino Kaku Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",Meiryo,system-ui,sans-serif;
+}
+/* テーマカラー切り替え(新機能8)。既存の配色が最初からCSS変数に統一されていたため、
+   :root[data-theme=...]で変数を上書きするだけでJS側の変更なしに全画面へ反映できる。
+   mint(既定)以外に、派手さを抑えた「落ち着いた色」と、夜の使用を想定して寒色(ブルーライト)を
+   抑えた「夜間モード」の2パターンを追加した */
+:root[data-theme="calm"]{
+  --bg:#0b0e14; --panel:#161c2a; --panel2:#1d2436; --line:#2b3346;
+  --mint:#6c93c9; --mint-d:#4d74ab; --coral:#d9776a; --amber:#d9b25c;
+  --glow1:#1b2436; --glow2:#1a2a34;
+}
+:root[data-theme="night"]{
+  --bg:#0a0806; --panel:#161310; --panel2:#1d1815; --line:#2e2822;
+  --txt:#f0ead9; --dim:#a89c88;
+  --mint:#e0a458; --mint-d:#c68a3e; --coral:#e2735a; --amber:#f0c674;
+  --glow1:#241c12; --glow2:#1f1712;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
 body{
   margin:0;background:
-    radial-gradient(1200px 700px at 15% -10%, #16203a 0%, transparent 60%),
-    radial-gradient(900px 600px at 110% 20%, #122c2a 0%, transparent 55%),
+    radial-gradient(1200px 700px at 15% -10%, var(--glow1) 0%, transparent 60%),
+    radial-gradient(900px 600px at 110% 20%, var(--glow2) 0%, transparent 55%),
     var(--bg);
   color:var(--txt);font-family:var(--ja);overflow:hidden;
   font-feature-settings:"palt" 1;
+  transition:background-color .25s,color .25s;
 }
 button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 button{cursor:pointer;border:none;background:none}
@@ -190,6 +208,11 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .tile.screenTile{border-color:var(--mint-d)}
 .grid.pinmode .tile{aspect-ratio:auto}
 .tile.speaking{border-color:var(--mint);box-shadow:0 0 0 2px rgba(95,227,192,.35),0 0 26px rgba(95,227,192,.18)}
+/* 色覚サポートモード(新機能5)。発言中ハイライトの枠線色だけに頼らず、アイコンでも「今誰が話しているか」を示す */
+.spkIcon{display:none;position:absolute;top:8px;right:8px;background:rgba(6,9,16,.6);border-radius:50%;width:22px;height:22px;align-items:center;justify-content:center;font-size:11px;z-index:2}
+body.cbMode .tile.speaking .spkIcon{display:flex}
+body.cbMode .pollOpt.voted .po-label::before,body.cbMode .jankenOpt.voted::before,body.cbMode .wwOpt.voted::before{content:'✔ '}
+body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 .tile video{width:100%;height:100%;object-fit:cover;display:block;background:#0b0f1c}
 .tile.mirror video{transform:scaleX(-1)}
 .tile.camoff video{opacity:0}
@@ -328,6 +351,15 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .jankenRow{display:flex;align-items:center;gap:8px;background:#0c1120;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:12.5px}
 .jankenRow.win{border-color:var(--mint);background:rgba(95,227,192,.1)}
 .jankenTag{margin-left:auto;font-size:10px;font-weight:800;color:var(--mint);letter-spacing:.06em}
+.topicCard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+.topicQ{font-size:14px;font-weight:700;margin:4px 0 9px}
+.topicRow{display:flex;align-items:center;gap:8px;font-size:12.5px}
+.topicTime{margin-left:auto;font-family:var(--mono);font-weight:700;color:var(--mint)}
+.topicOrder{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.topicOrder span{background:#0c1120;border:1px solid var(--line);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--dim)}
+.topicOrder span.cur{border-color:var(--mint);color:var(--mint);font-weight:700}
+.topicOrder span.done{opacity:.45;text-decoration:line-through}
+.topicResult{font-size:14px;font-weight:700;color:var(--mint)}
 .bgGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
 .bgPick{display:flex;flex-direction:column;gap:6px;border:1px solid var(--line);border-radius:11px;padding:6px;background:#0c1120;transition:.15s}
 .bgPick:hover{border-color:var(--mint-d)}
@@ -596,6 +628,24 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .rx{position:absolute;bottom:90px;font-size:38px;animation:fly 2.6s ease-out forwards}
 @keyframes fly{0%{opacity:0;transform:translateY(0) scale(.5)}12%{opacity:1;transform:translateY(-30px) scale(1.1)}100%{opacity:0;transform:translateY(-330px) scale(1) rotate(14deg)}}
 
+/* アジェンダ/進行タイマー(新機能2)のHUD。既存のじゃんけん・アンケートと同じホスト権威パターンで
+   全員に状態を同期し、カウントダウン自体は各クライアントが同じstartTsから逆算してローカルに刻む
+   （時計のズレはあるがネットワーク往復を毎秒発生させないための設計） */
+#agendaHud{display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:4;
+  width:min(420px,calc(100% - 24px));background:rgba(15,19,32,.94);border:1px solid var(--line);
+  border-radius:14px;padding:10px 14px;box-shadow:0 12px 30px rgba(0,0,0,.4);backdrop-filter:blur(10px)}
+#agendaHud.on{display:block;animation:panelIn .18s ease}
+.ahRow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px}
+.ahRow b{font-size:13px}
+#ahCount{color:var(--dim)}
+#ahTime{font-family:var(--mono);font-weight:700;color:var(--mint)}
+#agendaHud.over #ahTime{color:var(--coral)}
+.ahBar{height:5px;border-radius:4px;background:#0c1120;overflow:hidden;margin:6px 0}
+#ahBarFill{height:100%;background:var(--mint);width:0%;transition:width .3s linear}
+#agendaHud.over #ahBarFill{background:var(--coral)}
+#ahHostBtns button{font-size:11.5px;padding:4px 9px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);margin-left:6px}
+#ahHostBtns button:hover{border-color:var(--mint-d)}
+
 /* 同時通訳ウィジェット（画面左下に浮かぶコンパクトパネル） */
 #itpBox{position:fixed;left:16px;bottom:100px;width:300px;max-width:calc(100vw - 32px);
   background:rgba(15,19,32,.96);border:1px solid var(--line);border-radius:16px;
@@ -850,6 +900,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       </div>
       <div class="grid" id="grid"></div>
       <div id="caps"></div>
+      <!-- アジェンダ/進行タイマー(新機能2)のHUD。アジェンダが有効な間だけ画面上部中央に表示される -->
+      <div id="agendaHud">
+        <div class="ahRow"><b id="ahTitle"></b><span id="ahCount"></span></div>
+        <div class="ahBar"><div id="ahBarFill"></div></div>
+        <div class="ahRow"><span id="ahTime"></span><span id="ahHostBtns" style="display:none">
+          <button id="ahNext" title="次の議題へ">次へ ▶</button><button id="ahStop" title="終了">終了</button></span></div>
+      </div>
       <!-- 画面共有中、自分が何を共有しているか自分でも確認できる小さいプレビュー -->
       <div id="shareSelfPreview">
         <video id="shareSelfVideo" autoplay playsinline muted></video>
@@ -899,6 +956,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <button class="btn ghost" id="btnMuteAll" style="font-size:13px">全員にミュートを依頼</button>
         <button class="btn ghost" id="btnTogglePublish" style="font-size:13px">🌐　一覧に公開する</button>
         <button class="btn ghost" id="btnToggleTransport" style="font-size:13px" title="次に参加する人からの接続方式が切り替わります">🔀　接続方式：メッシュ</button>
+        <button class="btn ghost" id="btnOpenAgenda" style="font-size:13px">📋　アジェンダ</button>
       </div>
     </aside>
 
@@ -1002,6 +1060,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="frow"><span>入退室サウンド</span><div class="toggle on" id="swRoomSound"></div></div>
       <div class="frow"><span>FPS・通信状況を表示</span><div class="toggle" id="swDebug"></div></div>
       <div class="frow"><span>表示名</span><input type="text" id="inName" maxlength="18"></div>
+      <div class="frow"><span>配色テーマ</span><select id="selTheme">
+        <option value="mint">ミント（既定）</option>
+        <option value="calm">落ち着いた色</option>
+        <option value="night">夜間モード</option>
+      </select></div>
+      <div class="frow"><span>色覚サポートモード</span><div class="toggle" id="swColorblind"></div></div>
+      <p class="hint" style="margin-top:-4px">投票結果や発言中ハイライトなど、色だけに頼っていた表示にアイコン・マークを追加してより見分けやすくします。</p>
     </div>
 
     <div class="sec"><h4>フレンド</h4>
@@ -1063,6 +1128,37 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
   </div>
 </div>
 
+<!-- アジェンダ/進行タイマー（新機能2、ホストのみ編集可） -->
+<div class="modal" id="mAgenda">
+  <div class="sheet" style="max-width:420px">
+    <h3>アジェンダ／進行タイマー</h3>
+    <div class="sub">議題ごとに目安の時間を決めておくと、会議中にカウントダウン表示されます</div>
+    <div id="agendaRows" style="display:flex;flex-direction:column;gap:8px;margin:12px 0"></div>
+    <button class="btn ghost" id="btnAgendaAddRow" style="font-size:12.5px;margin-bottom:12px">＋　議題を追加</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn primary" id="btnAgendaStart" style="flex:1">この内容で開始</button>
+      <button class="btn ghost" id="btnAgendaStopAll" style="flex:0 0 auto;color:var(--coral)">終了</button>
+    </div>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
+  </div>
+</div>
+
+<!-- お題トーク開始（新機能3） -->
+<div class="modal" id="mTopic">
+  <div class="sheet" style="max-width:360px">
+    <h3>お題トークを始める</h3>
+    <div class="sub">ランダムなお題が出て、順番に1人ずつ話します</div>
+    <div class="row"><label class="f">1人あたりの持ち時間</label><select id="selTopicSecs">
+      <option value="20">20秒</option>
+      <option value="30" selected>30秒</option>
+      <option value="45">45秒</option>
+      <option value="60">60秒</option>
+    </select></div>
+    <button class="btn primary" id="btnTopicStart" style="margin-top:8px">はじめる</button>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
+  </div>
+</div>
+
 <!-- 招待・QR -->
 <div class="modal" id="mInvite">
   <div class="sheet" style="max-width:360px;text-align:center">
@@ -1112,6 +1208,8 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <h4>みんなで遊ぶ</h4>
       <div style="display:flex;flex-direction:column;gap:9px">
         <button class="btn ghost" id="plusKaraoke">🎤　カラオケ</button>
+        <button class="btn ghost" id="plusBgm">🎵　BGMをかける</button>
+        <button class="btn ghost" id="plusTopic">🗣　お題トーク</button>
         <button class="btn ghost" id="plusWW">🐺　ワードウルフ</button>
         <button class="btn ghost" id="plusJinro">🌙　人狼ゲーム（簡易版）</button>
         <button class="btn ghost" id="plusInokori">🏃　放課後の居残りに誘う</button>
@@ -1654,6 +1752,11 @@ const S={
   ktQueue:[], ktSinger:null, ktSong:null, ktPlayTs:0, ktOpen:false, ktMyScore:0, ktLastScoreOther:0,
   miniGame:null, wwWord:null, jinroRole:null, jinroWolves:null, jinroWolfMateIds:null, jinroSeerResults:[],
   debugOn:localStorage.getItem('kdm-debug')==='1', pingMs:null,
+  theme:localStorage.getItem('kdm-theme')||'mint',
+  colorblind:localStorage.getItem('kdm-cbmode')==='1',
+  agendaState:null, agendaOpen:false,
+  topicOpen:false,
+  bgmState:null, bgmOpen:false, bgmVol:parseFloat(localStorage.getItem('kdm-bgmvol')||'0.18'),
   friendReqSent:new Set(),
   /* 管理者機能（不正利用防止のための運営者専用モード）用。すべてホストのブラウザだけが持つ
      「このルームを開いている間だけ」のメモリ上の状態で、部屋が終われば消える(次のセッションには引き継がれない)。
@@ -2558,7 +2661,8 @@ function admitGuest(conn,isAdminEntry){
   // 途中で切れて表示できないことがあった、と思われる箇所のひとつ）
   connSend(conn,{t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked,transport:S.transport},
              roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState,wb:S.wbStrokes,
-             kt:{queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}});
+             kt:{queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs},
+             agenda:S.agendaState,bgm:S.bgmState});
   broadcast({t:'roster',roster:S.roster});
   sysBroadcast(nm+' が参加しました','join',conn.peer);
   // 入っただけでは自動でメンバー扱いにしない。ホストが参加者パネルから明示的に追加した時だけ記録する
@@ -2668,6 +2772,18 @@ function dropPeer(id){
       deliver({t:'wwReveal',id:HostSecret.id,accusedId:null,wolfId:HostSecret.wolfId,majorityWord:HostSecret.majorityWord,minorityWord:HostSecret.minorityWord,correct:false,cancelled:true});
     }
     S.miniGame=null; HostSecret=null;
+  }
+  if(S.miniGame&&S.miniGame.type==='topic'){
+    const entry=S.chat.find(c=>c.topic&&c.id===S.miniGame.id);
+    if(entry&&entry.state==='talking'&&entry.order.includes(id)){
+      // 話者本人が抜けた場合は、削除後に同じidxが次の人を指すことになるので自動的に交代する
+      const leavingPos=entry.order.indexOf(id);
+      entry.order=entry.order.filter(x=>x!==id);
+      if(leavingPos<entry.idx) entry.idx=Math.max(0,entry.idx-1);
+      if(!entry.order.length||entry.idx>=entry.order.length){ entry.state='done'; S.miniGame=null; }
+      else entry.startTs=Date.now();
+      deliver({t:'topicPhase',id:entry.id,idx:entry.idx,state:entry.state,startTs:entry.startTs,order:entry.order});
+    }
   }
   if(HostSecret&&HostSecret.type==='jinro'&&HostSecret.players.includes(id)){
     HostSecret.alive[id]=false; // 退出は「死亡」扱いにして進行を止めない
@@ -2904,6 +3020,58 @@ function hostHandle(from,m){
       const aliveCount=Object.keys(HostSecret.alive).filter(k=>HostSecret.alive[k]).length;
       if(Object.keys(HostSecret.dayVotes).length>=aliveCount) jinroCloseVote(m.id);
       schedulePersistSave(); break;}
+    /* ---------------- アジェンダ/進行タイマー(新機能2) ----------------
+       既存のじゃんけん・アンケートと同じhostHandle→deliverパターン。カウントダウンの秒読み自体は
+       ネットワークで毎秒送らず、各クライアントがstartTsから逆算してローカルに刻む設計（yt同時視聴の
+       「経過秒数で同期」と同じ考え方）。議題の登録・進行操作はホストだけに許可する */
+    case 'agendaStart':{
+      if(!p.host) break;
+      const items=(Array.isArray(m.items)?m.items:[]).map(it=>({
+        text:String(it.text||'').slice(0,60).trim()||'（無題の議題）',
+        mins:Math.max(1,Math.min(180,Math.round(+it.mins)||5))
+      })).slice(0,20);
+      if(!items.length) break;
+      S.agendaState={items,idx:0,startTs:Date.now()};
+      deliver({t:'agendaState',state:S.agendaState});
+      schedulePersistSave(); break;}
+    case 'agendaNext':{
+      if(!p.host||!S.agendaState) break;
+      const nextIdx=S.agendaState.idx+1;
+      if(nextIdx>=S.agendaState.items.length){ S.agendaState=null; }
+      else{ S.agendaState=Object.assign({},S.agendaState,{idx:nextIdx,startTs:Date.now()}); }
+      deliver({t:'agendaState',state:S.agendaState});
+      schedulePersistSave(); break;}
+    case 'agendaStop':{
+      if(!p.host) break;
+      S.agendaState=null;
+      deliver({t:'agendaState',state:null});
+      schedulePersistSave(); break;}
+    /* ---------------- お題トーク（新機能3、アイスブレイクミニゲーム） ----------------
+       ワードウルフ・人狼と同じ「S.miniGameで排他制御しつつ、hostHandle→deliverで進行を配る」
+       枠組みを流用。秘密情報は無いので専用のHostSecretは使わず、公開の順番配列だけをS.chatの
+       エントリで管理する */
+    case 'topicStart':{
+      if(S.miniGame){ hostSendTo(from,{t:'mgError',msg:'既に別のミニゲームが進行中です'}); break; }
+      const players=S.roster.map(x=>x.id);
+      if(players.length<2){ hostSendTo(from,{t:'mgError',msg:'お題トークには2人以上必要です'}); break; }
+      const id='tp'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      const order=[...players].sort(()=>Math.random()-0.5);
+      const topicText=TOPIC_LIST[Math.floor(Math.random()*TOPIC_LIST.length)];
+      const secsPer=Math.max(10,Math.min(180,Math.round(+m.secs)||30));
+      S.miniGame={type:'topic',id};
+      const entry={topic:true,id,from,topicText,order,idx:0,secsPer,startTs:Date.now(),state:'talking',ts:Date.now()};
+      S.chat.push(entry); if(S.chat.length>300)S.chat.shift();
+      deliver({t:'topicEntry',entry});
+      schedulePersistSave(); break;}
+    case 'topicNext':{
+      const entry=S.chat.find(c=>c.topic&&c.id===m.id); if(!entry||entry.state!=='talking') break;
+      const curSpeaker=entry.order[entry.idx];
+      if(from!==curSpeaker && !p.host) break;
+      const nextIdx=entry.idx+1;
+      if(nextIdx>=entry.order.length){ entry.state='done'; if(S.miniGame&&S.miniGame.type==='topic'&&S.miniGame.id===entry.id) S.miniGame=null; }
+      else{ entry.idx=nextIdx; entry.startTs=Date.now(); }
+      deliver({t:'topicPhase',id:entry.id,idx:entry.idx,state:entry.state,startTs:entry.startTs,order:entry.order});
+      schedulePersistSave(); break;}
     case 'ping':
       hostSendTo(from,{t:'pong',ts:m.ts}); break;
     /* 会議参加者からのフレンド申請。会議の仲間内メッセージ経由で相手のフレンドIDを教え合うだけで、
@@ -3072,6 +3240,8 @@ async function guestJoin(code){
       S.joined=true; S.chat=(m.chat||[]); renderChat(); enterMeeting(); renderTiles(); renderPpl();
       S.wbStrokes=Array.isArray(m.wb)?m.wb:[]; wbRedrawAll();
       if(m.kt){ S.ktQueue=Array.isArray(m.kt.queue)?m.kt.queue:[]; S.ktSinger=m.kt.singer||null; S.ktSong=m.kt.song||null; S.ktPlayTs=m.kt.playTs||0; ktSyncPlayback(); }
+      S.agendaState=m.agenda||null; renderAgendaHud();
+      S.bgmState=m.bgm||null; applyBgm();
       sendState();
       if(m.yt && m.yt.id){
         let time=m.yt.time||0;
@@ -3092,7 +3262,7 @@ async function guestJoin(code){
   });
   conn.on('close',()=>{ if(settled) return; settled=true; toast(S.joined?'ホストが退出したため会議が終了しました':'会議に入れませんでした'); bail(); });
 }
-function bail(){ setTimeout(()=>location.reload(),1600); }
+function bail(){ if(S.recording) stopTileRecording(); setTimeout(()=>location.reload(),1600); }
 function send(m){ if(S.isHost) hostHandle(S.myId,m); else if(S.hostConn) connSend(S.hostConn,m); }
 function sendState(){ send({t:'state',audio:S.audio,video:S.video,hand:S.hand,share:S.sharing}); }
 
@@ -3169,6 +3339,30 @@ function onMessage(m){
       if(m.from!==S.myId){ S.ktLastScoreOther=m.score; if(S.ktOpen) ktRenderPanel(); }
       break;
     case 'mgError': toast(m.msg||'ミニゲームを開始できませんでした'); break;
+    /* ---------------- お題トーク ---------------- */
+    case 'topicEntry':
+      S.miniGame={type:'topic',id:m.entry.id};
+      pushChat(Object.assign({topic:true},m.entry));
+      break;
+    case 'topicPhase':{
+      const entry=S.chat.find(c=>c.topic&&c.id===m.id);
+      if(entry){
+        entry.idx=m.idx; entry.state=m.state; entry.startTs=m.startTs;
+        if(Array.isArray(m.order)) entry.order=m.order;
+        const card=$('#chatLog').querySelector(`.topicCard[data-topic-id="${m.id}"]`);
+        if(card) card.replaceWith(renderTopicCard(entry));
+        if(entry.state==='talking' && entry.order[entry.idx]===S.myId) toast('🗣 あなたの番です！');
+      }
+      if(m.state==='done' && S.miniGame&&S.miniGame.type==='topic'&&S.miniGame.id===m.id) S.miniGame=null;
+      break;}
+    case 'agendaState':{
+      const prevIdx=S.agendaState?S.agendaState.idx:-1;
+      S.agendaState=m.state||null;
+      agendaChimed=false;
+      renderAgendaHud();
+      if(S.agendaState && S.agendaState.idx!==prevIdx) toast('📋 議題：'+S.agendaState.items[S.agendaState.idx].text);
+      else if(!S.agendaState && prevIdx>=0) toast('📋 アジェンダを終了しました');
+      break;}
     /* ---------------- ワードウルフ ---------------- */
     case 'wwEntry':
       S.miniGame={type:'ww',id:m.entry.id};
@@ -3477,6 +3671,8 @@ $('#chatIn').addEventListener('blur',requestSyncViewport);
 function tick(){
   const s=Math.floor((Date.now()-S.t0)/1000);
   $('#chipTime').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  agendaTick();
+  topicTick();
 }
 function setNet(ok){ $('#chipNet').querySelector('.dot').classList.toggle('bad',!ok); $('#netTxt').textContent=ok?(S.isHost?'ホスト':'接続中'):'再接続中'; }
 
@@ -3527,6 +3723,7 @@ function renderTiles(soft){
         <div class="tflags"></div>
         <button class="pinb" title="ピン留め" aria-label="このタイルをピン留め">📌</button>
         <button class="recBadge" title="録画を停止" aria-label="録画を停止">⏺ REC</button>
+        <div class="spkIcon" title="発言中">🔊</div>
         <div class="lvl"></div>`;
       const togglePin=()=>{ S.pin=S.pin===p.id?null:p.id; renderTiles(); };
       el.querySelector('.pinb').onclick=e=>{ e.stopPropagation(); togglePin(); };
@@ -3773,6 +3970,65 @@ function renderJankenCard(entry){
   }
   return wrap;
 }
+/* お題トークのカード（新機能3）。カウントダウンの毎秒更新はtopicTick()がdata属性を見て
+   カードの中身だけを直接書き換える（1秒ごとにカード全体をreplaceWithすると、ボタンの
+   ホバー状態などがちらつくため、時間表示だけをピンポイントで更新する設計にした） */
+function renderTopicCard(entry){
+  const wrap=document.createElement('div');
+  wrap.className='topicCard'; wrap.dataset.topicId=entry.id; wrap.dataset.topicState=entry.state;
+  const order=entry.order||[];
+  const names=order.map(id=>{ const pp=S.roster.find(x=>x.id===id); return pp?pp.name:'退出済み'; });
+  if(entry.state==='talking'){
+    const speakerId=order[entry.idx]; const speakerP=S.roster.find(x=>x.id===speakerId);
+    const isMe=speakerId===S.myId; const meP=S.roster.find(x=>x.id===S.myId);
+    const remain=Math.max(0,Math.ceil(entry.secsPer-(Date.now()-entry.startTs)/1000));
+    wrap.dataset.start=entry.startTs; wrap.dataset.secs=entry.secsPer; wrap.dataset.chimed='0';
+    wrap.innerHTML=`<div class="mh"><b>🗣 お題トーク</b><time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div>
+      <div class="topicQ">「${esc(entry.topicText)}」</div>
+      <div class="topicRow"><b>${esc(speakerP?speakerP.name:'？')}</b>さんの番（${entry.idx+1}/${order.length}）<span class="topicTime">${String(Math.floor(remain/60)).padStart(2,'0')}:${String(remain%60).padStart(2,'0')}</span></div>
+      <div class="topicOrder">${names.map((n,i)=>`<span class="${i===entry.idx?'cur':i<entry.idx?'done':''}">${esc(n)}</span>`).join('')}</div>`;
+    if(isMe||(meP&&meP.host)){
+      const nextBtn=document.createElement('button');
+      nextBtn.className='btn ghost'; nextBtn.style.cssText='width:auto;padding:6px 14px;font-size:12px;margin-top:8px';
+      nextBtn.textContent=isMe?'話し終わった（次の人へ）':'次の人へ進める';
+      nextBtn.onclick=()=>send({t:'topicNext',id:entry.id});
+      wrap.appendChild(nextBtn);
+    }
+  }else{
+    wrap.innerHTML=`<div class="mh"><b>🗣 お題トーク</b><time>${new Date(entry.ts).toTimeString().slice(0,5)}</time></div>
+      <div class="topicQ">「${esc(entry.topicText)}」</div>
+      <div class="topicResult">🎉 全員話し終わりました！</div>`;
+    const again=document.createElement('button');
+    again.className='btn ghost'; again.style.cssText='width:auto;padding:6px 12px;font-size:12px;margin-top:8px';
+    again.textContent='もう一度お題トークをする';
+    again.onclick=()=>send({t:'topicStart',secs:entry.secsPer});
+    wrap.appendChild(again);
+  }
+  return wrap;
+}
+function topicTick(){
+  document.querySelectorAll('.topicCard[data-topic-state="talking"]').forEach(card=>{
+    const start=+card.dataset.start, secs=+card.dataset.secs;
+    const remain=Math.max(0,Math.ceil(secs-(Date.now()-start)/1000));
+    const timeEl=card.querySelector('.topicTime');
+    if(timeEl) timeEl.textContent=String(Math.floor(remain/60)).padStart(2,'0')+':'+String(remain%60).padStart(2,'0');
+    if(remain<=0 && card.dataset.chimed!=='1'){ card.dataset.chimed='1'; chime([784,523],{dur:.2,gap:.05,type:'sine',peak:.13}); }
+  });
+}
+/* お題の一覧。しゅんりさんの学生生活に合いそうな身近なテーマを中心に、雑談のきっかけになりやすいものを選んだ */
+const TOPIC_LIST=[
+  '最近ハマっていること','好きな食べ物ベスト3','小さい頃の思い出','休みの日の過ごし方',
+  '好きな季節とその理由','もし1億円もらったら何に使う？','好きな動物とその理由','得意料理・作ってみたい料理',
+  '最近見て面白かった動画や番組','行ってみたい国や場所','好きな教科・苦手な教科','子供の頃の将来の夢',
+  'お気に入りの音楽・アーティスト','最近笑った出来事','尊敬する人','もし1日だけ超能力が使えたら',
+  '好きなゲーム','無人島に1つだけ持っていくなら','最近買ってよかったもの','好きな映画・アニメ',
+  '特技・自慢できること','好きな色とその理由','朝型？夜型？その理由','もしタイムスリップできるなら'
+];
+$('#plusTopic').onclick=()=>{ $('#mPlus').classList.remove('on'); $('#mTopic').classList.add('on'); };
+$('#btnTopicStart').onclick=()=>{
+  send({t:'topicStart',secs:+$('#selTopicSecs').value});
+  $('#mTopic').classList.remove('on');
+};
 /* ワードウルフのカード。「自分の単語」は共有データ(entry)には一切乗らず、ローカルだけのS.wwWordから
    読むので、DOMを見比べても他人の単語がのぞける心配がない設計になっている */
 function renderWwCard(entry){
@@ -3904,6 +4160,7 @@ function addChatEl(m){
   else if(m.janken){ d.className='msg'; d.appendChild(renderJankenCard(m)); }
   else if(m.ww){ d.className='msg'; d.appendChild(renderWwCard(m)); }
   else if(m.jinro){ d.className='msg'; d.appendChild(renderJinroCard(m)); }
+  else if(m.topic){ d.className='msg'; d.appendChild(renderTopicCard(m)); }
   else{
     d.className='msg'+(m.ai?' ai':'')+(m.cap?' cap':'');
     const body=m.text?linkify(m.text):'';
@@ -4547,7 +4804,7 @@ $('#cPpl').onclick=()=>togglePanel('sidePpl');
 $('#cSet').onclick=()=>$('#mSet').classList.add('on');
 // ホーム画面（会議に入る前）からも設定を開けるように。表示名・APIキー・フレンドID等を事前に済ませられる
 $('#btnHomeSettings').onclick=()=>$('#mSet').classList.add('on');
-$('#cLeave').onclick=()=>{ if(confirm(S.isHost?'会議を終了しますか？（全員退出になります）':'退出しますか？')){ if(S.isHost) RoomReg.unregister(); location.reload(); } };
+$('#cLeave').onclick=()=>{ if(confirm(S.isHost?'会議を終了しますか？（全員退出になります）':'退出しますか？')){ if(S.recording) stopTileRecording(); if(S.isHost) RoomReg.unregister(); location.reload(); } };
 function togglePanel(id){
   const on=!$('#'+id).classList.contains('on');
   ['sideChat','sidePpl','sideYt'].forEach(x=>$('#'+x).classList.toggle('on',x===id&&on));
@@ -4895,6 +5152,64 @@ function stopTileRecording(){
   send({t:'recNotice',on:false});
 }
 function toggleTileRecording(){ S.recording?stopTileRecording():startTileRecording(); }
+
+/* ============================================================
+   アジェンダ/進行タイマー（新機能2）
+   ホストが議題+目安時間を登録し、既存のじゃんけん・アンケートと同じhostHandle→deliverパターンで
+   全員に配る。カウントダウンの毎秒更新はネットワークを使わず、同期されたstartTsから各クライアントが
+   ローカルに逆算する（YouTube同時視聴の「経過秒数で合わせる」方式と同じ考え方）
+   ============================================================ */
+let agendaChimed=false;
+function renderAgendaHud(){
+  const hud=$('#agendaHud');
+  if(!S.agendaState){ hud.classList.remove('on','over'); return; }
+  const {items,idx,startTs}=S.agendaState;
+  const item=items[idx]; if(!item){ hud.classList.remove('on'); return; }
+  hud.classList.add('on');
+  $('#ahTitle').textContent='📋 '+item.text;
+  $('#ahCount').textContent=(idx+1)+' / '+items.length;
+  const totalSec=item.mins*60;
+  const elapsed=(Date.now()-startTs)/1000;
+  const remain=Math.max(0,Math.ceil(totalSec-elapsed));
+  const over=elapsed>totalSec;
+  hud.classList.toggle('over',over);
+  const mm=Math.floor(remain/60), ss=remain%60;
+  $('#ahTime').textContent=over?('超過中 +'+Math.floor((elapsed-totalSec)/60)+':'+String(Math.floor((elapsed-totalSec)%60)).padStart(2,'0')):(String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'));
+  $('#ahBarFill').style.width=Math.min(100,elapsed/totalSec*100)+'%';
+  $('#ahHostBtns').style.display=S.isHost?'':'none';
+  if(over && !agendaChimed){ agendaChimed=true; chime([880,660],{dur:.22,gap:.05,type:'sine',peak:.14}); toast('⏰ 時間になりました：'+item.text); }
+}
+function agendaTick(){ if(S.agendaState) renderAgendaHud(); }
+function agendaRenderRows(items){
+  const wrap=$('#agendaRows'); wrap.innerHTML='';
+  (items&&items.length?items:[{text:'',mins:5}]).forEach(it=>agendaAddRow(it.text,it.mins));
+}
+function agendaAddRow(text,mins){
+  const row=document.createElement('div'); row.className='row'; row.style.cssText='display:flex;gap:6px;align-items:center';
+  row.innerHTML=`<input class="in agTxt" placeholder="議題（例：進捗共有）" maxlength="60" style="flex:1" value="${esc(text||'')}">
+    <input class="in agMin" type="number" min="1" max="180" value="${mins||5}" style="width:64px;text-align:center">
+    <span style="font-size:12px;color:var(--dim)">分</span>
+    <button class="iconbtn agDel" title="削除" style="width:32px;height:32px">✕</button>`;
+  row.querySelector('.agDel').onclick=()=>row.remove();
+  $('#agendaRows').appendChild(row);
+}
+$('#btnOpenAgenda').onclick=()=>{
+  agendaRenderRows(S.agendaState?S.agendaState.items:null);
+  $('#mAgenda').classList.add('on');
+};
+$('#btnAgendaAddRow').onclick=()=>agendaAddRow('',5);
+$('#btnAgendaStart').onclick=()=>{
+  const items=[...$('#agendaRows').querySelectorAll('.row')].map(row=>({
+    text:row.querySelector('.agTxt').value,
+    mins:row.querySelector('.agMin').value
+  })).filter(it=>it.text.trim());
+  if(!items.length) return toast('議題を1つ以上入力してください');
+  send({t:'agendaStart',items});
+  $('#mAgenda').classList.remove('on');
+};
+$('#btnAgendaStopAll').onclick=()=>{ send({t:'agendaStop'}); $('#mAgenda').classList.remove('on'); };
+$('#ahNext').onclick=()=>send({t:'agendaNext'});
+$('#ahStop').onclick=()=>send({t:'agendaStop'});
 
 /* ============================================================
    カラオケ（著作権フリー音源のみ使用。曲のライセンス情報はナレッジファイル参照）
@@ -5364,6 +5679,28 @@ $('#swRoomSound').onclick=()=>{
   localStorage.setItem('kdm-roomsound',S.roomSound?'1':'0');
   toast(S.roomSound?'入退室サウンドをオンにしました':'オフにしました');
   if(S.roomSound) playJoinSound();
+};
+/* テーマカラー切り替え(新機能8)。全CSSが変数化済みなので、html要素にdata-theme属性を
+   立てるだけで既存コードに一切手を入れずに全画面へ反映される */
+function applyTheme(name){
+  S.theme=(name==='calm'||name==='night')?name:'mint';
+  document.documentElement.dataset.theme=S.theme;
+  localStorage.setItem('kdm-theme',S.theme);
+}
+$('#selTheme').value=S.theme; applyTheme(S.theme);
+$('#selTheme').onchange=e=>{ applyTheme(e.target.value); toast('配色テーマを変更しました'); };
+/* 色覚サポートモード(新機能5)。調査の結果、このアプリの色分けはほぼ全て名前・アイコン等の
+   テキストと必ずセットで表示されていたが、依頼どおり明示的なモードとして「色だけの手がかり」を
+   さらに減らすため、発言中ハイライト・投票/選択済み表示にアイコンでの補強を追加する */
+function applyColorblind(on){
+  S.colorblind=!!on;
+  document.body.classList.toggle('cbMode',S.colorblind);
+  localStorage.setItem('kdm-cbmode',S.colorblind?'1':'0');
+}
+$('#swColorblind').classList.toggle('on',S.colorblind); applyColorblind(S.colorblind);
+$('#swColorblind').onclick=()=>{
+  applyColorblind(!S.colorblind); $('#swColorblind').classList.toggle('on',S.colorblind);
+  toast(S.colorblind?'色覚サポートモードをオンにしました':'オフにしました');
 };
 $('#selFxVideo').onchange=e=>pickFxVideoOption(e.target.value);
 $('#selFxVoice').onchange=e=>{ S.fx.voice=e.target.value; VoiceFX.apply(S.fx.voice); toast('ボイスチェンジャーを変更しました'); };
