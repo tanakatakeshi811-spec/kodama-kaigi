@@ -120,6 +120,12 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
 .code-in{display:flex;gap:9px;justify-content:center}
 .code-in input{width:58px;height:70px;text-align:center;font-family:var(--mono);font-size:30px;font-weight:700;text-transform:uppercase;background:#0c1120;border:1px solid var(--line);border-radius:14px;color:var(--txt)}
 .code-in input:focus{border-color:var(--mint);outline:none;box-shadow:0 0 0 4px rgba(95,227,192,.12)}
+.transportSeg{display:flex;gap:8px}
+.transportSeg button{flex:1;padding:10px 6px;border-radius:11px;background:#0c1120;border:1px solid var(--line);color:var(--dim);font-size:12.5px;font-weight:700;transition:.15s;cursor:pointer}
+.transportSeg button:hover{border-color:var(--mint-d);color:var(--txt)}
+.transportSeg button.on{background:rgba(95,227,192,.14);color:var(--mint);border-color:var(--mint-d)}
+.chip.transportChip{cursor:default}
+.chip.transportChip.cf{color:#8fc4ff;border-color:rgba(124,196,255,.35);background:rgba(124,196,255,.08)}
 .hint{color:var(--dim);font-size:12px;line-height:1.7;margin-top:12px}
 .ytRateRow{display:flex;align-items:center;gap:9px;margin-top:12px;justify-content:center}
 .ytRateLabel{font-size:11.5px;color:var(--dim);white-space:nowrap}
@@ -668,6 +674,14 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
           <div class="toggle" id="hPub"></div>
         </div>
       </div>
+      <div class="row">
+        <label class="f">接続方式</label>
+        <div class="transportSeg" id="hTransportSeg" data-val="mesh">
+          <button type="button" class="on" data-val="mesh">🌐 メッシュ(P2P)</button>
+          <button type="button" data-val="cloudflare">☁️ Cloudflare</button>
+        </div>
+        <p class="hint" id="hTransportHint">サーバーを使わず全員が直接つながる、これまで通りの方式です。</p>
+      </div>
       <button class="btn primary" id="btnMake">会議を開く</button>
       <p class="hint">4文字の合言葉が自動で発行されます。公開しない場合は、合言葉を知っている人だけが入れます。</p>
     </div>
@@ -705,6 +719,13 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
         <div class="sw" id="pPubSw">
           <div><b style="font-size:13.5px">一覧に公開する</b><small>「さがす」から誰でも見つけられます</small></div>
           <div class="toggle" id="pPub"></div>
+        </div>
+      </div>
+      <div class="row">
+        <label class="f">接続方式</label>
+        <div class="transportSeg" id="pTransportSeg" data-val="mesh">
+          <button type="button" class="on" data-val="mesh">🌐 メッシュ(P2P)</button>
+          <button type="button" data-val="cloudflare">☁️ Cloudflare</button>
         </div>
       </div>
       <button class="btn primary" id="btnPersistNew">新しく持続的会議を始める</button>
@@ -805,6 +826,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
     <div class="keycaps" id="capsCode"></div>
     <div class="title" id="mTitle">会議</div>
     <div class="chip" id="chipNet"><span class="dot"></span><span id="netTxt">接続中</span></div>
+    <div class="chip transportChip" id="chipTransport" title="この会議の接続方式"></div>
     <div class="sp"></div>
     <div class="chip" id="chipTime">00:00</div>
     <button class="iconbtn" id="btnCopy" title="招待をコピー" aria-label="招待をコピー">
@@ -876,6 +898,7 @@ label.f{display:block;margin:0 0 6px;font-size:12px;color:var(--dim);letter-spac
       <div class="compose" id="hostTools" style="display:none;flex-wrap:wrap">
         <button class="btn ghost" id="btnMuteAll" style="font-size:13px">全員にミュートを依頼</button>
         <button class="btn ghost" id="btnTogglePublish" style="font-size:13px">🌐　一覧に公開する</button>
+        <button class="btn ghost" id="btnToggleTransport" style="font-size:13px" title="次に参加する人からの接続方式が切り替わります">🔀　接続方式：メッシュ</button>
       </div>
     </aside>
 
@@ -1498,7 +1521,11 @@ if('serviceWorker' in navigator){
 }
 
 /* ---------- 定数 ---------- */
-const PREFIX='kdm-';                 // ルームのPeer ID接頭辞
+const PREFIX='kdm-';                 // ルームのPeer ID接頭辞（Cloudflareリレーが使えない時のフォールバック用）
+// 部屋コードの信頼性向上・チャット画像保存用のCloudflare Worker(放課後の居残りのhoukago-inokori-relayと同じ考え方)
+const RELAY_WS='wss://kodama-kaigi-relay.shunri-ai.workers.dev/ws';
+const RELAY_HTTP='https://kodama-kaigi-relay.shunri-ai.workers.dev';
+const CALLS_ENABLED=false; // Cloudflare Calls(SFU中継)はダッシュボードでの手動セットアップが未了のため、まだ実配線していない
 const DIR_ID='kdm-directory-v3';     // 公開一覧を束ねるピアのID
 const ADMIN_HUB_ID='kdm-admin-hub-v1'; // 管理者どうしがオンライン状況を確認しあうためのハブピアのID
 const ADMIN_PW='tama0809';           // 管理者モードのパスワード
@@ -1607,6 +1634,7 @@ async function extractRemoteIP(conn){
 /* ---------- 状態 ---------- */
 const S={
   name:'', code:'', roomName:'', isHost:false, published:false, locked:false,
+  transport:'mesh', usingRelay:false, // 接続方式(メッシュ/Cloudflare)の表示用。usingRelayは部屋コード登録にCloudflareリレーが使えたかどうかの内部フラグ
   peer:null, myId:'', conns:new Map(), hostConn:null,
   roster:[], calls:new Map(), streams:new Map(), chat:[], capLog:[],
   screenCalls:new Map(), screenStreams:new Map(), _selfScreenStream:null,
@@ -1666,6 +1694,25 @@ const savedName=localStorage.getItem('kdm-name')||'';
 $('#hPubSw').onclick=()=>$('#hPub').classList.toggle('on');
 $('#pPubSw').onclick=()=>$('#pPub').classList.toggle('on');
 
+/* 接続方式(メッシュ/Cloudflare)の選択UI。ホストが会議を開始する前に選ぶ方式にした
+   (進行中の動的切り替えはWebRTC接続の張り直しが必要で複雑になるため見送り、依頼で許可されていた
+   「開始前に選ぶ」形を採用)。デフォルトは常にメッシュ(サーバーなし)。 */
+function transportSegSetup(id,hintId){
+  const seg=$(id); if(!seg) return;
+  const btns=[...seg.querySelectorAll('button')];
+  btns.forEach(b=>b.onclick=()=>{
+    seg.dataset.val=b.dataset.val;
+    btns.forEach(x=>x.classList.toggle('on',x===b));
+    if(hintId){
+      $(hintId).textContent=b.dataset.val==='cloudflare'
+        ?(CALLS_ENABLED?'Cloudflareの中継サーバーを経由します。大人数の会議で安定しやすくなります。':'Cloudflare Callsは現在準備中です。設定が整うまでは自動的にメッシュ方式で開始されます。')
+        :'サーバーを使わず全員が直接つながる、これまで通りの方式です。';
+    }
+  });
+}
+transportSegSetup('#hTransportSeg','#hTransportHint');
+transportSegSetup('#pTransportSeg',null);
+
 // コード入力欄
 const codeBoxes=$$('#codeIn input');
 codeBoxes.forEach((el,i)=>{
@@ -1689,8 +1736,9 @@ $('#btnMake').onclick=async()=>{
   S.name=n; localStorage.setItem('kdm-name',n);
   S.roomName=$('#hRoom').value.trim()||n+'の会議';
   S.published=$('#hPub').classList.contains('on');
+  const transport=$('#hTransportSeg').dataset.val==='cloudflare'?'cloudflare':'mesh';
   $('#btnMake').disabled=true; $('#btnMake').textContent='準備中…';
-  try{ await startMedia(); await hostStart(); }
+  try{ await startMedia(); await hostStart({transport}); }
   catch(e){ console.error(e); toast('開けませんでした：'+(e.message||e)); $('#btnMake').disabled=false; $('#btnMake').textContent='会議を開く'; }
 };
 $('#btnJoin').onclick=async()=>{
@@ -1709,8 +1757,9 @@ $('#btnPersistNew').onclick=async()=>{
   S.roomName=$('#pRoom').value.trim()||n+'の会議';
   S.published=$('#pPub').classList.contains('on');
   S.persistent=true;
+  const transport=$('#pTransportSeg').dataset.val==='cloudflare'?'cloudflare':'mesh';
   $('#btnPersistNew').disabled=true; $('#btnPersistNew').textContent='準備中…';
-  try{ await startMedia(); await hostStart(); }
+  try{ await startMedia(); await hostStart({transport}); }
   catch(e){ console.error(e); toast('開けませんでした：'+(e.message||e)); $('#btnPersistNew').disabled=false; $('#btnPersistNew').textContent='新しく持続的会議を始める'; }
 };
 
@@ -2322,6 +2371,85 @@ async function reaskMediaPermission(){
 $('#btnReaskPermission').onclick=reaskMediaPermission;
 
 /* ============================================================
+   部屋コードの信頼性向上(Cloudflare Worker + Durable Object)
+   これまで「合言葉をそのままPeerJSのpeer IDとして使う」設計だったため、PeerJSの公開ブローカー上での
+   衝突・早い者勝ちにそのまま依存していた。放課後の居残り(houkago-inokori-relay)と同じ考え方で、
+   「合言葉→実際のpeer ID」の登録・在籍確認・検索だけをこのWorker+Durable Objectに任せ、
+   実際の映像・音声・チャットは今まで通りPeerJSのP2Pメッシュのまま変えない。
+   「早い者勝ちでホスト/参加者が決まる」という既存の体験もそのまま(host_registerがcode_takenを
+   返すかどうかがそのまま早い者勝ちの判定になる)。
+   リレーに繋がらない(Cloudflare側の障害・オフライン等)場合は、旧来の「合言葉をそのままpeer IDにする」
+   方式にその場でフォールバックする設計にしており、Workerが落ちても会議自体は開けなくならない。 */
+const RoomReg={
+  ws:null, connecting:null, code:null, peerId:null, isHost:false, hbTimer:null,
+  connect(){
+    if(this.ws&&this.ws.readyState===1) return Promise.resolve(this.ws);
+    if(this.connecting) return this.connecting;
+    this.connecting=new Promise((res,rej)=>{
+      let settled=false;
+      const ws=new WebSocket(RELAY_WS);
+      const to=setTimeout(()=>{ if(!settled){settled=true; this.connecting=null; try{ws.close()}catch(_){} rej(new Error('relay timeout'));} },7000);
+      ws.onopen=()=>{ if(settled)return; settled=true; clearTimeout(to); this.ws=ws; this.connecting=null; res(ws); };
+      ws.onerror=()=>{ if(settled)return; settled=true; clearTimeout(to); this.connecting=null; rej(new Error('relay unreachable')); };
+      ws.onclose=()=>{
+        this.ws=null;
+        // ホスト中に接続が切れた場合、そのままだとサーバー側が合言葉を空席扱いにしてしまうため、
+        // 同じ合言葉・同じpeer IDで自動的に再登録を試みる(一時的な回線の乱れからの自己復旧)
+        if(this.isHost&&this.code&&this.peerId){
+          const savedCode=this.code, savedPeerId=this.peerId;
+          setTimeout(()=>{ if(this.isHost&&this.code===savedCode) this.registerHost(savedCode,savedPeerId).catch(()=>{}); },1500);
+        }
+      };
+    });
+    return this.connecting;
+  },
+  /* ホストとして合言葉を登録する。true=成功、false=既に他の誰かが使用中(=早い者勝ちで負けた)。
+     リレー自体に繋がらない場合は例外を投げる(呼び出し側でフォールバックする) */
+  async registerHost(code,peerId){
+    const ws=await this.connect();
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const to=setTimeout(()=>{ if(!settled){settled=true; cleanup(); reject(new Error('relay timeout'));} },7000);
+      const onmsg=evt=>{
+        let m; try{m=JSON.parse(evt.data)}catch(_){return;}
+        if(m.code!==code) return;
+        if(m.t==='host_registered'){ settled=true; cleanup(); this.code=code; this.peerId=peerId; this.isHost=true; this.startHeartbeat(); resolve(true); }
+        else if(m.t==='code_taken'){ settled=true; cleanup(); resolve(false); }
+      };
+      const cleanup=()=>{ clearTimeout(to); ws.removeEventListener('message',onmsg); };
+      ws.addEventListener('message',onmsg);
+      ws.send(JSON.stringify({t:'host_register',code,peerId}));
+    });
+  },
+  startHeartbeat(){
+    clearInterval(this.hbTimer);
+    this.hbTimer=setInterval(()=>{ if(this.ws&&this.ws.readyState===1&&this.code) this.ws.send(JSON.stringify({t:'host_heartbeat',code:this.code})); },8000);
+  },
+  unregister(){
+    clearInterval(this.hbTimer); this.hbTimer=null;
+    if(this.isHost&&this.ws&&this.ws.readyState===1&&this.code){ try{this.ws.send(JSON.stringify({t:'host_unregister'}))}catch(_){} }
+    this.isHost=false; this.code=null;
+  },
+  /* 参加者側：合言葉から実際のpeer IDを問い合わせる。見つからなければnull、
+     リレー自体に繋がらない場合は例外を投げる(呼び出し側でフォールバックする) */
+  async lookup(code){
+    const ws=await this.connect();
+    return new Promise((resolve,reject)=>{
+      let settled=false;
+      const to=setTimeout(()=>{ if(!settled){settled=true; cleanup(); reject(new Error('relay timeout'));} },7000);
+      const onmsg=evt=>{
+        let m; try{m=JSON.parse(evt.data)}catch(_){return;}
+        if(m.t!=='join_result'||m.code!==code) return;
+        settled=true; cleanup(); resolve(m.found?m.peerId:null);
+      };
+      const cleanup=()=>{ clearTimeout(to); ws.removeEventListener('message',onmsg); };
+      ws.addEventListener('message',onmsg);
+      ws.send(JSON.stringify({t:'join_lookup',code}));
+    });
+  }
+};
+
+/* ============================================================
    ホスト
    ============================================================ */
 function makePeer(id){
@@ -2332,14 +2460,14 @@ function makePeer(id){
     p.on('error',e=>{clearTimeout(to);rej(e)});
   });
 }
-async function hostStart(opts){
-  opts=opts||{};
+/* 旧来の「合言葉をそのままpeer IDにする」方式(Cloudflareリレーに繋がらない時のフォールバックのみで使う) */
+async function hostStartLegacy(opts){
   let peer=null;
   if(opts.resumeCode){
     try{ peer=await makePeer(PREFIX+opts.resumeCode); S.code=opts.resumeCode; }
     catch(e){
       const err=new Error(e.type==='unavailable-id'?'この合言葉の会議はまだ使用中のようです':(e.message||'再開できませんでした'));
-      err.occupied=(e.type==='unavailable-id'); // 既に誰かがホストとして開いている＝参加者として入れる可能性がある、の目印
+      err.occupied=(e.type==='unavailable-id');
       throw err;
     }
   }else{
@@ -2350,7 +2478,40 @@ async function hostStart(opts){
     }
     if(!peer) throw new Error('空いている合言葉が見つかりません');
   }
+  S.usingRelay=false;
+  return peer;
+}
+async function hostStart(opts){
+  opts=opts||{};
+  let peer=await makePeer(); // ランダムなpeer ID。合言葉とは分離しており、Cloudflareリレーが在籍確認を担う
+  try{
+    if(opts.resumeCode){
+      const registered=await RoomReg.registerHost(opts.resumeCode,peer.id);
+      if(!registered){
+        try{peer.destroy()}catch(_){}
+        const err=new Error('この合言葉の会議はまだ使用中のようです');
+        err.occupied=true; // 既に誰かがホストとして開いている＝参加者として入れる可能性がある、の目印
+        throw err;
+      }
+      S.code=opts.resumeCode;
+    }else{
+      let code=null;
+      for(let i=0;i<8&&!code;i++){
+        const c=genCode();
+        if(await RoomReg.registerHost(c,peer.id)) code=c;
+      }
+      if(!code){ try{peer.destroy()}catch(_){} throw new Error('空いている合言葉が見つかりません'); }
+      S.code=code;
+    }
+    S.usingRelay=true;
+  }catch(e){
+    if(e.occupied||e.message==='空いている合言葉が見つかりません') throw e; // リレーは繋がっていて、判定として正しく失敗した場合
+    // Cloudflareリレー自体に繋がらない(障害・オフライン等)場合だけ、旧来方式にフォールバックする
+    try{peer.destroy()}catch(_){}
+    peer=await hostStartLegacy(opts);
+  }
   S.peer=peer; S.myId=peer.id; S.isHost=true;
+  S.transport=(opts.transport==='cloudflare')?'cloudflare':'mesh';
   if(S.persistent){
     const saved=loadPersistData(S.code);
     if(saved){ S.chat=saved.chat||[]; S.persistMembers=saved.members||[]; if(opts.resumeCode) S.roomName=saved.roomName||S.roomName; }
@@ -2395,7 +2556,7 @@ function admitGuest(conn,isAdminEntry){
   // welcome同期は画像付きチャット履歴を含みうる大きなメッセージになりやすいため、connSend()で
   // 必要ならチャンク分割して送る（ここがそのまま送っていた頃は新規参加者に届く過去の画像が
   // 途中で切れて表示できないことがあった、と思われる箇所のひとつ）
-  connSend(conn,{t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked},
+  connSend(conn,{t:'welcome',you:conn.peer,room:{name:S.roomName,code:S.code,host:S.myId,locked:S.locked,transport:S.transport},
              roster:S.roster,chat:S.chat.slice(-60),yt:S.ytState,wb:S.wbStrokes,
              kt:{queue:S.ktQueue,singer:S.ktSinger,song:S.ktSong,playTs:S.ktPlayTs}});
   broadcast({t:'roster',roster:S.roster});
@@ -2544,7 +2705,8 @@ function hostHandle(from,m){
     case 'rename':
       p.name=String(m.name||'').slice(0,18)||p.name; deliver({t:'roster',roster:S.roster}); break;
     case 'chat':{
-      const imgs=Array.isArray(m.imgs)?m.imgs.filter(s=>typeof s==='string'&&s.startsWith('data:image/')).slice(0,4):[];
+      // R2アップロードのURL(通常はこちら)か、アップロード失敗時のフォールバックのdata URLのどちらかだけを許可
+      const imgs=Array.isArray(m.imgs)?m.imgs.filter(s=>typeof s==='string'&&(s.startsWith('data:image/')||s.indexOf(RELAY_HTTP+'/img/')===0)).slice(0,4):[];
       const invite=(m.invite&&INVITE_GAMES[m.invite.game])?{game:m.invite.game,code:String(m.invite.code||'').toUpperCase().slice(0,8)}:null;
       // 画像以外の一般ファイル。base64化で元サイズの約1.37倍に膨らむため、クライアント側の20MB上限に
       // 対応する余裕を持たせた28MBをホスト側の最終的なサニティチェックとしている
@@ -2882,11 +3044,21 @@ async function guestJoin(code){
   let settled=false; // denied/locked拒否など、閉じる理由が既にはっきりしている場合は close時の二重案内を出さない
   peer.on('call',handleIncomingCall);
   peer.on('error',e=>{ if(e.type==='peer-unavailable'&&!S.joined){ toast('その合言葉の会議は見つかりません'); bail(); } });
+  // Cloudflareリレーに合言葉→実際のpeer IDを問い合わせる。見つからなければここで確定的にエラー。
+  // リレー自体に繋がらない(障害・オフライン等)場合だけ、旧来の「合言葉をそのままpeer IDにする」方式にフォールバックする
+  let targetId=PREFIX+code;
+  try{
+    const found=await RoomReg.lookup(code);
+    if(found===null){ try{peer.destroy()}catch(_){} throw new Error('会議が見つかりません（合言葉を確認してください）'); }
+    targetId=found;
+  }catch(e){
+    if(e.message&&e.message.indexOf('会議が見つかりません')===0) throw e;
+  }
   // 管理者モードの端末は、接続時に(パスワードのハッシュによる)簡易な証明を一緒に送る。
   // これにより、公開中の会議であれば鍵(ロック)があっても入れる（非公開の会議の扱いは変わらない）
   const meta={name:S.name};
   if(isAdminActive()) meta.adminProof=await adminProofHash();
-  const conn=peer.connect(PREFIX+code,{metadata:meta,reliable:true,serialization:'json'});
+  const conn=peer.connect(targetId,{metadata:meta,reliable:true,serialization:'json'});
   S.hostConn=conn;
   await new Promise((res,rej)=>{
     const to=setTimeout(()=>rej(new Error('会議が見つかりません（合言葉を確認してください）')),12000);
@@ -2896,7 +3068,7 @@ async function guestJoin(code){
   conn.on('data',raw=>{
     const m=receiveChunk(raw); if(m===null) return; // チャンクの続きを待っている途中
     if(m.t==='welcome'){
-      S.roomName=m.room.name; S.locked=m.room.locked; S.roster=m.roster;
+      S.roomName=m.room.name; S.locked=m.room.locked; S.roster=m.roster; S.transport=m.room.transport==='cloudflare'?'cloudflare':'mesh';
       S.joined=true; S.chat=(m.chat||[]); renderChat(); enterMeeting(); renderTiles(); renderPpl();
       S.wbStrokes=Array.isArray(m.wb)?m.wb:[]; wbRedrawAll();
       if(m.kt){ S.ktQueue=Array.isArray(m.kt.queue)?m.kt.queue:[]; S.ktSinger=m.kt.singer||null; S.ktSong=m.kt.song||null; S.ktPlayTs=m.kt.playTs||0; ktSyncPlayback(); }
@@ -2928,6 +3100,7 @@ function sendState(){ send({t:'state',audio:S.audio,video:S.video,hand:S.hand,sh
 function onMessage(m){
   switch(m.t){
     case 'roster': S.roster=m.roster; renderTiles(); renderPpl(); break;
+    case 'transport': S.transport=(m.mode==='cloudflare')?'cloudflare':'mesh'; updateTransportUi(); break;
     case 'chat': pushChat(m.msg); break;
     case 'cap': showCap(m); break;
     case 'react': flyReact(m.emoji); break;
@@ -3193,6 +3366,7 @@ function enterMeeting(){
   $('#cLock').style.display=S.isHost?'':'none';
   $('#hostTools').style.display=S.isHost?'':'none';
   if(S.isHost) updatePublishBtn();
+  updateTransportUi();
   $('#cMic').classList.toggle('off',!S.audio);
   $('#cCam').classList.toggle('off',!S.video);
   S.t0=Date.now(); setInterval(tick,1000); setNet(true);
@@ -3209,6 +3383,30 @@ $('#btnTogglePublish').onclick=()=>{
   if(S.published){ Dir.unpublish(); toast('会議を非公開にしました（「さがす」一覧から消えます）'); }
   else{ Dir.publish(); toast('会議を「さがす」一覧に公開しました'); }
   updatePublishBtn();
+};
+/* 接続方式(メッシュ/Cloudflare)のインジケーター。ホスト・参加者どちらの画面にも
+   常時見えるチップ(#chipTransport)と、ホストだけが操作できるトグル(#btnToggleTransport)を同期する */
+function updateTransportUi(){
+  const cf=S.transport==='cloudflare';
+  const chip=$('#chipTransport');
+  if(chip){
+    chip.classList.toggle('cf',cf);
+    chip.textContent=cf?(CALLS_ENABLED?'☁️ Cloudflare':'☁️ Cloudflare（準備中・メッシュで動作中）'):'🌐 メッシュ(P2P)';
+  }
+  const b=$('#btnToggleTransport');
+  if(b) b.textContent=cf?'🔀　接続方式：Cloudflare':'🔀　接続方式：メッシュ';
+}
+$('#btnToggleTransport').onclick=()=>{
+  if(!S.isHost) return;
+  const next=S.transport==='cloudflare'?'mesh':'cloudflare';
+  if(next==='cloudflare'){
+    toast(CALLS_ENABLED?'Cloudflare経由の接続方式に切り替えました':'Cloudflare Callsはまだ準備中のため、表示だけ切り替わります（映像・音声は引き続きメッシュ(P2P)のまま届きます）');
+  }else{
+    toast('メッシュ(P2P)方式に切り替えました');
+  }
+  S.transport=next;
+  updateTransportUi();
+  deliver({t:'transport',mode:next});
 };
 /* ============================================================
    デバッグ表示（FPS・ping）。デフォルトOFFの軽量な補助表示。
@@ -3740,12 +3938,16 @@ function persistList(){
 function loadPersistData(code){
   try{ const raw=localStorage.getItem(PERSIST_PREFIX+code); return raw?JSON.parse(raw):null; }catch(_){ return null; }
 }
+/* 画像がR2のURL(軽量なテキスト)になったため、画像付きメッセージも保存対象に含められるようになった。
+   ただしR2アップロードに失敗した時のフォールバックのdata URL画像だけは、これまで通り
+   localStorage容量を圧迫するため保存対象から除外する(一般ファイル添付は今まで通り除外のまま) */
+function hasHeavyImgs(m){ return Array.isArray(m.imgs)&&m.imgs.some(s=>typeof s==='string'&&s.startsWith('data:')); }
 function savePersistData(){
   if(!S.isHost||!S.persistent||!S.code) return;
   try{
     const data={
       roomName:S.roomName,
-      chat:S.chat.filter(m=>(!m.imgs||!m.imgs.length)&&!m.file).slice(-100), // 画像はlocalStorage容量を圧迫するので保存対象から外す
+      chat:S.chat.filter(m=>!hasHeavyImgs(m)&&!m.file).slice(-100),
       members:S.persistMembers||[],
       ts:Date.now()
     };
@@ -3785,7 +3987,7 @@ function savePersistMembership(code,roomName){
     const existing=loadPersistData(code);
     const data=existing||{roomName,chat:[],members:[],ts:Date.now()};
     data.roomName=roomName||data.roomName; data.ts=Date.now();
-    if(S.chat&&S.chat.length) data.chat=S.chat.filter(m=>(!m.imgs||!m.imgs.length)&&!m.file).slice(-100);
+    if(S.chat&&S.chat.length) data.chat=S.chat.filter(m=>!hasHeavyImgs(m)&&!m.file).slice(-100);
     localStorage.setItem(PERSIST_PREFIX+code, JSON.stringify(data));
     const list=persistList().filter(x=>x.code!==code);
     list.unshift({code,name:data.roomName,members:(data.members||[]).length,ts:Date.now()});
@@ -4345,7 +4547,7 @@ $('#cPpl').onclick=()=>togglePanel('sidePpl');
 $('#cSet').onclick=()=>$('#mSet').classList.add('on');
 // ホーム画面（会議に入る前）からも設定を開けるように。表示名・APIキー・フレンドID等を事前に済ませられる
 $('#btnHomeSettings').onclick=()=>$('#mSet').classList.add('on');
-$('#cLeave').onclick=()=>{ if(confirm(S.isHost?'会議を終了しますか？（全員退出になります）':'退出しますか？')) location.reload(); };
+$('#cLeave').onclick=()=>{ if(confirm(S.isHost?'会議を終了しますか？（全員退出になります）':'退出しますか？')){ if(S.isHost) RoomReg.unregister(); location.reload(); } };
 function togglePanel(id){
   const on=!$('#'+id).classList.contains('on');
   ['sideChat','sidePpl','sideYt'].forEach(x=>$('#'+x).classList.toggle('on',x===id&&on));
@@ -4950,8 +5152,10 @@ const LocPiP={
   }
 };
 
-// 写真の送信（送信前にリサイズ・圧縮してbase64化。1枚あたり長辺1280px・JPEG品質0.72程度）
-function resizeImageToDataURL(file,maxSide,quality){
+// 写真の送信（送信前にリサイズ・圧縮。1枚あたり長辺1280px・JPEG品質0.72程度は変えていない）
+// 元はbase64化してP2Pでそのまま送っていたが、Cloudflare R2にアップロードしてURLだけをP2Pで送る方式にした
+// (URLは軽量なテキストなので、持続的会議のlocalStorage保存対象にも含められるようになった)
+function resizeImageToCanvas(file,maxSide){
   return new Promise((resolve,reject)=>{
     const img=new Image(); const url=URL.createObjectURL(file);
     img.onload=()=>{
@@ -4961,19 +5165,41 @@ function resizeImageToDataURL(file,maxSide,quality){
       w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
       const c=document.createElement('canvas'); c.width=w; c.height=h;
       c.getContext('2d').drawImage(img,0,0,w,h);
-      resolve(c.toDataURL('image/jpeg',quality));
+      resolve(c);
     };
     img.onerror=()=>{ URL.revokeObjectURL(url); reject(new Error('画像を読み込めません')); };
     img.src=url;
   });
+}
+function resizeImageToDataURL(file,maxSide,quality){
+  return resizeImageToCanvas(file,maxSide).then(c=>c.toDataURL('image/jpeg',quality));
+}
+function resizeImageToBlob(file,maxSide,quality){
+  return resizeImageToCanvas(file,maxSide).then(c=>new Promise(res=>c.toBlob(res,'image/jpeg',quality)));
+}
+async function uploadImageToRelay(blob){
+  const res=await fetch(RELAY_HTTP+'/upload',{method:'POST',headers:{'content-type':blob.type||'image/jpeg'},body:blob});
+  if(!res.ok) throw new Error('upload failed: '+res.status);
+  const data=await res.json();
+  if(!data||!data.ok||!data.url) throw new Error('upload failed');
+  return data.url;
+}
+/* 複数ファイルを圧縮してR2にアップロードし、URLの配列を返す。R2が未設定・オフライン等でアップロードに
+   失敗した画像だけは、従来通りbase64のdata URLをそのままP2Pで送るフォールバックにする(機能自体は壊れない) */
+async function resizeAndUploadImages(files){
+  const out=[];
+  for(const f of files){
+    try{ out.push(await uploadImageToRelay(await resizeImageToBlob(f,1280,0.72))); }
+    catch(_){ try{ out.push(await resizeImageToDataURL(f,1280,0.72)); }catch(__){} }
+  }
+  return out;
 }
 $('#photoFile').onchange=async e=>{
   const files=[...e.target.files].filter(f=>f.type.startsWith('image/')).slice(0,4);
   e.target.value='';
   if(!files.length) return;
   toast('画像を処理しています…');
-  const imgs=[];
-  for(const f of files){ try{ imgs.push(await resizeImageToDataURL(f,1280,0.72)); }catch(_){} }
+  const imgs=await resizeAndUploadImages(files);
   if(!imgs.length) return toast('画像を読み込めませんでした');
   send({t:'chat',text:'',imgs});
 };
@@ -7071,7 +7297,7 @@ $('#friendPhotoFile').onchange=async e=>{
   const files=[...e.target.files].filter(f=>f.type.startsWith('image/')).slice(0,4);
   e.target.value=''; if(!files.length) return;
   toast('画像を処理しています…');
-  const imgs=[]; for(const f of files){ try{ imgs.push(await resizeImageToDataURL(f,1280,0.72)); }catch(_){} }
+  const imgs=await resizeAndUploadImages(files);
   if(!imgs.length) return toast('画像を読み込めませんでした');
   sendFriendMessage({imgs});
 };
@@ -7222,8 +7448,13 @@ FriendNet.init();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.3.0';
+const APP_VERSION='v3.4.0';
 const CHANGELOG=[
+  {ver:'v3.4.0',date:'2026-09-13',items:[
+    '部屋の合言葉の信頼性を向上（Cloudflare Workerで合言葉→接続先を管理、衝突しにくくなりました。使い方は変わりません）',
+    'チャットの写真送信をCloudflare R2に保存する方式に変更（軽量化、持続的会議の履歴にも写真付きメッセージを残せるように）',
+    'ホストが接続方式（メッシュ/Cloudflare）を選べるトグルを追加（会議を開く前に選択、画面上にどちらで動作中か表示）',
+  ]},
   {ver:'v3.3.0',date:'2026-08-26',items:[
     '不正利用防止のための管理者モードを追加（設定画面からパスワードで設定、複数端末で同時に管理者になれます）',
     '管理者どうしで、今オンラインの端末を確認・権限の取り消しができるように',
