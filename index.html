@@ -932,7 +932,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 
     <!-- チャット -->
     <aside class="side" id="sideChat">
-      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnFriendInMeeting" title="フレンド" aria-label="フレンドチャットを開く">👥</button><button class="iconbtn" id="btnAiSum" title="AIで要約" aria-label="AIで要約">✨</button><button class="iconbtn" id="btnMinutes" title="議事録" aria-label="議事録を作成・書き出し">📝</button><button class="iconbtn" data-close="sideChat" title="閉じる" aria-label="チャットを閉じる">✕</button></div>
+      <div class="sh"><b>チャット</b><button class="iconbtn" id="btnFriendInMeeting" title="フレンド" aria-label="フレンドチャットを開く">👥</button><button class="iconbtn" id="btnAiSum" title="AIで要約" aria-label="AIで要約">✨</button><button class="iconbtn" id="btnAiJoin" title="AIを会議に参加させる" aria-label="AIを会議に参加させる" style="display:none">🤖</button><button class="iconbtn" id="btnMinutes" title="議事録" aria-label="議事録を作成・書き出し">📝</button><button class="iconbtn" data-close="sideChat" title="閉じる" aria-label="チャットを閉じる">✕</button></div>
       <div class="scroll" id="chatLog"></div>
       <div class="compose">
         <button id="btnPlus" title="添付・機能" aria-label="添付・機能を追加">＋</button>
@@ -1107,6 +1107,13 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
     <div class="sec"><h4>外部サービス</h4>
       <div class="frow"><span>YouTube APIキー</span><input type="text" id="inYtKey" placeholder="任意（検索結果をアプリ内に表示）" style="max-width:220px"></div>
       <p class="hint" style="margin-top:-4px">Google Cloud Consoleで「YouTube Data API v3」を有効にしてAPIキーを発行すると、YouTube検索の結果がアプリの中に直接表示されるようになります（無料枠は1日あたり検索およそ100回程度）。未設定の場合は、これまで通り新しいタブでYouTube検索が開きます。</p>
+      <div class="frow" id="rowKotoLink" style="display:none"><span>コトダマ</span><b id="kotoLinkTxt" style="font-weight:500">つながっています（AIはClaude）</b></div>
+      <div class="frow"><span>会議に参加するAI</span><select id="selAiMode">
+        <option value="call">呼ばれたら答える（「コトダマ」「AI」）</option>
+        <option value="free">自分からも発言する</option>
+      </select></div>
+      <div class="frow"><span>AIの声を読み上げる</span><input type="checkbox" id="chkAiVoice" checked></div>
+      <p class="hint" style="margin-top:-4px">チャット欄の🤖で、AIを会議に参加させられます。参加中は全員の字幕がオンになり、AIが会話を聞いて、呼ばれたら声と文字で答えます。コトダマの中から開くと、AI機能（@AI・要約・議事録・会議に参加するAI）はコトダマのClaudeを使います（APIキー不要）。</p>
       <div class="frow"><span>Gemini APIキー</span><input type="text" id="inGeminiKey" placeholder="任意（チャットのAI機能に使用）" style="max-width:220px"></div>
       <p class="hint" style="margin-top:-4px">Google AI Studio（aistudio.google.com）で無料発行できます。設定するとチャットで「@AI ○○」と話しかけて質問したり、「AIで要約」ボタンで会話をまとめたりできるようになります。呼び出しはあなたのキーを使って、あなたのブラウザから直接Geminiに送られます（未設定の間はAI機能は使えません）。</p>
       <div class="frow"><span>Geminiのモデル</span><select id="selGeminiModel">
@@ -1582,6 +1589,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
     <div id="minutesActions" style="display:none;gap:8px;margin-top:10px">
       <button class="btn ghost" id="btnMinutesDownload" style="flex:1">⬇ ダウンロード(.txt)</button>
       <button class="btn ghost" id="btnMinutesShare" style="flex:1">💬 チャットに共有</button>
+      <button class="btn ghost" id="btnMinutesKoto" style="flex:1;display:none">📥 コトダマに保存</button>
     </div>
     <button class="btn ghost" data-closemodal style="margin-top:14px">閉じる</button>
   </div>
@@ -2887,6 +2895,10 @@ function hostHandle(from,m){
       deliver({t:'cap',from,name:p.name,color:p.color,text:String(m.text||'').slice(0,400),final:!!m.final,lang:m.lang}); break;
     case 'react':
       deliver({t:'react',from,name:p.name,emoji:String(m.emoji||'👍').slice(0,4)}); break;
+    case 'aiSay':
+      deliver({t:'aiSay',from,name:String(m.name||'AI').slice(0,18),text:String(m.text||'').slice(0,1200)}); break;
+    case 'aiPresence':
+      deliver({t:'aiPresence',from,on:!!m.on,name:String(m.name||'AI').slice(0,18)}); break;
     case 'poll':{
       const q=String(m.q||'').slice(0,120).trim();
       const opts=(Array.isArray(m.opts)?m.opts:[]).map(o=>String(o||'').slice(0,60).trim()).filter(Boolean).slice(0,4);
@@ -3340,8 +3352,10 @@ function onMessage(m){
   switch(m.t){
     case 'roster': S.roster=m.roster; renderTiles(); renderPpl(); break;
     case 'transport': S.transport=(m.mode==='cloudflare')?'cloudflare':'mesh'; updateTransportUi(); break;
-    case 'chat': pushChat(m.msg); break;
-    case 'cap': showCap(m); break;
+    case 'chat': pushChat(m.msg); if(m.msg&&!m.msg.ai&&m.msg.text) AiPart.hear(m.msg.name,m.msg.text,m.msg.from); KotoBridge.event('chat',{name:m.msg&&m.msg.name,text:m.msg&&m.msg.text,ai:!!(m.msg&&m.msg.ai)}); break;
+    case 'cap': showCap(m); if(m.final){ AiPart.hear(m.name,m.text,m.from); KotoBridge.event('cap',{name:m.name,text:m.text}); } break;
+    case 'aiSay': AiPart.onSay(m); break;
+    case 'aiPresence': AiPart.onPresence(m); break;
     case 'react': flyReact(m.emoji); break;
     case 'poll': pushChat(Object.assign({poll:true},m.poll)); break;
     case 'pollVote':{
@@ -3625,6 +3639,7 @@ function stopAllOutgoingScreenCalls(){
    画面描画
    ============================================================ */
 function enterMeeting(){
+  try{ KotoBridge.event('joined',{room:S.roomName||'',code:S.code||''}); kotoLinkUi(); }catch(_){}
   $('#home').style.display='none'; $('#meet').classList.add('on');
   $('#mTitle').textContent=S.roomName;
   $('#capsCode').innerHTML=S.code.split('').map(c=>`<span>${c}</span>`).join('');
@@ -4546,6 +4561,7 @@ async function trGoogle(text,to){
 }
 async function trClaude(text,to){
   const label=(TRLANGS.find(l=>l[0]===to)||[to,to])[1];
+  if(KotoBridge.ok) return (await KotoBridge.ask(`次の発話を${label}に訳して、訳文だけを出力してください。説明や引用符は不要です。\n\n${text}`,'tr')).trim();
   const r=await fetch('https://api.anthropic.com/v1/messages',{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
@@ -6338,7 +6354,8 @@ function aiWaitWithCountdown(sec){
 }
 /* 429エラー(利用制限)の時だけ、レスポンスが教えてくれた待ち時間ぶんだけ待って1回だけ自動再試行する。
    無限リトライはせず、1回失敗したらそこで諦めてエラー表示にする（無応答のまま延々粘らないようにするため） */
-async function callGemini(prompt){
+async function callGemini(prompt,kind){
+  if(KotoBridge.ok) return {text:await KotoBridge.ask(prompt,kind||'chat'),usage:null};
   try{
     return await _callGeminiOnce(prompt);
   }catch(e){
@@ -6352,8 +6369,142 @@ async function callGemini(prompt){
 function toastAiUsage(usage){
   if(usage&&usage.totalTokenCount) toast('🔢 今回の消費トークン数（目安）：'+usage.totalTokenCount,3200);
 }
+
+/* ============================================================
+   コトダマとの連携（コトダマの中に埋め込まれて開かれたとき）
+   ・AI機能（@AI・要約・議事録・翻訳・会議に参加するAI）を、コトダマのClaudeで動かす（APIキー不要）
+   ・議事録をコトダマの会話として保存できる
+   親ページは、同じオリジン・localhost・ファイルから開いたもの だけを信用する
+   ============================================================ */
+const KotoBridge={
+  ok:false, name:'コトダマ', origin:null, seq:0, pend:new Map(),
+  init(){
+    if(window.parent===window) return;
+    addEventListener('message',e=>{
+      if(e.source!==window.parent) return;
+      const m=e.data; if(!m||m.kk!==1) return;
+      if(m.op==='hi'){
+        const o=e.origin;
+        if(!(o===location.origin||o==='null'||/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(o))) return;
+        this.origin=o; this.ok=!!m.ai; this.name=String(m.name||'コトダマ').slice(0,18); kotoLinkUi(); return;
+      }
+      if(!this.origin||e.origin!==this.origin) return;
+      if(m.op==='ans'){ const p=this.pend.get(m.id); if(p){ this.pend.delete(m.id); clearTimeout(p.to); m.err?p.rej(new Error(m.err)):p.res(String(m.text||'')); } }
+      else if(m.op==='status'){ this.ok=!!m.ai; kotoLinkUi(); }
+    });
+    this.post({op:'hello',v:1});
+    setTimeout(()=>{ if(!this.origin) this.post({op:'hello',v:1}); },1500);
+  },
+  post(o){ try{ window.parent.postMessage(Object.assign({kk:1},o),(this.origin&&this.origin!=='null')?this.origin:'*'); }catch(_){} },
+  ask(prompt,kind){
+    if(!this.ok) return Promise.reject(new Error('コトダマのAIにつながっていません'));
+    const id=++this.seq;
+    return new Promise((res,rej)=>{
+      const to=setTimeout(()=>{ this.pend.delete(id); rej(new Error('コトダマから答えが来ませんでした（2分）')); },120000);
+      this.pend.set(id,{res,rej,to});
+      this.post({op:'ask',id,kind:kind||'chat',prompt:String(prompt).slice(0,60000)});
+    });
+  },
+  event(type,data){ if(this.origin&&(type==='joined'||type==='left')) this.post({op:'event',type,data}); },
+  save(title,text){ this.post({op:'save',title,text}); }
+};
+function aiReady(){ return KotoBridge.ok||!!geminiApiKey(); }
+function kotoLinkUi(){
+  const r=$('#rowKotoLink'); if(r) r.style.display=KotoBridge.origin?'':'none';
+  const t=$('#kotoLinkTxt'); if(t) t.textContent=KotoBridge.ok?'つながっています（AIはClaude）':'つながっていますが、コトダマのAIが使えません（中継サーバーを確認）';
+  const k=$('#btnMinutesKoto'); if(k) k.style.display=KotoBridge.origin?'':'none';
+  const b=$('#btnAiJoin'); if(b) b.style.display=aiReady()?'':'none';
+}
+
+/* ---- 会議に参加するAI ----
+   全員の字幕（確定したもの）とチャットを聞き、名前を呼ばれたら（モードによっては自分から）短く話す。
+   発言は全員に配られ、各端末で字幕として出て、声でも読み上げられる。AIを動かしているのは、AIを参加させた人の端末だけ */
+const AiPart={
+  on:false, busy:false, again:false, log:[], n:0, t:null, beat:null,
+  get name(){ return KotoBridge.ok?KotoBridge.name:'AI'; },
+  wake(){ return new RegExp(this.name+'|ことだま|コトダマ|言霊|エーアイ|えーあい|AIさん|ねえAI|(^|[^A-Za-z])AI([^A-Za-z]|$)','i'); },
+  mode(){ return localStorage.getItem('kdm-ai-mode')||'call'; },
+  toggle(){ this.on?this.leave():this.join(); },
+  join(){
+    if(!aiReady()) return toast('AIを参加させるには、コトダマから開くか、Gemini APIキーを登録してください');
+    if(!S.joined) return toast('会議に入ってから参加させてください');
+    this.on=true; this.log=[]; this.n=0;
+    send({t:'aiPresence',on:true,name:this.name});
+    send({t:'chat',text:`🤖 ${this.name}（AI）が会議に参加しました。「${this.name}」や「AI」と呼びかけると、声と文字で答えます。`,ai:true});
+    clearInterval(this.beat); this.beat=setInterval(()=>{ if(this.on) send({t:'aiPresence',on:true,name:this.name}); },30000);
+    this.ui();
+  },
+  leave(){
+    this.on=false; clearInterval(this.beat); clearTimeout(this.t);
+    send({t:'aiPresence',on:false,name:this.name});
+    send({t:'chat',text:`🤖 ${this.name}（AI）が会議から抜けました。`,ai:true});
+    this.ui();
+  },
+  ui(){ const b=$('#btnAiJoin'); if(b){ b.classList.toggle('act',this.on); b.title=this.on?'AIを会議から外す':'AIを会議に参加させる'; } },
+  similar(a,b){ a=String(a||'').replace(/[\s、。！？!?,.]/g,''); b=String(b||'').replace(/[\s、。！？!?,.]/g,''); if(!a||!b) return false; if(b.includes(a)&&a.length>=6) return true; let same=0; for(const ch of a) if(b.includes(ch)) same++; return a.length>=8&&same/a.length>0.85; },
+  hear(name,text,from){
+    if(!this.on||!text) return;
+    if(S.lastAiSay&&Date.now()-S.lastAiSayAt<60000&&this.similar(text,S.lastAiSay)) return; /* AIの声を字幕が拾ったもの */
+    this.log.push(`${name||'誰か'}: ${text}`); if(this.log.length>80) this.log.shift();
+    if(this.wake().test(text)){ clearTimeout(this.t); this.trigger(true); return; }
+    if(this.mode()==='free'){ this.n++; clearTimeout(this.t); this.t=setTimeout(()=>{ if(this.n>=2) this.trigger(false); },6000); }
+  },
+  async trigger(called){
+    if(this.busy){ if(called) this.again=true; return; }
+    this.busy=true; this.n=0; aiIconState('loading');
+    const prompt=`あなたはビデオ会議「${S.roomName||'コダマ会議'}」に参加しているAI「${this.name}」です。参加者：${S.roster.map(p=>p.name).join('、')}。`
+      +'下は会議のやりとりで、「（声）」の無いものはチャット、ほかは音声認識の文字起こし（誤字・聞き間違いがあります。意味をくみ取ってください）です。\n'
+      +(called?'いまあなたが呼ばれました。直前の呼びかけ・質問に答えてください。'
+              :'流れを見て、あなたが発言すると会議の役に立つとき（質問に答えられる、情報を補える、話を整理できる、意見を求められている）だけ発言してください。発言しないほうがよいときは「（パス）」とだけ書いてください。')
+      +'\nあなたの返事は全員の画面に字幕で出て、声で読み上げられます。話し言葉で、1〜3文に短く。記号・箇条書き・URL・絵文字は使わない。名前の前置きは不要。\n\n会議のやりとり（新しいものが下）：\n'+this.log.slice(-40).join('\n');
+    try{
+      const {text}=await callGemini(prompt,'talk');
+      const t=String(text||'').replace(/^[「『]|[」』]$/g,'').trim();
+      if(t&&!/^[（(]?パス[)）]?$/.test(t)){
+        this.log.push(`${this.name}（AI）: ${t}`);
+        send({t:'aiSay',name:this.name,text:t});
+        send({t:'chat',text:t,ai:true});
+      }
+      aiIconState('idle');
+    }catch(e){ console.warn(e); toast('AIの発言に失敗しました：'+(e.message||'不明なエラー')); aiIconState('error'); }
+    finally{ this.busy=false; if(this.again){ this.again=false; this.trigger(true); } }
+  },
+  onSay(m){
+    S.lastAiSay=m.text; S.lastAiSayAt=Date.now();
+    showCap({from:'__ai',name:'🤖 '+m.name,color:'#a78bfa',text:m.text,final:true});
+    if(localStorage.getItem('kdm-ai-voice')!=='0'&&'speechSynthesis' in window){
+      try{
+        const u=new SpeechSynthesisUtterance(m.text); u.lang='ja-JP'; u.rate=1.08;
+        const v=speechSynthesis.getVoices().find(x=>/^ja/i.test(x.lang)); if(v) u.voice=v;
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      }catch(_){}
+    }
+  },
+  onPresence(m){
+    const was=!!S.aiPresent; S.aiPresent=m.on;
+    let b=$('#aiBadge');
+    if(m.on){
+      if(!b){ b=document.createElement('div'); b.id='aiBadge'; b.style.cssText='position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:60;background:rgba(124,92,255,.92);color:#fff;font-size:12.5px;padding:5px 12px;border-radius:999px;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25)'; document.body.appendChild(b); }
+      b.textContent='🤖 '+m.name+'（AI）が参加中・会話を聞いています';
+      if(!was&&!S.capsOn){ setCaps(true); toast('AIが会議に参加したので、AIが話を聞けるよう字幕をオンにしました（字幕ボタンで止められます）',5200); }
+    }else if(b) b.remove();
+  }
+};
+$('#btnAiJoin').onclick=()=>AiPart.toggle();
+$('#selAiMode').value=AiPart.mode();
+$('#selAiMode').onchange=e=>{ localStorage.setItem('kdm-ai-mode',e.target.value); toast(e.target.value==='free'?'AIが自分からも発言します':'AIは呼ばれたら答えます'); };
+$('#chkAiVoice').checked=localStorage.getItem('kdm-ai-voice')!=='0';
+$('#chkAiVoice').onchange=e=>localStorage.setItem('kdm-ai-voice',e.target.checked?'1':'0');
+$('#btnMinutesKoto').onclick=()=>{
+  const text=$('#minutesOut').value; if(!text) return;
+  KotoBridge.save(`会議の記録 ${S.roomName||''} ${new Date().toLocaleDateString('ja-JP')}`.trim(),text);
+  toast('コトダマに保存しました（コトダマの会話一覧に入ります）');
+};
+$('#inGeminiKey').addEventListener('input',()=>setTimeout(kotoLinkUi,50));
+KotoBridge.init(); kotoLinkUi();
+
 async function askAI(question){
-  if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  if(!aiReady()) return toast('AI機能を使うには、コトダマから開くか、設定画面でGemini APIキーを登録してください');
   if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
   aiIconState('loading');
   try{
@@ -6367,15 +6518,14 @@ async function askAI(question){
   }
 }
 $('#btnAiSum').onclick=async()=>{
-  if(!geminiApiKey()) return toast('AI機能を使うには設定画面でGemini APIキーを登録してください');
+  if(!aiReady()) return toast('AI機能を使うには、コトダマから開くか、設定画面でGemini APIキーを登録してください');
   if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
-  const recent=S.chat.filter(m=>!m.sys&&!m.poll).slice(-40);
-  if(!recent.length) return toast('まだ要約できるチャットがありません');
-  const transcript=recent.map(m=>`${m.ai?'AI':m.name}: ${m.text||(m.imgs&&m.imgs.length?'[画像]':'')}`).join('\n');
+  const transcript=meetingChatTranscript(80);
+  if(!transcript) return toast('まだ要約できる会話がありません（チャットか字幕が必要です）');
   aiIconState('loading');
   toast('要約を作成しています…');
   try{
-    const {text:reply,usage}=await callGemini('次はビデオ会議アプリのチャットログです。話の流れが分かるように、簡潔に日本語で要約してください。\n\n'+transcript);
+    const {text:reply,usage}=await callGemini('次はビデオ会議のチャットと字幕（音声認識なので誤字があります）の記録です。話の流れと要点が分かるように、簡潔に日本語で要約してください。\n\n'+transcript);
     send({t:'chat',text:'📋 会話の要約\n\n'+reply,ai:true});
     aiIconState('idle'); toastAiUsage(usage);
   }catch(e){
@@ -6389,12 +6539,16 @@ $('#btnAiSum').onclick=async()=>{
    話題・決定事項・ToDoを構造化し、ダウンロード可能な形にする専用機能。AI不要の生ログ書き出しも併設。 */
 function meetingChatTranscript(limit){
   const recent=S.chat.filter(m=>!m.sys&&!m.poll).slice(-(limit||300));
-  return recent.map(m=>{
-    const time=new Date(m.ts).toTimeString().slice(0,5);
+  const rows=recent.map(m=>{
+    const time=new Date(m.ts).toTimeString().slice(0,8);
     const who=m.ai?'AI':(m.name||'？');
     const body=m.text||(m.imgs&&m.imgs.length?'[画像]':(m.file?`[ファイル:${m.file.name||''}]`:''));
-    return body?`[${time}] ${who}: ${body}`:null;
-  }).filter(Boolean).join('\n');
+    return body?{time,line:`[${time.slice(0,5)}] ${who}: ${body}`}:null;
+  }).filter(Boolean);
+  /* 字幕(音声)の記録も含める。字幕をチャットにも記録する設定のときは二重になるので足さない */
+  if(!S.capToChat) for(const c of (S.capLog||[]).slice(-(limit||300))) if(c&&c.text&&!/^🤖/.test(c.name||'')) rows.push({time:c.ts,line:`[${String(c.ts).slice(0,5)}] ${c.name}（声）: ${c.text}`});
+  rows.sort((a,b)=>a.time<b.time?-1:a.time>b.time?1:0);
+  return rows.slice(-(limit||300)).map(r=>r.line).join('\n');
 }
 function minutesHeader(){
   const dur=Math.floor((Date.now()-S.t0)/1000);
@@ -6414,7 +6568,7 @@ $('#btnRawExport').onclick=()=>{
   toast('生ログを表示しました。そのままダウンロードできます');
 };
 $('#btnMakeMinutes').onclick=async()=>{
-  if(!geminiApiKey()) return toast('議事録の自動整理にはGemini APIキーが必要です（設定画面で登録できます）。AI不要の「生ログを書き出す」も使えます');
+  if(!aiReady()) return toast('議事録の自動整理にはコトダマかGemini APIキーが必要です（設定画面で登録できます）。AI不要の「生ログを書き出す」も使えます');
   if(aiBusy) return toast('AIが応答中です。少し待ってからもう一度お試しください');
   const transcript=meetingChatTranscript(300);
   if(!transcript) return toast('まだ議事録にできるチャットがありません');
