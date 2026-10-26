@@ -135,6 +135,7 @@ const IMG_MAX_BYTES = 6 * 1024 * 1024;
 const EXT_BY_TYPE = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' };
 
 async function handleUpload(request, env) {
+  if (!env.IMAGES) return jsonRes({ ok: false, error: 'storage not configured' }, 503); // R2未設定→アプリ側がP2P送信にフォールバック
   const type = (request.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
   const ext = EXT_BY_TYPE[type];
   if (!ext) return jsonRes({ ok: false, error: 'unsupported content-type' }, 400);

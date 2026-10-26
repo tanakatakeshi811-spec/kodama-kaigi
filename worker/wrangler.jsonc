@@ -11,8 +11,8 @@
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["RoomRegistry"] },
     { "tag": "v2", "new_sqlite_classes": ["PushRegistry"] }
-  ],
-  "r2_buckets": [
-    { "binding": "IMAGES", "bucket_name": "kodama-kaigi-images" }
   ]
+  // チャット画像のR2保存(IMAGES)は、Cloudflare側にバケット「kodama-kaigi-images」を作った場合だけ、
+  // 次の2行を有効にする(無くても、画像は従来どおりP2Pで直接送られるので機能は壊れない):
+  // ,"r2_buckets": [ { "binding": "IMAGES", "bucket_name": "kodama-kaigi-images" } ]
 }
