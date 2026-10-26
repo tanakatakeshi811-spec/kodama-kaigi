@@ -12,6 +12,7 @@ https://tanakatakeshi811-spec.github.io/kodama-kaigi/
 - 公開ルーム検索(ロビー方式、専用サーバー不要)
 - 字幕・翻訳・チャット(音声入力対応)・反応・挙手
 - 招待URL・QRコード表示
+- フレンドへの通知(Web Push): チャット・着信・会議への招待が、アプリを閉じていてもスマホ/PCに届く。会議の招待画面から、フレンドを通知つきで招待できる
 - YouTube同時視聴(全員で再生同期)
 - 画面共有+自分のカメラを同時表示
 - 映像エフェクト(モザイク・黒塗り)・音声ボイスチェンジャー
@@ -20,3 +21,8 @@ https://tanakatakeshi811-spec.github.io/kodama-kaigi/
 ## 動かし方
 
 `index.html` をブラウザ(Chrome / Edge 推奨)で直接開くだけ。マイク・カメラの許可が必要な機能もある。
+
+## 通知(Web Push)を使えるようにする
+
+通知の送信はCloudflare Worker(`worker/`)が中継する。コード更新後に**1回だけ** `worker\deploy-push.bat` を実行すると、通知用の鍵の作成・Workerの更新・登録まで自動で行う(事前に `npx wrangler login` 済みであること)。
+各端末で、フレンド画面の🔔から「通知をオン」にする。iPhoneは、Safariの共有 →「ホーム画面に追加」したアプリから開くと使える(iOS 16.4以降)。

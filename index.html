@@ -443,6 +443,10 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 .fcName{font-weight:700;font-size:14px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fcId{font-size:10px;color:var(--dim);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .friendTyping{padding:4px 14px;font-size:11px;color:var(--dim);font-style:italic;flex:0 0 auto}
+.pushBanner{display:flex;align-items:center;gap:10px;background:rgba(95,227,192,.1);border:1px solid rgba(95,227,192,.3);border-radius:12px;padding:10px 12px;margin-bottom:10px;font-size:12px;line-height:1.5}
+.ifRow{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
+.ifRow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.ifRow .fcDot{flex:0 0 auto}
 .friendRow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;transition:.15s;position:relative}
 .friendRow:hover,.friendRow.active{background:var(--panel2)}
 .friendRow .fr-pi{width:38px;height:38px;border-radius:50%;background:var(--mint-d);display:grid;place-items:center;font-weight:800;color:#04241d;flex:0 0 auto;position:relative}
@@ -574,7 +578,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 .modal{position:fixed;inset:0;background:rgba(4,6,12,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:18px;z-index:40}
 /* バグ修正:自分のID・フレンド追加・フレンド設定は#friendOverlay(z-index:56)の「上」に開くモーダルなので、
    通常の.modal(z-index:40)のままだと背面に隠れてしまっていた。専用に高いz-indexを与える */
-#mMyFriendId,#mAddFriend,#mFriendSettings,#mPhraseStamp{z-index:59}
+#mMyFriendId,#mAddFriend,#mFriendSettings,#mPhraseStamp,#mPush,#mInviteFriends{z-index:59}
 .modal.on{display:flex;animation:modalBgIn .18s ease}
 .modal.on .sheet{animation:modalIn .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes modalBgIn{from{opacity:0}to{opacity:1}}
@@ -1070,6 +1074,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
     </div>
 
     <div class="sec"><h4>フレンド</h4>
+      <div class="frow"><span>通知（アプリを閉じていてもチャット・着信・招待が届きます）</span><button class="btn ghost" id="btnSetPush" style="width:auto;padding:7px 14px;font-size:12px">通知の設定</button></div>
       <div class="frow"><span>持続的な個人ID（会議に入っていなくてもフレンドとチャット・通話できます）</span><button class="btn ghost" id="btnSetFriendId" style="width:auto;padding:7px 14px;font-size:12px">自分のIDを見る</button></div>
     </div>
 
@@ -1209,7 +1214,40 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
       <button class="btn ghost" id="btnInviteLimitsApply" style="font-size:12.5px">この設定を適用</button>
       <p class="hint" id="inviteLimitsStatus" style="margin-top:6px"></p>
     </div>
-    <button class="btn primary" data-closemodal style="margin-top:14px">閉じる</button>
+    <button class="btn ghost" id="btnInviteFriends" style="margin-top:14px">👥 フレンドを招待（通知が届きます）</button>
+    <button class="btn primary" data-closemodal style="margin-top:10px">閉じる</button>
+  </div>
+</div>
+
+<!-- フレンドを会議に招待 -->
+<div class="modal" id="mInviteFriends">
+  <div class="sheet" style="max-width:380px">
+    <h3>フレンドを会議に招待</h3>
+    <div class="sub">相手がアプリを閉じていても、通知をオンにしていれば届きます</div>
+    <div id="ifList" style="margin:12px 0;max-height:48vh;overflow:auto"></div>
+    <button class="btn ghost" data-closemodal>閉じる</button>
+  </div>
+</div>
+
+<!-- 会議に招待された -->
+<div class="modal" id="mFriendInvited" style="z-index:80">
+  <div class="sheet" style="max-width:340px;text-align:center">
+    <h3 id="fiTitle">会議に招待されました</h3>
+    <div class="sub" id="fiRoom"></div>
+    <button class="btn primary" id="fiJoin" style="margin-top:16px">参加する</button>
+    <button class="btn ghost" id="fiLater" style="margin-top:10px">あとで</button>
+  </div>
+</div>
+
+<!-- 通知の設定 -->
+<div class="modal" id="mPush">
+  <div class="sheet" style="max-width:380px">
+    <h3>🔔 通知</h3>
+    <div class="sub" id="pushStatus"></div>
+    <button class="btn primary" id="btnPushToggle" style="margin-top:14px"></button>
+    <button class="btn ghost" id="btnPushTest" style="margin-top:10px;display:none">テスト通知を送る</button>
+    <p class="hint" id="pushHint" style="margin-top:12px"></p>
+    <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
   </div>
 </div>
 
@@ -1418,6 +1456,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
   <div class="wbTop">
     <b>👥 フレンド</b>
     <div class="wbTools">
+      <button class="iconbtn" id="btnPushSettings" title="通知の設定" aria-label="通知の設定">🔔</button>
       <button class="iconbtn" id="btnMyFriendId" title="自分のID">🪪</button>
       <button class="iconbtn" id="btnAddFriend" title="フレンドを追加">➕</button>
     </div>
@@ -1425,6 +1464,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
   </div>
   <div class="friendBody" id="friendBody">
     <div class="friendListPane" id="friendListPane">
+      <div class="pushBanner" id="pushBanner" style="display:none"><span>🔔 通知をオンにすると、アプリを閉じていてもチャット・着信・会議への招待が届きます</span><button class="btn primary" id="btnPushBanner" style="width:auto;padding:6px 12px;font-size:12px">設定する</button></div>
       <div class="empty" id="friendListEmpty">まだフレンドがいません。右上の「➕」から追加できます</div>
       <div id="friendListItems"></div>
     </div>
@@ -1435,6 +1475,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
           <button class="iconbtn friendBackBtn" id="friendBackBtn" title="一覧に戻る" aria-label="フレンド一覧に戻る">←</button>
           <div class="fcDot" id="fcDot"></div>
           <div class="fcNameWrap"><div class="fcName" id="fcName"></div><div class="fcId" id="fcId"></div></div>
+          <button class="iconbtn" id="friendInviteBtn" title="いまの会議に招待" aria-label="いまの会議に招待する">🎥</button>
           <button class="iconbtn" id="friendCallBtn" title="音声・ビデオ通話" aria-label="通話を発信">📞</button>
           <button class="iconbtn" id="friendSettingsBtn" title="このフレンドの設定" aria-label="このフレンドの設定">⚙</button>
         </div>
@@ -7001,7 +7042,7 @@ function myFriendId(){
   return id;
 }
 function friendList(){ try{ return JSON.parse(localStorage.getItem('kdm-friends')||'[]'); }catch(_){ return []; } }
-function saveFriendList(list){ localStorage.setItem('kdm-friends',JSON.stringify(list)); }
+function saveFriendList(list){ localStorage.setItem('kdm-friends',JSON.stringify(list)); try{ Push.syncSoon(); }catch(_){} }
 function findFriend(fid){ return friendList().find(f=>f.id===fid)||null; }
 function upsertFriend(patch){
   const list=friendList();
@@ -7187,7 +7228,13 @@ const FriendNet={
         friendUnread.set(fid,(friendUnread.get(fid)||0)+1);
         renderFriendList();
         toast('💬 '+(f?f.name:'フレンド')+'からメッセージが届きました');
+        Push.local('💬 '+(f?f.name:'フレンド'),(m.text||'').slice(0,100)||'メッセージが届きました','chat-'+fid,'?fchat='+fid);
       }
+      return;
+    }
+    if(m.t==='meetInvite'){
+      if(!findFriend(fid)||!/^[A-Z0-9]{4}$/.test(String(m.code||''))) return;
+      showInviteNotice({fid,name:m.name,code:m.code,room:String(m.room||'').slice(0,40)});
       return;
     }
     if(m.t==='typing'){
@@ -7270,13 +7317,14 @@ const FriendNet={
     const f=findFriend(fid);
     openFriendCallUi(f?f.name:'不明なフレンド',true,fid);
     fcStartRing();
+    Push.local('📞 '+(f?f.name:'フレンド')+'さんから着信','タップして応答','call-'+fid,'?fchat='+fid+'&call=1',{requireInteraction:true});
     call.on('close',()=>closeFriendCallUi());
     call.on('error',()=>closeFriendCallUi());
     this._pendingIncomingCall=call;
   },
   async acceptCall(fid){
     const call=this._pendingIncomingCall; if(!call) return;
-    fcStopRing();
+    fcStopRing(); Push.clearTag('call-'+fid);
     let out; try{ out=await this.ensureCallMedia(); }catch(_){}
     if(!out||!this.callAudioTrack){ toast('マイクが使えません'); this.rejectCall(fid); return; }
     call.answer(out);
@@ -7284,7 +7332,7 @@ const FriendNet={
     $('#friendCallAccept').style.display='none';
   },
   rejectCall(fid){
-    fcStopRing();
+    fcStopRing(); Push.clearTag('call-'+fid);
     const call=this.calls.get(fid)||this._pendingIncomingCall;
     if(call){ try{call.close()}catch(_){} }
     this.calls.delete(fid); this._pendingIncomingCall=null;
@@ -7292,20 +7340,46 @@ const FriendNet={
   },
   async startCall(fid){
     if(this.calls.size){ toast('既に別の通話中です'); return; }
-    if(!this.isOnline(fid)){ toast('相手がオフラインのため発信できません'); return; }
+    let waited=false;
+    if(!this.isOnline(fid)){
+      // 相手がアプリを閉じている/別の場所にいる: 通知を送って、相手が開くのを待つ
+      const r=await Push.notify(fid,'call');
+      if(!r||!r.sent){ toast('相手がオフラインのため発信できません（相手が通知をオンにしていません）'); return; }
+      waited=true; this._waitFid=fid;
+      const f0=findFriend(fid);
+      openFriendCallUi(f0?f0.name:'フレンド',false,fid);
+      fcStartRing();
+      $('#friendCallStatus').textContent='相手に通知を送りました。応答を待っています…';
+      const ok=await this.waitConnect(fid,45000);
+      if(this._waitFid!==fid) return; // 自分で切った
+      this._waitFid=null;
+      if(!ok){ closeFriendCallUi(); toast('相手がアプリを開かなかったため、つながりませんでした'); return; }
+    }else{
+      Push.notify(fid,'call'); // 相手の画面が閉じかけていても気づけるよう、念のため通知も送る(開いていれば画面内の着信が出るだけ)
+    }
     let out; try{ out=await this.ensureCallMedia(); }catch(_){}
-    if(!out||!this.callAudioTrack){ toast('マイクが使えません'); return; }
+    if(!out||!this.callAudioTrack){ toast('マイクが使えません'); if(waited) closeFriendCallUi(); return; }
     this.callFid=fid; this.callRole='host';
     const f=findFriend(fid);
-    openFriendCallUi(f?f.name:'フレンド',false,fid);
-    fcStartRing();
+    if(!waited){ openFriendCallUi(f?f.name:'フレンド',false,fid); fcStartRing(); }
+    else $('#friendCallStatus').textContent='呼び出し中…';
     const call=this.peer.call(fid,out);
     this.calls.set(fid,call);
     call.on('stream',st=>{ fcStopRing(); $('#fcRemoteVideo').srcObject=st; startCallTimer(); startCallNetLoop(fid); $('#friendCallStatus').textContent='通話中…'; });
     call.on('close',()=>closeFriendCallUi());
     call.on('error',()=>closeFriendCallUi());
   },
+  async waitConnect(fid,ms){
+    const t0=Date.now();
+    while(Date.now()-t0<ms && this._waitFid===fid){
+      if(this.isOnline(fid)) return true;
+      this.connectTo(fid).catch(()=>{});
+      await new Promise(z=>setTimeout(z,2000));
+    }
+    return this.isOnline(fid);
+  },
   hangup(fid){
+    if(this._waitFid===fid) this._waitFid=null;
     const call=this.calls.get(fid); if(call){ try{call.close()}catch(_){} }
     this.calls.delete(fid);
     closeFriendCallUi();
@@ -7892,9 +7966,10 @@ function sendFriendMessage(payload){
   const msg=Object.assign({t:'chat',id,ts:Date.now(),selfDestruct},payload);
   friendChatAppend(fid,{id,dir:'out',text:payload.text||'',imgs:payload.imgs||null,file:payload.file||null,yamada:payload.yamada||null,phrase:payload.phrase||null,ts:msg.ts,selfDestruct,deleted:false,readByPeer:false});
   const online=FriendNet.queueSend(fid,msg);
+  Push.notify(fid,'chat',{text:msg.imgs?'📷 写真が届きました':msg.file?'📎 ファイルが届きました':(msg.text||msg.phrase||'スタンプが届きました')});
   renderFriendChat(fid);
   renderFriendList();
-  if(!online) toast('相手はオフラインです。オンラインになったら自動で送信されます');
+  if(!online) toast('相手はオフラインです。オンラインになったら自動で送信されます（通知は送りました）');
 }
 function sendFriendTextNow(){
   const t=$('#friendChatIn').value.trim(); if(!t) return;
@@ -7960,6 +8035,7 @@ function openFriendOverlay(){
   FriendNet.init();
   $('#friendOverlay').classList.add('on');
   renderFriendList();
+  $('#pushBanner').style.display=((Push.supported()&&!Push.isOn()&&Notification.permission!=='denied')||(!Push.supported()&&Push.isIos()&&!Push.standalone()))?'flex':'none';
   $('#mPlus') && $('#mPlus').classList.remove('on');
 }
 $('#friendClose').onclick=()=>$('#friendOverlay').classList.remove('on');
@@ -8073,11 +8149,221 @@ $('#btnRemoveFriend').onclick=()=>{
 // ホーム画面にいる間も含めて、ページを開いたらすぐにフレンド用Peerを起動しておく
 FriendNet.init();
 
+/* ============================================================
+   通知(Web Push)・会議への招待
+   フレンド同士なら、相手がアプリを閉じていても、チャット・通話・会議への招待がスマホやPCに通知で届く。
+   仕組み: 各端末が「通知を受け取る」と登録した購読(PushSubscription)を、Cloudflare Worker(RELAY_HTTP/push/*)が
+   フレンドID単位で預かる。送る側はWorkerへ「このフレンドに通知して」と頼むだけで、中身(会話など)はWorkerに残らない。
+   通知を送ってよい相手は、受け取る側が自分の確定済みフレンドIDだけを登録(allow)しておく。
+   アプリを開いている間の本物の通信は今まで通りP2P。通知はあくまで「気づいてもらう」ための追加の経路。
+   ============================================================ */
+function pushU8(b64u){ const s=(b64u+'==='.slice((b64u.length+3)%4)).replace(/-/g,'+').replace(/_/g,'/'); const bin=atob(s); return Uint8Array.from(bin,c=>c.charCodeAt(0)); }
+const Push={
+  LS_ON:'kdm-push-on', _ct:{}, _seenInvite:new Map(),
+  supported(){ return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window; },
+  isIos(){ return /iPhone|iPad|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1); },
+  standalone(){ return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true; },
+  token(){
+    let t=localStorage.getItem('kdm-push-token');
+    if(!t){ t=Array.from(crypto.getRandomValues(new Uint8Array(24)),b=>b.toString(16).padStart(2,'0')).join(''); localStorage.setItem('kdm-push-token',t); }
+    return t;
+  },
+  isOn(){ return this.supported()&&localStorage.getItem(this.LS_ON)==='1'&&Notification.permission==='granted'; },
+  myName(){ return (S.name||localStorage.getItem('kdm-name')||'').slice(0,30); },
+  allowList(){ return friendList().filter(f=>f.status!=='pending').map(f=>f.id).concat([myFriendId()]); },
+  async post(path,body){
+    const r=await fetch(RELAY_HTTP+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+    let j=null; try{ j=await r.json(); }catch(_){}
+    return {status:r.status,j};
+  },
+  /* 自分のID・名前・受け取ってよい相手の一覧(と、通知がオンならこの端末の購読)をWorkerへ。変更のたびに呼ぶ */
+  async sync(){
+    try{
+      if(!friendList().length&&!this.isOn()) return;
+      const body={id:myFriendId(),token:this.token(),name:this.myName(),allow:this.allowList()};
+      if(this.isOn()){
+        const reg=await navigator.serviceWorker.ready; const sub=await reg.pushManager.getSubscription();
+        if(sub) body.sub=sub.toJSON();
+      }
+      await this.post('/push/register',body);
+    }catch(_){}
+  },
+  syncSoon(){ clearTimeout(this._st); this._st=setTimeout(()=>this.sync(),800); },
+  async enable(){
+    if(!this.supported()) throw new Error('unsupported');
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted') throw new Error('denied');
+    let kj=null; try{ kj=await (await fetch(RELAY_HTTP+'/push/key')).json(); }catch(_){}
+    if(!kj||!kj.publicKey) throw new Error('server');
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(sub&&localStorage.getItem('kdm-push-vkey')!==kj.publicKey){ try{ await sub.unsubscribe(); }catch(_){} sub=null; } // サーバーの鍵が変わっていたら作り直す
+    if(!sub) sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:pushU8(kj.publicKey)});
+    localStorage.setItem('kdm-push-vkey',kj.publicKey);
+    const r=await this.post('/push/register',{id:myFriendId(),token:this.token(),name:this.myName(),allow:this.allowList(),sub:sub.toJSON()});
+    if(!r.j||!r.j.ok) throw new Error('server');
+    localStorage.setItem(this.LS_ON,'1');
+  },
+  async disable(){
+    localStorage.setItem(this.LS_ON,'0');
+    try{
+      const reg=await navigator.serviceWorker.ready; const sub=await reg.pushManager.getSubscription();
+      if(sub){ const ep=sub.endpoint; try{ await sub.unsubscribe(); }catch(_){} await this.post('/push/unregister',{id:myFriendId(),token:this.token(),endpoint:ep}); }
+    }catch(_){}
+  },
+  /* 相手に通知を送る。戻り値は {ok,sent}(sent=届けた端末の数)。失敗時はnull */
+  async notify(to,kind,extra,retried){
+    try{
+      if(kind==='chat'){ const now=Date.now(); if(now-(this._ct[to]||0)<8000) return null; this._ct[to]=now; } // 連投は8秒に1回まで
+      const r=await this.post('/push/notify',Object.assign({from:myFriendId(),token:this.token(),to,kind,name:this.myName()||'フレンド'},extra||{}));
+      if(r.status===403&&r.j&&r.j.error==='sender_not_registered'&&!retried){ await this.sync(); return this.notify(to,kind,extra,true); }
+      return r.j;
+    }catch(_){ return null; }
+  },
+  /* 画面が見えていない時の、自分の端末内からの通知(P2Pで届いた内容用)。Push経由と同じtagにして二重にならないようにしている */
+  async local(title,body,tag,url,opts){
+    try{
+      if(!this.supported()||Notification.permission!=='granted'||!document.hidden) return;
+      const reg=await navigator.serviceWorker.ready;
+      await reg.showNotification(title,Object.assign({body,tag,icon:'icon-192.png',badge:'favicon-32.png',data:{url:url||''},renotify:false},opts||{}));
+    }catch(_){}
+  },
+  async clearTag(tag){ try{ const reg=await navigator.serviceWorker.ready; (await reg.getNotifications({tag})).forEach(n=>n.close()); }catch(_){} },
+  /* Service Workerから: アプリが見えている時に届いた通知(自分で通知は出さず、画面の中で知らせる) */
+  onPush(d){
+    if(!d) return;
+    if(d.kind==='invite'&&d.code) showInviteNotice({fid:d.fid,name:d.name,code:d.code,room:d.room});
+    else if(d.kind==='chat'){ if(!FriendNet.isOnline(d.fid)){ toast('💬 '+(d.name||'フレンド')+'：'+(d.body||'メッセージ')); FriendNet.connectTo(d.fid).catch(()=>{}); } }
+    else if(d.kind==='call'){ toast('📞 '+(d.name||'フレンド')+'さんから着信（接続しています…）',5000); FriendNet.connectTo(d.fid).catch(()=>{}); }
+  },
+};
+function showInviteNotice(d){
+  const key=d.code+':'+d.fid, now=Date.now();
+  if(now-(Push._seenInvite.get(key)||0)<60000) return; // P2Pと通知の両方で届いても、1回だけ表示する
+  Push._seenInvite.set(key,now);
+  const f=findFriend(d.fid);
+  const name=(f&&f.name)||d.name||'フレンド';
+  $('#fiTitle').textContent='🎥 '+name+'さんが会議に招待しています';
+  $('#fiRoom').textContent='「'+(d.room||'会議')+'」';
+  $('#fiJoin').dataset.code=d.code;
+  $('#mFriendInvited').classList.add('on');
+  Push.local('🎥 '+name+'さんが会議に招待しています','「'+(d.room||'会議')+'」に参加しませんか？','invite-'+d.code,'?code='+d.code+'&autojoin=1',{requireInteraction:true});
+}
+function joinFromInvite(code,auto){
+  if($('#meet').classList.contains('on')){ toast('いまの会議を終了してから、もう一度招待を開いてください',4000); return; }
+  $('#friendOverlay').classList.remove('on');
+  $('#mFriendInvited').classList.remove('on');
+  const joinTab=$$('.tabs button').find(b=>b.dataset.tab==='join'); if(joinTab) joinTab.click();
+  String(code||'').toUpperCase().split('').slice(0,4).forEach((c,i)=>{ if(codeBoxes[i]) codeBoxes[i].value=c; });
+  if(!$('#gName').value.trim()) $('#gName').value=localStorage.getItem('kdm-name')||'';
+  if($('#gName').value.trim()) $('#btnJoin').click();
+  else { toast('表示名を入れて「参加する」を押してください'); $('#gName').focus(); }
+}
+$('#fiJoin').onclick=()=>joinFromInvite($('#fiJoin').dataset.code,true);
+$('#fiLater').onclick=()=>$('#mFriendInvited').classList.remove('on');
+
+/* 起動の合図(通知をタップして開いた/すでに開いているアプリに知らせる)。?fchat=フレンドID でそのチャットを開く、?code=XXXX&autojoin=1 で参加 */
+function handleLaunch(search){
+  let p; try{ p=new URL(search||'',location.href).searchParams; }catch(_){ return; }
+  const fid=p.get('fchat'), code=(p.get('code')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
+  if(fid&&/^f[a-z0-9]{16}$/.test(fid)){
+    openFriendOverlay();
+    if(findFriend(fid)){ openFriendChat(fid); if(p.get('call')==='1'&&!FriendNet.isOnline(fid)) toast('接続しています…（相手から発信されるまでお待ちください）',4000); }
+  }else if(code&&p.get('autojoin')==='1'){
+    setTimeout(()=>joinFromInvite(code,true),600);
+  }
+}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',e=>{
+    const m=e.data; if(!m) return;
+    if(m.kdmPush) Push.onPush(m.kdmPush);
+    if(typeof m.kdmOpen==='string') handleLaunch(m.kdmOpen);
+  });
+}
+
+/* --- 通知の設定画面 --- */
+async function paintPushModal(){
+  const st=$('#pushStatus'), btn=$('#btnPushToggle'), tst=$('#btnPushTest'), hint=$('#pushHint');
+  tst.style.display='none';
+  if(!Push.supported()){
+    st.textContent='この環境では通知が使えません';
+    btn.style.display='none';
+    hint.textContent=Push.isIos()&&!Push.standalone()
+      ?'iPhone・iPadでは、Safariの共有ボタン →「ホーム画面に追加」で追加したコダマ会議のアイコンから開くと、通知が使えるようになります（iOS 16.4以降）。'
+      :'Chrome・Edge・Firefoxなどの新しいブラウザ、または「アプリをインストール」したコダマ会議で使えます。';
+    return;
+  }
+  btn.style.display='';
+  const perm=Notification.permission;
+  if(perm==='denied'){ st.textContent='ブラウザで通知がブロックされています'; btn.style.display='none'; hint.textContent='アドレスバーの🔒（サイトの設定）から「通知」を許可にしてから、このページを開き直してください。'; return; }
+  if(Push.isOn()){
+    st.textContent='✅ この端末で通知がオンです'; btn.textContent='この端末の通知をオフにする'; tst.style.display='';
+    hint.textContent='フレンドからのチャット・着信・会議への招待が、アプリを閉じていても届きます。スマホとPCの両方で、それぞれオンにしてください。';
+  }else{
+    st.textContent='通知はオフです'; btn.textContent='🔔 この端末で通知をオンにする';
+    hint.textContent='オンにすると、アプリを閉じていても、フレンドからのチャット・着信・会議への招待が通知で届きます。スマホとPCの両方で、それぞれオンにできます。';
+    if(Push.isIos()&&!Push.standalone()) hint.textContent+='（iPhoneは、ホーム画面に追加したアプリから開いている必要があります）';
+  }
+}
+function openPushModal(){ $('#mPush').classList.add('on'); paintPushModal(); }
+$('#btnPushToggle').onclick=async()=>{
+  const b=$('#btnPushToggle'); b.disabled=true;
+  try{
+    if(Push.isOn()){ await Push.disable(); toast('この端末の通知をオフにしました'); }
+    else{ await Push.enable(); toast('通知をオンにしました'); }
+  }catch(e){
+    const m=e&&e.message;
+    toast(m==='denied'?'通知が許可されませんでした':m==='server'?'通知サーバーの準備がまだできていません':'通知をオンにできませんでした',4200);
+  }
+  b.disabled=false; paintPushModal(); renderFriendList();
+};
+$('#btnPushTest').onclick=async()=>{
+  const r=await Push.notify(myFriendId(),'test');
+  toast(r&&r.sent?'テスト通知を送りました（数秒で届きます）':'送れませんでした。もう一度オンにしてみてください',3600);
+};
+$('#btnPushSettings').onclick=openPushModal;
+$('#btnSetPush').onclick=openPushModal;
+$('#btnPushBanner').onclick=openPushModal;
+
+/* --- 会議にフレンドを招待(通知つき) --- */
+function sendMeetInvite(fid){
+  if(!S.code){ toast('先に会議を開く・会議に入ってから招待してください'); return false; }
+  const f=findFriend(fid); if(!f) return false;
+  FriendNet.send(fid,{t:'meetInvite',code:S.code,room:S.roomName||'会議',name:S.name||''}); // 相手がオンラインならP2Pで即座に
+  Push.notify(fid,'invite',{code:S.code,room:S.roomName||'会議'}); // アプリを閉じている相手・別の端末にも通知で
+  return true;
+}
+function openInviteFriends(){
+  const box=$('#ifList'); box.innerHTML='';
+  const list=friendList().filter(f=>f.status!=='pending');
+  if(!list.length){ box.innerHTML='<div class="empty" style="padding:18px 6px">まだフレンドがいません。フレンド画面の「➕」から追加できます</div>'; }
+  list.forEach(f=>{
+    const row=document.createElement('div'); row.className='ifRow';
+    row.innerHTML=`<span class="fcDot${FriendNet.isOnline(f.id)?' online':''}"></span><b>${esc(f.name||'名前未設定')}</b><button class="btn primary" style="width:auto;padding:7px 14px;font-size:12.5px">招待する</button>`;
+    const b=row.querySelector('button');
+    b.onclick=()=>{ if(sendMeetInvite(f.id)){ b.textContent='招待しました ✔'; b.disabled=true; toast((f.name||'フレンド')+'さんに招待を送りました'); } };
+    box.appendChild(row);
+  });
+  $('#mInviteFriends').classList.add('on');
+}
+$('#btnInviteFriends').onclick=()=>{ $('#mInvite').classList.remove('on'); openInviteFriends(); };
+$('#friendInviteBtn').onclick=()=>{ const fid=currentFriendChatId; if(fid&&sendMeetInvite(fid)) toast('会議への招待を送りました'); };
+
+// 起動時: 自分の登録を最新にし、通知から開かれた場合はその続きへ
+Push.sync();
+(function(){ const p=new URLSearchParams(location.search); if(p.get('fchat')||(p.get('code')&&p.get('autojoin')==='1')){ const s=location.search; try{ history.replaceState(null,'',location.pathname); }catch(_){} setTimeout(()=>handleLaunch(s),400); } })();
+
+
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.5.0';
+const APP_VERSION='v3.6.0';
 const CHANGELOG=[
+  {ver:'v3.6.0',date:'2026-10-26',items:[
+    'フレンドに通知が届くように：チャット・通話の着信・会議への招待が、アプリを閉じていてもスマホ・PCに通知で届きます（フレンド画面の🔔から、端末ごとにオン）',
+    '会議の招待画面と、フレンドのチャット画面（🎥）から、フレンドを会議に招待できるように',
+    '相手がアプリを閉じていても、発信すると通知で呼び出して、開いてくれたら自動で通話につながります'
+  ]},
   {ver:'v3.5.0',date:'2026-09-13',items:[
     '発言中の人のタイルに🔊アイコンが出る「色覚サポートモード」など、色だけに頼らない表示への切り替えを設定に追加',
     '配色テーマ（ミント/落ち着いた色/夜間モード）を設定から選べるように',

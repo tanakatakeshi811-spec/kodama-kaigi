@@ -4,11 +4,13 @@
   "compatibility_date": "2026-09-01",
   "durable_objects": {
     "bindings": [
-      { "name": "ROOMS", "class_name": "RoomRegistry" }
+      { "name": "ROOMS", "class_name": "RoomRegistry" },
+      { "name": "PUSH", "class_name": "PushRegistry" }
     ]
   },
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["RoomRegistry"] }
+    { "tag": "v1", "new_sqlite_classes": ["RoomRegistry"] },
+    { "tag": "v2", "new_sqlite_classes": ["PushRegistry"] }
   ],
   "r2_buckets": [
     { "binding": "IMAGES", "bucket_name": "kodama-kaigi-images" }

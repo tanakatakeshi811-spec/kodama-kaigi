@@ -11,8 +11,11 @@
      /ws        … RoomRegistry Durable Object への WebSocket (部屋コードの登録・在籍確認・検索)
      /upload    … チャット画像をR2に保存(POST、bodyは画像バイナリ)
      /img/:key  … 保存した画像の配信(GET)
+     /push/key, /push/register, /push/unregister, /push/notify … 通知(Web Push)。PushRegistry(push-registry.js)へ
      /health, / … 生存確認
 */
+
+export { PushRegistry } from './push-registry.js';
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -170,6 +173,9 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
     if (url.pathname === '/' || url.pathname === '/health') {
       return new Response('kodama-kaigi relay: ok', { headers: CORS });
+    }
+    if (url.pathname.startsWith('/push/')) {
+      return env.PUSH.get(env.PUSH.idFromName('global')).fetch(request);
     }
     if (url.pathname === '/ws') {
       const id = env.ROOMS.idFromName('global');
