@@ -148,10 +148,21 @@ export class PushRegistry {
       const code = clip(b.code, 4).toUpperCase();
       if (!CODE_RE.test(code)) return json({ ok: false, error: 'bad_code' }, 400);
       const room = clip(b.room, 40) || '会議';
-      payload = { kind, title: `🎥 ${name}さんが会議に招待しています`, body: `「${room}」に参加しませんか？`, url: `?code=${code}&autojoin=1`, tag: 'invite-' + code, code, room, renotify: true };
-      ttl = 900; urgency = 'high';
+      const important = b.important === true; // 「重要通知」: 通知が出しっぱなし・長めに残る・見た目も目立つ(見た目はsw.js側)
+      payload = important
+        ? { kind, important: true, title: `🚨【重要】${name}さんから会議への招待`, body: `「${room}」に今すぐ参加してください`, url: `?code=${code}&autojoin=1`, tag: 'invite-' + code, code, room, renotify: true }
+        : { kind, title: `🎥 ${name}さんが会議に招待しています`, body: `「${room}」に参加しませんか？`, url: `?code=${code}&autojoin=1`, tag: 'invite-' + code, code, room, renotify: true };
+      ttl = important ? 3600 : 900; urgency = 'high';
     } else if (kind === 'test') {
-      payload = { kind, title: '🔔 通知テスト', body: 'この端末に通知が届いています', url: '', tag: 'test' };
+      // variant: 通知の見た目をその場で試すための種類(中身は仮のもの。招待や着信は実際には発生しない)
+      const variant = ['invite', 'important', 'call', 'chat'].includes(b.variant) ? b.variant : '';
+      const T = {
+        invite: ['🎥 テストさんが会議に招待しています', '「テスト会議」に参加しませんか？'],
+        important: ['🚨【重要】テストさんから会議への招待', '「テスト会議」に今すぐ参加してください'],
+        call: ['📞 テストさんから着信', 'タップして応答します'],
+        chat: ['💬 テスト', 'こんにちは！通知の見た目のテストです'],
+      };
+      payload = { kind, variant, title: variant ? T[variant][0] : '🔔 通知テスト', body: variant ? T[variant][1] : 'この端末に通知が届いています', url: '', tag: 'test', room: 'テスト会議' };
       ttl = 60; urgency = 'normal';
     } else {
       payload = { kind, title: `💬 ${name}`, body: clip(b.text, 100) || 'メッセージが届きました', url: `?fchat=${b.from}`, tag: 'chat-' + b.from };

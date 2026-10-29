@@ -447,6 +447,25 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 .ifRow{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--line)}
 .ifRow b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
 .ifRow .fcDot{flex:0 0 auto}
+/* 重要通知(v3.7.0): 招待する側が「重要」にすると、受け取った側は赤く目立つ表示になる */
+.ifImp{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;margin:12px 0 4px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);cursor:pointer;font-size:13px;line-height:1.5}
+.ifImp input{width:18px;height:18px;margin-top:2px;accent-color:var(--coral);flex:0 0 auto}
+.ifImp small{display:block;color:var(--dim);font-size:11.5px}
+.ifImp:has(input:checked){border-color:var(--coral);background:rgba(255,95,116,.12)}
+#mFriendInvited .sheet.important{border-color:var(--coral);box-shadow:0 0 0 2px rgba(255,95,116,.5),0 30px 80px rgba(0,0,0,.6);animation:impPulse 1.4s ease-in-out infinite}
+#mFriendInvited .sheet.important #fiTitle{color:var(--coral)}
+#mFriendInvited .sheet.important #fiJoin{background:var(--coral);color:#fff}
+#fiBadge{display:none;margin:0 auto 10px;width:max-content;padding:3px 12px;border-radius:20px;background:var(--coral);color:#fff;font-size:12px;font-weight:800;letter-spacing:.1em}
+#mFriendInvited .sheet.important #fiBadge{display:block}
+@keyframes impPulse{50%{box-shadow:0 0 0 6px rgba(255,95,116,.25),0 30px 80px rgba(0,0,0,.6)}}
+/* 見た目の設定(背景画像・通知アイコン) */
+body.hasBg{background:linear-gradient(rgba(5,7,12,var(--bgdim,.45)),rgba(5,7,12,var(--bgdim,.45))),var(--bgimg) center/cover no-repeat fixed,var(--bg)}
+.frow .rowBtns{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.frow .rowBtns .btn{width:auto;padding:7px 14px;font-size:12px}
+#niPrev{width:34px;height:34px;border-radius:9px;object-fit:cover;border:1px solid var(--line);background:var(--panel2)}
+.ntBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.ntBtns .btn{width:100%;padding:9px 6px;font-size:12px}
+@media(prefers-reduced-motion:reduce){#mFriendInvited .sheet.important{animation:none}}
 .friendRow{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;transition:.15s;position:relative}
 .friendRow:hover,.friendRow.active{background:var(--panel2)}
 .friendRow .fr-pi{width:38px;height:38px;border-radius:50%;background:var(--mint-d);display:grid;place-items:center;font-weight:800;color:#04241d;flex:0 0 auto;position:relative}
@@ -1069,6 +1088,11 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
         <option value="calm">落ち着いた色</option>
         <option value="night">夜間モード</option>
       </select></div>
+      <div class="frow"><span>背景画像（好きな画像にできます）</span><span class="rowBtns"><button class="btn ghost" id="btnBgPick">画像を選ぶ</button><button class="btn ghost" id="btnBgReset" style="display:none">戻す</button></span></div>
+      <div class="frow" id="rowBgDim" style="display:none"><span>背景の暗さ</span><input type="range" id="rgBgDim" min="0" max="85" value="45"></div>
+      <div class="frow"><span>通知のアイコン（スマホ・PCの通知に出ます）</span><span class="rowBtns"><img id="niPrev" alt="" src="icon-192.png"><button class="btn ghost" id="btnNiPick">画像を選ぶ</button><button class="btn ghost" id="btnNiReset" style="display:none">戻す</button></span></div>
+      <input type="file" id="fileBg" accept="image/*" hidden><input type="file" id="fileNi" accept="image/*" hidden>
+      <p class="hint" style="margin-top:-4px">選んだ画像はこの端末の中だけに保存され、他の人や通知サーバーには送られません。</p>
       <div class="frow"><span>色覚サポートモード</span><div class="toggle" id="swColorblind"></div></div>
       <p class="hint" style="margin-top:-4px">投票結果や発言中ハイライトなど、色だけに頼っていた表示にアイコン・マークを追加してより見分けやすくします。</p>
     </div>
@@ -1224,6 +1248,7 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
   <div class="sheet" style="max-width:380px">
     <h3>フレンドを会議に招待</h3>
     <div class="sub">相手がアプリを閉じていても、通知をオンにしていれば届きます</div>
+    <label class="ifImp"><input type="checkbox" id="ifImportant"><span>🚨 重要通知として送る<small>通知が出しっぱなしになり、強い振動と赤い目立つ表示で届きます（急ぎのときだけ）</small></span></label>
     <div id="ifList" style="margin:12px 0;max-height:48vh;overflow:auto"></div>
     <button class="btn ghost" data-closemodal>閉じる</button>
   </div>
@@ -1231,7 +1256,8 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
 
 <!-- 会議に招待された -->
 <div class="modal" id="mFriendInvited" style="z-index:80">
-  <div class="sheet" style="max-width:340px;text-align:center">
+  <div class="sheet" id="fiSheet" style="max-width:340px;text-align:center">
+    <div id="fiBadge">🚨 重要</div>
     <h3 id="fiTitle">会議に招待されました</h3>
     <div class="sub" id="fiRoom"></div>
     <button class="btn primary" id="fiJoin" style="margin-top:16px">参加する</button>
@@ -1246,6 +1272,16 @@ body.cbMode .fcJkOpts button.voted::before{content:'✔ '}
     <div class="sub" id="pushStatus"></div>
     <button class="btn primary" id="btnPushToggle" style="margin-top:14px"></button>
     <button class="btn ghost" id="btnPushTest" style="margin-top:10px;display:none">テスト通知を送る</button>
+    <div id="ntBox" style="display:none">
+      <div class="sub" style="margin-top:14px">通知の見た目を試す（自分の端末に、見本の通知が届きます）</div>
+      <div class="ntBtns">
+        <button class="btn ghost" data-ntv="invite">🎥 招待</button>
+        <button class="btn ghost" data-ntv="important">🚨 重要な招待</button>
+        <button class="btn ghost" data-ntv="call">📞 着信</button>
+        <button class="btn ghost" data-ntv="chat">💬 チャット</button>
+      </div>
+      <p class="hint" style="margin-top:8px">見本は数秒で届きます。左のアイコンは、設定で選んだ通知アイコンです。</p>
+    </div>
     <p class="hint" id="pushHint" style="margin-top:12px"></p>
     <button class="btn ghost" data-closemodal style="margin-top:10px">閉じる</button>
   </div>
@@ -5876,6 +5912,74 @@ function applyTheme(name){
 }
 $('#selTheme').value=S.theme; applyTheme(S.theme);
 $('#selTheme').onchange=e=>{ applyTheme(e.target.value); toast('配色テーマを変更しました'); };
+/* 見た目の設定(v3.7.0): 背景に好きな画像・通知のアイコンに好きな画像。どちらもこの端末のlocalStorageにだけ保存する(縮小してから)。
+   通知アイコンはService Workerが通知を出す時に読むので、SW側のキャッシュにも渡しておく */
+const Look={
+  LS_BG:'kdm-bgimg', LS_DIM:'kdm-bgdim', LS_NI:'kdm-notif-icon',
+  get(k){ try{ return localStorage.getItem(k)||''; }catch(_){ return ''; } },
+  async swPost(msg){ try{ const reg=await navigator.serviceWorker.ready; const w=reg.active||navigator.serviceWorker.controller; if(w) w.postMessage(msg); }catch(_){} },
+  loadImg(file){
+    return new Promise((res,rej)=>{
+      const u=URL.createObjectURL(file), im=new Image();
+      im.onload=()=>{ URL.revokeObjectURL(u); res(im); };
+      im.onerror=()=>{ URL.revokeObjectURL(u); rej(new Error('img')); };
+      im.src=u;
+    });
+  },
+  /* 背景は長辺1600pxのJPEG、通知アイコンは中央で正方形に切り抜いた192pxのPNGに縮める */
+  async shrink(file,kind){
+    const im=await this.loadImg(file); const cv=document.createElement('canvas'); const g=cv.getContext('2d');
+    if(kind==='icon'){
+      const s=Math.min(im.naturalWidth,im.naturalHeight); cv.width=cv.height=192;
+      g.drawImage(im,(im.naturalWidth-s)/2,(im.naturalHeight-s)/2,s,s,0,0,192,192);
+      return cv.toDataURL('image/png');
+    }
+    const k=Math.min(1,1600/Math.max(im.naturalWidth,im.naturalHeight));
+    cv.width=Math.max(1,Math.round(im.naturalWidth*k)); cv.height=Math.max(1,Math.round(im.naturalHeight*k));
+    g.drawImage(im,0,0,cv.width,cv.height);
+    return cv.toDataURL('image/jpeg',0.82);
+  },
+  paint(){
+    const bg=this.get(this.LS_BG), ni=this.get(this.LS_NI);
+    const dim=Math.min(85,Math.max(0,parseInt(this.get(this.LS_DIM)||'45',10)||0));
+    const root=document.documentElement.style;
+    if(bg){ root.setProperty('--bgimg','url("'+bg+'")'); root.setProperty('--bgdim',String(dim/100)); }
+    else{ root.removeProperty('--bgimg'); root.removeProperty('--bgdim'); }
+    document.body.classList.toggle('hasBg',!!bg);
+    $('#btnBgReset').style.display=bg?'':'none';
+    $('#rowBgDim').style.display=bg?'':'none';
+    $('#rgBgDim').value=dim;
+    $('#niPrev').src=ni||'icon-192.png';
+    $('#btnNiReset').style.display=ni?'':'none';
+  },
+  save(key,val){
+    try{ if(val) localStorage.setItem(key,val); else localStorage.removeItem(key); return true; }
+    catch(_){ toast('画像が大きすぎて保存できませんでした。小さい画像でお試しください',4200); return false; }
+  },
+  async pick(file,kind){
+    if(!file) return;
+    try{
+      const url=await this.shrink(file,kind);
+      if(kind==='icon'){
+        if(!this.save(this.LS_NI,url)) return;
+        this.swPost({kdmIcon:url}); toast('通知のアイコンを変更しました');
+      }else{
+        if(!this.save(this.LS_BG,url)) return;
+        toast('背景画像を変更しました');
+      }
+      this.paint();
+    }catch(_){ toast('この画像は読み込めませんでした',3600); }
+  },
+};
+$('#btnBgPick').onclick=()=>$('#fileBg').click();
+$('#btnNiPick').onclick=()=>$('#fileNi').click();
+$('#fileBg').onchange=e=>{ Look.pick(e.target.files[0],'bg'); e.target.value=''; };
+$('#fileNi').onchange=e=>{ Look.pick(e.target.files[0],'icon'); e.target.value=''; };
+$('#btnBgReset').onclick=()=>{ Look.save(Look.LS_BG,''); Look.save(Look.LS_DIM,''); Look.paint(); toast('背景を元に戻しました'); };
+$('#btnNiReset').onclick=()=>{ Look.save(Look.LS_NI,''); Look.swPost({kdmIcon:null}); Look.paint(); toast('通知のアイコンを元に戻しました'); };
+$('#rgBgDim').oninput=e=>{ Look.save(Look.LS_DIM,e.target.value); document.documentElement.style.setProperty('--bgdim',String(e.target.value/100)); };
+Look.paint();
+if(Look.get(Look.LS_NI)) Look.swPost({kdmIcon:Look.get(Look.LS_NI)}); // SW側のキャッシュが消えていても復元する
 /* 色覚サポートモード(新機能5)。調査の結果、このアプリの色分けはほぼ全て名前・アイコン等の
    テキストと必ずセットで表示されていたが、依頼どおり明示的なモードとして「色だけの手がかり」を
    さらに減らすため、発言中ハイライト・投票/選択済み表示にアイコンでの補強を追加する */
@@ -7234,7 +7338,7 @@ const FriendNet={
     }
     if(m.t==='meetInvite'){
       if(!findFriend(fid)||!/^[A-Z0-9]{4}$/.test(String(m.code||''))) return;
-      showInviteNotice({fid,name:m.name,code:m.code,room:String(m.room||'').slice(0,40)});
+      showInviteNotice({fid,name:m.name,code:m.code,room:String(m.room||'').slice(0,40),important:m.important===true});
       return;
     }
     if(m.t==='typing'){
@@ -8225,14 +8329,18 @@ const Push={
     try{
       if(!this.supported()||Notification.permission!=='granted'||!document.hidden) return;
       const reg=await navigator.serviceWorker.ready;
-      await reg.showNotification(title,Object.assign({body,tag,icon:'icon-192.png',badge:'favicon-32.png',data:{url:url||''},renotify:false},opts||{}));
+      /* 見た目はService Worker側(sw.js)で一本化している。Push経由の通知と同じデザインで出る */
+      const o=opts||{}, kind=o.kind||(/^call-/.test(tag)?'call':/^invite-/.test(tag)?'invite':'chat');
+      const w=reg.active||navigator.serviceWorker.controller;
+      if(w){ w.postMessage({kdmShow:{kind,title,body,tag,url:url||'',name:o.name||'',room:o.room||'',important:!!o.important,renotify:!!o.renotify,ts:Date.now()}}); return; }
+      await reg.showNotification(title,{body,tag,icon:'icon-192.png',badge:'favicon-32.png',data:{url:url||''},requireInteraction:!!o.requireInteraction});
     }catch(_){}
   },
   async clearTag(tag){ try{ const reg=await navigator.serviceWorker.ready; (await reg.getNotifications({tag})).forEach(n=>n.close()); }catch(_){} },
   /* Service Workerから: アプリが見えている時に届いた通知(自分で通知は出さず、画面の中で知らせる) */
   onPush(d){
     if(!d) return;
-    if(d.kind==='invite'&&d.code) showInviteNotice({fid:d.fid,name:d.name,code:d.code,room:d.room});
+    if(d.kind==='invite'&&d.code) showInviteNotice({fid:d.fid,name:d.name,code:d.code,room:d.room,important:d.important===true});
     else if(d.kind==='chat'){ if(!FriendNet.isOnline(d.fid)){ toast('💬 '+(d.name||'フレンド')+'：'+(d.body||'メッセージ')); FriendNet.connectTo(d.fid).catch(()=>{}); } }
     else if(d.kind==='call'){ toast('📞 '+(d.name||'フレンド')+'さんから着信（接続しています…）',5000); FriendNet.connectTo(d.fid).catch(()=>{}); }
   },
@@ -8243,11 +8351,18 @@ function showInviteNotice(d){
   Push._seenInvite.set(key,now);
   const f=findFriend(d.fid);
   const name=(f&&f.name)||d.name||'フレンド';
-  $('#fiTitle').textContent='🎥 '+name+'さんが会議に招待しています';
-  $('#fiRoom').textContent='「'+(d.room||'会議')+'」';
+  const imp=d.important===true, room=d.room||'会議';
+  $('#fiTitle').textContent=imp?name+'さんから会議への招待':'🎥 '+name+'さんが会議に招待しています';
+  $('#fiRoom').textContent='「'+room+'」'+(imp?'に今すぐ参加してください':'');
   $('#fiJoin').dataset.code=d.code;
+  $('#fiJoin').textContent=imp?'今すぐ参加する':'参加する';
+  $('#fiSheet').classList.toggle('important',imp);
   $('#mFriendInvited').classList.add('on');
-  Push.local('🎥 '+name+'さんが会議に招待しています','「'+(d.room||'会議')+'」に参加しませんか？','invite-'+d.code,'?code='+d.code+'&autojoin=1',{requireInteraction:true});
+  if(imp){
+    try{ navigator.vibrate&&navigator.vibrate([400,150,400,150,600]); }catch(_){}
+    chime([880,1108.73,880,1108.73],{dur:0.28,gap:0.18,type:'triangle',peak:0.2});
+  }
+  Push.local(imp?'🚨【重要】'+name+'さんから会議への招待':'🎥 '+name+'さんが会議に招待しています',imp?'「'+room+'」に今すぐ参加してください':'「'+room+'」に参加しませんか？','invite-'+d.code,'?code='+d.code+'&autojoin=1',{kind:'invite',important:imp,name,room});
 }
 function joinFromInvite(code,auto){
   if($('#meet').classList.contains('on')){ toast('いまの会議を終了してから、もう一度招待を開いてください',4000); return; }
@@ -8284,7 +8399,7 @@ if('serviceWorker' in navigator){
 /* --- 通知の設定画面 --- */
 async function paintPushModal(){
   const st=$('#pushStatus'), btn=$('#btnPushToggle'), tst=$('#btnPushTest'), hint=$('#pushHint');
-  tst.style.display='none';
+  tst.style.display='none'; $('#ntBox').style.display='none';
   if(!Push.supported()){
     st.textContent='この環境では通知が使えません';
     btn.style.display='none';
@@ -8297,7 +8412,7 @@ async function paintPushModal(){
   const perm=Notification.permission;
   if(perm==='denied'){ st.textContent='ブラウザで通知がブロックされています'; btn.style.display='none'; hint.textContent='アドレスバーの🔒（サイトの設定）から「通知」を許可にしてから、このページを開き直してください。'; return; }
   if(Push.isOn()){
-    st.textContent='✅ この端末で通知がオンです'; btn.textContent='この端末の通知をオフにする'; tst.style.display='';
+    st.textContent='✅ この端末で通知がオンです'; btn.textContent='この端末の通知をオフにする'; tst.style.display=''; $('#ntBox').style.display='';
     hint.textContent='フレンドからのチャット・着信・会議への招待が、アプリを閉じていても届きます。スマホとPCの両方で、それぞれオンにしてください。';
   }else{
     st.textContent='通知はオフです'; btn.textContent='🔔 この端末で通知をオンにする';
@@ -8321,33 +8436,38 @@ $('#btnPushTest').onclick=async()=>{
   const r=await Push.notify(myFriendId(),'test');
   toast(r&&r.sent?'テスト通知を送りました（数秒で届きます）':'送れませんでした。もう一度オンにしてみてください',3600);
 };
+$$('#ntBox [data-ntv]').forEach(b=>b.onclick=async()=>{
+  const r=await Push.notify(myFriendId(),'test',{variant:b.dataset.ntv});
+  toast(r&&r.sent?'見本の通知を送りました（数秒で届きます）':'送れませんでした。もう一度オンにしてみてください',3600);
+});
 $('#btnPushSettings').onclick=openPushModal;
 $('#btnSetPush').onclick=openPushModal;
 $('#btnPushBanner').onclick=openPushModal;
 
 /* --- 会議にフレンドを招待(通知つき) --- */
-function sendMeetInvite(fid){
+function sendMeetInvite(fid,important){
   if(!S.code){ toast('先に会議を開く・会議に入ってから招待してください'); return false; }
   const f=findFriend(fid); if(!f) return false;
-  FriendNet.send(fid,{t:'meetInvite',code:S.code,room:S.roomName||'会議',name:S.name||''}); // 相手がオンラインならP2Pで即座に
-  Push.notify(fid,'invite',{code:S.code,room:S.roomName||'会議'}); // アプリを閉じている相手・別の端末にも通知で
+  const imp=important===true;
+  FriendNet.send(fid,{t:'meetInvite',code:S.code,room:S.roomName||'会議',name:S.name||'',important:imp}); // 相手がオンラインならP2Pで即座に
+  Push.notify(fid,'invite',{code:S.code,room:S.roomName||'会議',important:imp}); // アプリを閉じている相手・別の端末にも通知で
   return true;
 }
-function openInviteFriends(){
-  const box=$('#ifList'); box.innerHTML='';
-  const list=friendList().filter(f=>f.status!=='pending');
+function openInviteFriends(onlyFid){
+  const box=$('#ifList'); box.innerHTML=''; $('#ifImportant').checked=false;
+  const list=friendList().filter(f=>f.status!=='pending'&&(!onlyFid||f.id===onlyFid));
   if(!list.length){ box.innerHTML='<div class="empty" style="padding:18px 6px">まだフレンドがいません。フレンド画面の「➕」から追加できます</div>'; }
   list.forEach(f=>{
     const row=document.createElement('div'); row.className='ifRow';
     row.innerHTML=`<span class="fcDot${FriendNet.isOnline(f.id)?' online':''}"></span><b>${esc(f.name||'名前未設定')}</b><button class="btn primary" style="width:auto;padding:7px 14px;font-size:12.5px">招待する</button>`;
     const b=row.querySelector('button');
-    b.onclick=()=>{ if(sendMeetInvite(f.id)){ b.textContent='招待しました ✔'; b.disabled=true; toast((f.name||'フレンド')+'さんに招待を送りました'); } };
+    b.onclick=()=>{ const imp=$('#ifImportant').checked; if(sendMeetInvite(f.id,imp)){ b.textContent='招待しました ✔'; b.disabled=true; toast((f.name||'フレンド')+'さんに'+(imp?'【重要】の':'')+'招待を送りました'); } };
     box.appendChild(row);
   });
   $('#mInviteFriends').classList.add('on');
 }
 $('#btnInviteFriends').onclick=()=>{ $('#mInvite').classList.remove('on'); openInviteFriends(); };
-$('#friendInviteBtn').onclick=()=>{ const fid=currentFriendChatId; if(fid&&sendMeetInvite(fid)) toast('会議への招待を送りました'); };
+$('#friendInviteBtn').onclick=()=>{ const fid=currentFriendChatId; if(!fid) return; if(!S.code){ toast('先に会議を開く・会議に入ってから招待してください'); return; } openInviteFriends(fid); };
 
 // 起動時: 自分の登録を最新にし、通知から開かれた場合はその続きへ
 Push.sync();
@@ -8357,8 +8477,16 @@ Push.sync();
 /* ===================== 利用規約・バージョン表示・更新履歴 =====================
    バージョンは機能追加のたびに0.1ずつ上げる運用（大きな仕組みの追加＝メジャー、細かい機能追加＝マイナー）。
    CHANGELOGは配列の先頭に新しいものを足していくだけで良い構造にしてある（今後の更新もここに追記すればOK） */
-const APP_VERSION='v3.6.0';
+const APP_VERSION='v3.7.0';
 const CHANGELOG=[
+  {ver:'v3.7.0',date:'2026-10-29',items:[
+    '通知の見た目を一新：招待・着信・チャットで色とボタン（「参加する」「応答する」「あとで」）が変わり、招待にはバナー画像つきで届きます（スマホ版Chromeほか）',
+    '会議に招待するとき「🚨 重要通知として送る」を選べるように：相手の通知が出しっぱなしになり、強い振動と赤い目立つ表示で届きます',
+    '設定の「表示」から、背景を好きな画像に変えられるように（暗さの調整つき）',
+    '設定の「表示」から、通知に出るアイコンを好きな画像に変えられるように',
+    '🔔通知の設定に「通知の見た目を試す」を追加。自分の端末で見本の通知を確認できます',
+    '選んだ画像はこの端末の中だけに保存され、他の人やサーバーには送られません'
+  ]},
   {ver:'v3.6.0',date:'2026-10-26',items:[
     'フレンドに通知が届くように：チャット・通話の着信・会議への招待が、アプリを閉じていてもスマホ・PCに通知で届きます（フレンド画面の🔔から、端末ごとにオン）',
     '会議の招待画面と、フレンドのチャット画面（🎥）から、フレンドを会議に招待できるように',
